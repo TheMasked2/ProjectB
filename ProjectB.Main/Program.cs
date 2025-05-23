@@ -1,2 +1,13 @@
-﻿// See https://aka.ms/new-console-template for more information
-Console.WriteLine("Hello, World!");
+// //Menu.UserMenuFlights();
+// Menu.ShowMainMenu();
+public static class Programs
+{
+	public static void Main()
+	{
+		// TEMPORARY: Backfill FlightSeats for all existing flights
+		// BookingLogic.BackfillFlightSeats();
+
+		Menu.ShowMainMenu();
+		// Console.WriteLine(AirplaneAccess.GetAirplaneData("XC101"));
+	}
+}

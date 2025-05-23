@@ -1,0 +1,22 @@
+using Dapper;
+using Microsoft.Data.Sqlite;
+
+public static class BookingAccess
+{
+    private static SqliteConnection _connection = new SqliteConnection($"Data Source=DataSources/database.db");
+    private static string Table = "Bookings";
+    
+    public static void AddBooking(BookingModel booking)
+    {
+        string sql = $@"INSERT INTO {Table} 
+            (PassengerName, FlightID, BookingDate, BoardingTime, SeatID, SeatClass, BookingStatus, PaymentStatus, UserID)
+            VALUES (@PassengerName, @FlightID, @BookingDate, @BoardingTime, @SeatID, @SeatClass, @BookingStatus, @PaymentStatus, @UserID)";
+        _connection.Execute(sql, booking);
+    }
+
+    public static List<BookingModel> GetBookingsByUser(int userId)
+    {
+        string sql = $@"SELECT * FROM {Table} WHERE UserID = @UserID";
+        return _connection.Query<BookingModel>(sql, new { UserID = userId }).ToList();
+    }
+}

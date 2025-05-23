@@ -1,0 +1,14 @@
+﻿Timestamp;Action;AdminID;AdminName;TargetUserID;TargetUserName;Details
+2025-05-13 15:50:20;CREATE_USER;2;Admin Addmin;6;Chicken Jockey;Email=chickenjockey@mojang.nl|Admin=False
+2025-05-13 16:12:02;EDIT_USER;2;Admin Addmin;6;Steve Minecraft;FirstName=Chicken -> Steve|LastName=Jockey -> Minecraft|Email=chickenjockey@mojang.nl -> steveminecraft@mojang.com|PhoneNumber=612345678 -> 0612345678|City=Village -> The Mines|Country=Overworld -> The Nether
+2025-05-13 16:19:40;EDIT_USER;2;Admin Addmin;6;Iam Steve;FirstName=Steve -> Iam|LastName=Minecraft -> Steve
+2025-05-14 20:14:20;EDIT_USER;2;admin admin;1;HAHAGETTROLLEDIDIOT Dijksman;FirstName=Pieter -> HAHAGETTROLLEDIDIOT|IsAdmin=User -> Admin
+2025-05-14 20:15:14;EDIT_USER;2;admin admin;1;HAHAGETTROLLEDIDIOT Dijksman;IsAdmin=Admin -> User
+2025-05-15 01:48:47;CREATE_USER;1;admin admin;2;Pieter Dijksman;Email=something@gmail.com|Admin=False
+2025-05-19 14:19:33;EDIT_USER;1;admin admin;1;Admin Addmin;FirstName=admin -> Admin|LastName=admin -> Addmin|Email=admin@airtreides.com -> admin@airtreides.nl|PhoneNumber=3456875436 -> 0612345678|City=admin -> Rotterdam|Country=admin -> Netherlands
+2025-05-21 13:58:35;EDIT_USER;1;admin admin;1;Addmin admin;FirstName=admin -> Addmin
+2025-05-21 13:59:14;CREATE_USER;1;admin admin;4;Lucio Ridder;Email=lucioridder2003@gmail.com|Admin=False
+2025-05-21 14:14:03;EDIT_USER;1;Addmin admin;5;Lucio Ridder;IsAdmin=User -> Admin
+2025-05-21 14:14:34;EDIT_USER;5;Lucio Ridder;5;Lucio Ridder;IsAdmin=Admin -> User
+2025-05-21 14:18:58;EDIT_USER;1;Addmin admin;5;Lucio Ridder;IsAdmin=User -> Admin
+2025-05-21 14:19:18;EDIT_USER;5;Lucio Ridder;5;Lucio Ridder;IsAdmin=Admin -> User
