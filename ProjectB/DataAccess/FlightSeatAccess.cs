@@ -1,7 +1,9 @@
 using Microsoft.Data.Sqlite;
 using Dapper;
+using ProjectB.DataAccess;
 
-public class FlightSeatAccess
+
+public class FlightSeatAccess : IFlightSeatAccess
 {
     private readonly SqliteConnection _connection = new SqliteConnection($"Data Source=DataSources/database.db");
     private const string Table = "FlightSeats";
@@ -31,7 +33,7 @@ public class FlightSeatAccess
         }
     }
 
-    public void SetSeatOccupied(int flightId, int seatId, bool isOccupied)
+    public void SetSeatOccupied(int flightId, string seatId, bool isOccupied)
     {
         string sql = $"UPDATE {Table} SET IsOccupied = @IsOccupied WHERE FlightID = @FlightID AND SeatID = @SeatID";
         _connection.Execute(sql, new { IsOccupied = isOccupied, FlightID = flightId, SeatID = seatId });

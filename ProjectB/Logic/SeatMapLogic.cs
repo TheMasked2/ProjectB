@@ -2,16 +2,11 @@ using ProjectB.DataAccess;
 
 public class SeatMapLogic
 {
-    private readonly IFlightSeatAccess _flightSeatAccess;
-
-    public SeatMapLogic(IFlightSeatAccess flightSeatAccess)
-    {
-        _flightSeatAccess = flightSeatAccess;
-    }
+    public static IFlightSeatAccess FlightSeatAccessService { get; set; } = new FlightSeatAccess();
 
     public List<SeatModel> GetSeatMap(int flightId)
     {
-        var seatTuples = _flightSeatAccess.GetSeatsForFlight(flightId);
+        var seatTuples = FlightSeatAccessService.GetSeatsForFlight(flightId);
         foreach (var (seat, isOccupied) in seatTuples)
             seat.IsOccupied = isOccupied;
         return seatTuples.Select(t => t.seat).ToList();
@@ -35,6 +30,6 @@ public class SeatMapLogic
     public void BookSeat(int flightId, SeatModel seat)
     {
         seat.IsOccupied = true;
-        _flightSeatAccess.SetSeatOccupied(flightId, seat.SeatID, true);
+        FlightSeatAccessService.SetSeatOccupied(flightId, seat.SeatID, true);
     }
 }
