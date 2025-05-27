@@ -10,10 +10,12 @@ public class User{
     public DateTime BirthDate { get; set; }
     public DateTime AccCreatedAt { get; set; }
     public bool IsAdmin { get; set; }
+    
+    public bool Guest { get; set; } = false;
 
-    public User() {}
+    public User() { }
 
-    public User(int userID, string firstName, string lastName, string country, string city, string emailAddress, string password, string phoneNumber, DateTime birthDate, DateTime accCreatedAt, bool isAdmin = false)
+    public User(int userID, string firstName, string lastName, string country, string city, string emailAddress, string password, string phoneNumber, DateTime birthDate, DateTime accCreatedAt, bool isAdmin = false, bool guest = false)
     {
         UserID = userID;
         FirstName = firstName;
@@ -26,6 +28,7 @@ public class User{
         BirthDate = birthDate;
         AccCreatedAt = accCreatedAt;
         IsAdmin = isAdmin;
+        Guest = guest;
     }
 
 }
