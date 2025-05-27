@@ -1,26 +1,30 @@
-public static class SeatMapLogic
+using ProjectB.DataAccess;
+
+public class SeatMapLogic
 {
-    // Get seat map for a specific flight (with occupancy)
-    public static List<SeatModel> GetSeatMap(int flightId)
+    private readonly IFlightSeatAccess _flightSeatAccess;
+
+    public SeatMapLogic(IFlightSeatAccess flightSeatAccess)
     {
-        // Get seat info and occupancy for this flight
-        var seatTuples = FlightSeatAccess.GetSeatsForFlight(flightId);
-        // Set IsOccupied property from FlightSeats table
+        _flightSeatAccess = flightSeatAccess;
+    }
+
+    public List<SeatModel> GetSeatMap(int flightId)
+    {
+        var seatTuples = _flightSeatAccess.GetSeatsForFlight(flightId);
         foreach (var (seat, isOccupied) in seatTuples)
             seat.IsOccupied = isOccupied;
         return seatTuples.Select(t => t.seat).ToList();
     }
 
-    // Returns seat letters and row numbers for a seat map
-    public static (List<string> seatLetters, List<int> rowNumbers) GetSeatLayout(List<SeatModel> seats)
+    public (List<string> seatLetters, List<int> rowNumbers) GetSeatLayout(List<SeatModel> seats)
     {
         var seatLetters = seats.Select(s => s.SeatPosition).Distinct().OrderBy(c => c).ToList();
         var rowNumbers = seats.Select(s => s.RowNumber).Distinct().OrderBy(n => n).ToList();
         return (seatLetters, rowNumbers);
     }
 
-    // Returns a seat if available, otherwise null
-    public static SeatModel TryGetAvailableSeat(List<SeatModel> seats, int row, string seatLetter)
+    public SeatModel TryGetAvailableSeat(List<SeatModel> seats, int row, string seatLetter)
     {
         var seat = seats.FirstOrDefault(s => s.RowNumber == row && s.SeatPosition == seatLetter);
         if (seat != null && !seat.IsOccupied)
@@ -28,10 +32,9 @@ public static class SeatMapLogic
         return null;
     }
 
-    // Mark seat as occupied for a specific flight
-    public static void BookSeat(int flightId, SeatModel seat)
+    public void BookSeat(int flightId, SeatModel seat)
     {
         seat.IsOccupied = true;
-        FlightSeatAccess.SetSeatOccupied(flightId, seat.SeatID, true);
+        _flightSeatAccess.SetSeatOccupied(flightId, seat.SeatID, true);
     }
 }
