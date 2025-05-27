@@ -4,6 +4,7 @@ public static class FlightLogic
 {
     public static IFlightAccess FlightAccessService { get; set; } = new FlightAccess();
     public static IFlightSeatAccess FlightSeatAccessService { get; set; } = new FlightSeatAccess();
+    public static IAirplaneAccess AirplaneAccessService { get; set; } = new AirplaneAccess();
     private static readonly Style primaryStyle = new(new Color(134, 64, 0));
     private static readonly Style highlightStyle = new(new Color(255, 122, 0));
     private static readonly Style errorStyle = new(new Color(162, 52, 0));
@@ -15,7 +16,7 @@ public static class FlightLogic
     /// <returns>A list of all flights.</returns>
     // public static List<FlightModel> GetAllFlights()
     // {
-    //     return FlightAccess.GetAllFlightData();
+    //     return FlightAccessService.GetAllFlightData();
     // }
 
     /// <summary>
@@ -93,7 +94,7 @@ public static class FlightLogic
             ValidateFlight(flight);
 
             // Set default values for required fields
-            AirplaneModel airplane = AirplaneLogic.GetAllAirplanes(flight.AirplaneID);
+            AirplaneModel airplane = AirplaneAccessService.GetAirplaneData(flight.AirplaneID);
 
             if (airplane == null)
             {

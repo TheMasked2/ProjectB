@@ -1,7 +1,8 @@
 using Microsoft.Data.Sqlite;
 using Dapper;
+using ProjectB.DataAccess;
 
-public static class AirplaneAccess
+public class AirplaneAccess : IAirplaneAccess
 {
     private static SqliteConnection _connection = new SqliteConnection($"Data Source=DataSources/database.db");
 
@@ -11,7 +12,7 @@ public static class AirplaneAccess
     /// Inserts a new airplane into the database.
     /// </summary>
     /// <param name="airplane">The airplane to insert.</param>
-    public static AirplaneModel GetAirplaneData(string airplaneID)
+    public AirplaneModel GetAirplaneData(string airplaneID)
     {
         string sql = $@"SELECT 
                             AirplaneID,
@@ -22,7 +23,7 @@ public static class AirplaneAccess
         return result;
 
     }
-    public static AirplaneModel GetAirplaneById(int airplaneId)
+    public AirplaneModel GetAirplaneById(string airplaneId)
     {
         string sql = $@"SELECT * FROM {Table} WHERE AirplaneID = @AirplaneId";
         var result = _connection.QueryFirstOrDefault<AirplaneModel>(sql, new { AirplaneId = airplaneId });

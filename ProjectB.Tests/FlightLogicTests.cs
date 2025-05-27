@@ -12,7 +12,7 @@ namespace ProjectB.Tests
         [DataRow("A123", 150, "Test Airline", "JFK", "LAX", 200, true)] // Valid flight
         [DataRow("InvalidID", 0, "Test Airline", "JFK", "LAX", 200, false)] // Invalid airplane
         [DataRow("A123", 150, "Test Airline", "JFK", "LAX", -100, false)] // Invalid price
-        public void AddFlight_TestCases(
+        public void AddFlight_CallsWriteAndSeatCreation_ReturnsExpected(
             string airplaneId,
             int totalSeats,
             string airline,
@@ -23,10 +23,14 @@ namespace ProjectB.Tests
         {
             // Arrange
             var mockFlightAccess = new Mock<IFlightAccess>();
-            var mockAirplaneLogic = new Mock<IAirplaneLogic>();
+            var mockAirplaneAccess = new Mock<IAirplaneAccess>();
             var mockFlightSeatAccess = new Mock<IFlightSeatAccess>();
 
-            var flightLogic = new FlightLogic(mockFlightAccess.Object, mockAirplaneLogic.Object, mockFlightSeatAccess.Object);
+            FlightLogic.FlightAccessService = mockFlightAccess.Object;
+            FlightLogic.AirplaneAccessService = mockAirplaneAccess.Object;
+            FlightLogic.FlightSeatAccessService = mockFlightSeatAccess.Object;
+
+            mockFlightAccess.Setup(f => f.GetAllFlightData()).Returns(new List<FlightModel>());
 
             var airplane = totalSeats > 0 ? new AirplaneModel { AirplaneID = airplaneId, TotalSeats = totalSeats } : null;
 
@@ -43,21 +47,20 @@ namespace ProjectB.Tests
                 FlightStatus = "Scheduled"
             };
 
-            mockAirplaneLogic.Setup(a => a.GetAllAirplanes(airplaneId)).Returns(airplane);
+            mockAirplaneAccess.Setup(a => a.GetAirplaneData(airplaneId)).Returns(airplane);
 
             // Act
+            var result = FlightLogic.AddFlight(flight);
+
             if (expectedResult)
             {
-                var result = flightLogic.AddFlight(flight);
-
-                // Assert
                 Assert.IsTrue(result);
                 mockFlightAccess.Verify(f => f.Write(It.IsAny<FlightModel>()), Times.Once);
                 mockFlightSeatAccess.Verify(f => f.CreateFlightSeats(It.IsAny<int>(), It.IsAny<string>()), Times.Once);
             }
             else
             {
-                Assert.ThrowsException<ArgumentException>(() => flightLogic.AddFlight(flight));
+                Assert.IsFalse(result);
                 mockFlightAccess.Verify(f => f.Write(It.IsAny<FlightModel>()), Times.Never);
                 mockFlightSeatAccess.Verify(f => f.CreateFlightSeats(It.IsAny<int>(), It.IsAny<string>()), Times.Never);
             }
