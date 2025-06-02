@@ -10,12 +10,17 @@ public class User{
     public DateTime BirthDate { get; set; }
     public DateTime AccCreatedAt { get; set; }
     public bool IsAdmin { get; set; }
+    
+    public bool Guest { get; set; } = false;
 
-    public bool FirstTimeDiscount { get; set; } = true; // Default to true, can be set to false after first use
 
     public User() { }
 
-    public User(int userID, string firstName, string lastName, string country, string city, string emailAddress, string password, string phoneNumber, DateTime birthDate, DateTime accCreatedAt, bool isAdmin = false, bool firsttimediscount = true)
+    public User(int userID, string firstName, string lastName, string country, string city, string emailAddress, string password, string phoneNumber, DateTime birthDate, DateTime accCreatedAt, bool isAdmin = false, bool guest = false)
+=======
+    public bool FirstTimeDiscount { get; set; } = true; // Default to true, can be set to false after first use
+
+    public User() { }
     {
         UserID = userID;
         FirstName = firstName;
@@ -28,6 +33,8 @@ public class User{
         BirthDate = birthDate;
         AccCreatedAt = accCreatedAt;
         IsAdmin = isAdmin;
-        FirstTimeDiscount = firsttimediscount;
+        Guest = guest;
+=======
+
     }
 }
