@@ -85,6 +85,7 @@ public static class Menu
                     break;
 
                 case "Login":
+                    UserUI.UserLogout();
                     UserUI.UserLogin();
                     break;
 
