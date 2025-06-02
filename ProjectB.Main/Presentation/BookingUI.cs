@@ -322,12 +322,13 @@ public static class BookingUI
         // Book the seat for this flight
         SeatMapLogic.BookSeat(flightID, selectedSeat);
 
+
         // Only create a booking if the user is not a guest
         if (SessionManager.CurrentUser != null && !SessionManager.CurrentUser.Guest)
         {
             BookingLogic.CreateBooking(SessionManager.CurrentUser, flight, selectedSeat);
         }
-
+=======
         if (SessionManager.CurrentUser != null && SessionManager.CurrentUser.Guest)
         {
             AnsiConsole.MarkupLine("[green]Booking successful![/]");
