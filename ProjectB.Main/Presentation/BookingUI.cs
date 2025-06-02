@@ -329,6 +329,7 @@ public static class BookingUI
         AnsiConsole.MarkupLine("[green]Booking Confirmation:[/]");
         AnsiConsole.MarkupLine($"[yellow]Seat[/]: [white]{selectedSeat.RowNumber}{selectedSeat.SeatPosition}[/]");
         AnsiConsole.MarkupLine($"[yellow]Seat Type[/]: [white]{selectedSeat.SeatType ?? "-"}[/]");
+
         if (SessionManager.CurrentUser.FirstTimeDiscount == true)
         {
             AnsiConsole.MarkupLine("[green]Congratulations! You have received a 10% discount on your first booking![/]");
