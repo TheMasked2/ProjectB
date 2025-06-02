@@ -11,9 +11,11 @@ public class User{
     public DateTime AccCreatedAt { get; set; }
     public bool IsAdmin { get; set; }
 
-    public User() {}
+    public bool FirstTimeDiscount { get; set; } = true; // Default to true, can be set to false after first use
 
-    public User(int userID, string firstName, string lastName, string country, string city, string emailAddress, string password, string phoneNumber, DateTime birthDate, DateTime accCreatedAt, bool isAdmin = false)
+    public User() { }
+
+    public User(int userID, string firstName, string lastName, string country, string city, string emailAddress, string password, string phoneNumber, DateTime birthDate, DateTime accCreatedAt, bool isAdmin = false, bool firsttimediscount = true)
     {
         UserID = userID;
         FirstName = firstName;
@@ -26,6 +28,6 @@ public class User{
         BirthDate = birthDate;
         AccCreatedAt = accCreatedAt;
         IsAdmin = isAdmin;
+        FirstTimeDiscount = firsttimediscount;
     }
-
 }

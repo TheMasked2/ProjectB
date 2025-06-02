@@ -329,12 +329,18 @@ public static class BookingUI
         AnsiConsole.MarkupLine("[green]Booking Confirmation:[/]");
         AnsiConsole.MarkupLine($"[yellow]Seat[/]: [white]{selectedSeat.RowNumber}{selectedSeat.SeatPosition}[/]");
         AnsiConsole.MarkupLine($"[yellow]Seat Type[/]: [white]{selectedSeat.SeatType ?? "-"}[/]");
-        if (SessionManager.CurrentUser.BirthDate + TimeSpan.FromDays(365 * 65) > DateTime.Now)
+
+        if (SessionManager.CurrentUser.FirstTimeDiscount == true)
+        {
+            AnsiConsole.MarkupLine("[green]Congratulations! You have received a 10% discount on your first booking![/]");
+            AnsiConsole.MarkupLine($"[yellow]Price[/]: [white]€{selectedSeat.Price * 0.9:F2}[/]");
+            SessionManager.CurrentUser.FirstTimeDiscount = false; // Mark as used
+            UserLogic.UpdateUser(SessionManager.CurrentUser); // Save the updated user
+        }
+        else
         {
             AnsiConsole.MarkupLine($"[yellow]Price[/]: [white]€{selectedSeat.Price:F2}[/]");
         }
-        else
-            AnsiConsole.MarkupLine($"[yellow]Price[/]: [white]€{(selectedSeat.Price * 0.8):F2}[/] [green]Discount: {selectedSeat.Price * 0.2:F2}[/]");
         AnsiConsole.MarkupLine($"[yellow]Airplane ID[/]: [white]{selectedSeat.AirplaneID}[/]");
         AnsiConsole.MarkupLine($"[yellow]Flight ID[/]: [white]{flight.FlightID}[/]");
         AnsiConsole.MarkupLine($"[yellow]From[/]: [white]{flight.DepartureAirport}[/]");
