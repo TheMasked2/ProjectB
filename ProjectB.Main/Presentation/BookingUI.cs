@@ -323,36 +323,61 @@ public static class BookingUI
         SeatMapLogic.BookSeat(flightID, selectedSeat);
 
 
-        // Only create a booking if the user is not a guest
-        if (SessionManager.CurrentUser != null && !SessionManager.CurrentUser.Guest)
+    // Only create a booking if the user is not a guest
+    if (SessionManager.CurrentUser != null && !SessionManager.CurrentUser.Guest)
+    {
+        BookingLogic.CreateBooking(SessionManager.CurrentUser, flight, selectedSeat);
+        AnsiConsole.MarkupLine("[green]Booking successful![/]");
+        AnsiConsole.MarkupLine($"[yellow]Seat[/]: [white]{selectedSeat.RowNumber}{selectedSeat.SeatPosition}[/]");
+        AnsiConsole.MarkupLine($"[yellow]Seat Type[/]: [white]{selectedSeat.SeatType ?? "-"}[/]");
+        AnsiConsole.MarkupLine($"[yellow]Price[/]: [white]€{selectedSeat.Price:F2}[/]");
+        AnsiConsole.MarkupLine($"[yellow]Airplane ID[/]: [white]{selectedSeat.AirplaneID}[/]");
+        AnsiConsole.MarkupLine($"[yellow]Flight ID[/]: [white]{flight.FlightID}[/]");
+        AnsiConsole.MarkupLine($"[yellow]From[/]: [white]{flight.DepartureAirport}[/]");
+        AnsiConsole.MarkupLine($"[yellow]To[/]: [white]{flight.ArrivalAirport}[/]");
+        AnsiConsole.MarkupLine($"[yellow]Departure[/]: [white]{flight.DepartureTime:g}[/]");
+        AnsiConsole.MarkupLine($"[yellow]Arrival[/]: [white]{flight.ArrivalTime:g}[/]");
+    }
+    else if (SessionManager.CurrentUser != null && SessionManager.CurrentUser.Guest)
+    {
+        AnsiConsole.MarkupLine("[green]Booking successful![/]");
+        AnsiConsole.MarkupLine("[yellow]You are currently logged in as a guest user. Bookings will not be saved.[/]");
+        string email = AnsiConsole.Prompt(
+            new TextPrompt<string>("[green]Enter your email address for booking confirmation:[/]")
+                .PromptStyle(highlightStyle)
+        );
+        AnsiConsole.MarkupLine($"[green]Send a email to with the flight information to: {email}[/]");
+        AnsiConsole.MarkupLine($"[yellow]Seat[/]: [white]{selectedSeat.RowNumber}{selectedSeat.SeatPosition}[/]");
+        AnsiConsole.MarkupLine($"[yellow]Seat Type[/]: [white]{selectedSeat.SeatType ?? "-"}[/]");
+        AnsiConsole.MarkupLine($"[yellow]Price[/]: [white]€{selectedSeat.Price:F2}[/]");
+        AnsiConsole.MarkupLine($"[yellow]Airplane ID[/]: [white]{selectedSeat.AirplaneID}[/]");
+        AnsiConsole.MarkupLine($"[yellow]Flight ID[/]: [white]{flight.FlightID}[/]");
+        AnsiConsole.MarkupLine($"[yellow]From[/]: [white]{flight.DepartureAirport}[/]");
+        AnsiConsole.MarkupLine($"[yellow]To[/]: [white]{flight.ArrivalAirport}[/]");
+        AnsiConsole.MarkupLine($"[yellow]Departure[/]: [white]{flight.DepartureTime:g}[/]");
+        AnsiConsole.MarkupLine($"[yellow]Arrival[/]: [white]{flight.ArrivalTime:g}[/]");
+    }
+    else if(SessionManager.CurrentUser.FirstTimeDiscount == true)
         {
-            BookingLogic.CreateBooking(SessionManager.CurrentUser, flight, selectedSeat);
+            AnsiConsole.MarkupLine("[green]Congratulations! You have received a 10% discount on your first booking![/]");
+            AnsiConsole.MarkupLine($"[yellow]Price[/]: [white]€{selectedSeat.Price * 0.9:F2}[/]");
+            SessionManager.CurrentUser.FirstTimeDiscount = false; // Mark as used
+            UserLogic.UpdateUser(SessionManager.CurrentUser); // Save the updated user
         }
-=======
-        if (SessionManager.CurrentUser != null && SessionManager.CurrentUser.Guest)
+        else if (SessionManager.CurrentUser.BirthDate + TimeSpan.FromDays(365 * 65) > DateTime.Now)
         {
-            AnsiConsole.MarkupLine("[green]Booking successful![/]");
-            AnsiConsole.MarkupLine("[yellow]You are currently logged in as a guest user. Bookings will not be saved.[/]");
+            AnsiConsole.MarkupLine($"[yellow]Price[/]: [white]€{selectedSeat.Price:F2}[/]");
         }
         else
-        {
-            string email = AnsiConsole.Prompt(
-                new TextPrompt<string>("[green]Enter your email address for booking confirmation:[/]")
-                    .PromptStyle(highlightStyle)
-            );
-            AnsiConsole.MarkupLine($"[green]Send a email to with the flight information to: {email}[/]");
-            AnsiConsole.MarkupLine($"[yellow]Seat[/]: [white]{selectedSeat.RowNumber}{selectedSeat.SeatPosition}[/]");
-            AnsiConsole.MarkupLine($"[yellow]Seat Type[/]: [white]{selectedSeat.SeatType ?? "-"}[/]");
-            AnsiConsole.MarkupLine($"[yellow]Price[/]: [white]€{selectedSeat.Price:F2}[/]");
+            AnsiConsole.MarkupLine($"[yellow]Price[/]: [white]€{(selectedSeat.Price * 0.8):F2}[/] [green]Discount: {selectedSeat.Price * 0.2:F2}[/]");
             AnsiConsole.MarkupLine($"[yellow]Airplane ID[/]: [white]{selectedSeat.AirplaneID}[/]");
             AnsiConsole.MarkupLine($"[yellow]Flight ID[/]: [white]{flight.FlightID}[/]");
             AnsiConsole.MarkupLine($"[yellow]From[/]: [white]{flight.DepartureAirport}[/]");
             AnsiConsole.MarkupLine($"[yellow]To[/]: [white]{flight.ArrivalAirport}[/]");
             AnsiConsole.MarkupLine($"[yellow]Departure[/]: [white]{flight.DepartureTime:g}[/]");
             AnsiConsole.MarkupLine($"[yellow]Arrival[/]: [white]{flight.ArrivalTime:g}[/]");
-        }
-        WaitForKeyPress();
-    }
+            WaitForKeyPress();
+        }   
 
     public static void ViewUserBookings(bool upcoming)
     {
