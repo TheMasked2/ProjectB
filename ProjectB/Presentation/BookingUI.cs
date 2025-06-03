@@ -2,6 +2,7 @@ using Spectre.Console;
 
 public static class BookingUI
 {
+    public static SeatMapLogic SeatMapLogicService { get; set; } = new SeatMapLogic();
     private static readonly Style primaryStyle = new(new Color(134, 64, 0));
     private static readonly Style highlightStyle = new(new Color(255, 122, 0));
     private static readonly Style errorStyle = new(new Color(162, 52, 0));
@@ -160,7 +161,7 @@ public static class BookingUI
 
     private static void BookingAFlight(int flightID)
     {
-        var flight = FlightAccess.GetById(flightID);
+        var flight = FlightLogic.GetFlightById(flightID);
         if (flight == null)
         {
             AnsiConsole.MarkupLine("[red]Flight not found.[/]");
@@ -169,7 +170,7 @@ public static class BookingUI
         }
 
         // Use flightID for seat map and booking
-        var seats = SeatMapLogic.GetSeatMap(flightID);
+        var seats = SeatMapLogicService.GetSeatMap(flightID);
         if (seats == null || seats.Count == 0)
         {
             AnsiConsole.MarkupLine("[red]No seats found for this airplane.[/]");
@@ -178,7 +179,7 @@ public static class BookingUI
         }
 
         // Arrange seat letters for known layouts
-        var (seatLettersRaw, rowNumbers) = SeatMapLogic.GetSeatLayout(seats);
+        var (seatLettersRaw, rowNumbers) = SeatMapLogicService.GetSeatLayout(seats);
         List<string> seatLetters;
         int colCount = seatLettersRaw.Count;
         if (colCount == 2)
@@ -307,7 +308,7 @@ public static class BookingUI
 
             if (int.TryParse(rowPart, out int row))
             {
-                selectedSeat = SeatMapLogic.TryGetAvailableSeat(seats, row, letterPart);
+                selectedSeat = SeatMapLogicService.TryGetAvailableSeat(seats, row, letterPart);
                 if (selectedSeat == null)
                 {
                     AnsiConsole.MarkupLine("[red]Seat does not exist or is already occupied.[/]");
@@ -320,7 +321,7 @@ public static class BookingUI
         }
 
         // Book the seat for this flight
-        SeatMapLogic.BookSeat(flightID, selectedSeat);
+        SeatMapLogicService.BookSeat(flightID, selectedSeat);
 
 
         // Only create a booking if the user is not a guest

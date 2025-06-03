@@ -1,11 +1,11 @@
 using System.Text;
 
-public static class LoggerAccess
+public class LoggerAccess : ILoggerAccess
 {
     private static readonly string LogDirectory = "DataSources";
     private static readonly string AdminActionsLog = Path.Combine(LogDirectory, "admin_actions.csv");
 
-    static LoggerAccess()
+    public LoggerAccess()
     {
         // Create logs directory if it doesn't exist
         if (!Directory.Exists(LogDirectory))
@@ -23,7 +23,7 @@ public static class LoggerAccess
         }
     }
     
-    public static bool WriteLogEntry(string logEntry)
+    public bool WriteLogEntry(string logEntry)
     {
         try
         {
@@ -40,7 +40,7 @@ public static class LoggerAccess
         }
     }
     
-    public static List<LogEntry> ReadAllLogEntries()
+    public List<LogEntry> ReadAllLogEntries()
     {
         List<LogEntry> entries = new List<LogEntry>();
         

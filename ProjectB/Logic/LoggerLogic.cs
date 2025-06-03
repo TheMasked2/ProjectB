@@ -4,6 +4,7 @@ using System.Text;
 
 public static class Logger
 {
+    public static ILoggerAccess LoggerAccessService { get; set; } = new LoggerAccess();
     public static bool LogUserCreation(User adminUser, User createdUser)
     {
         string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
@@ -16,8 +17,9 @@ public static class Logger
 
         string logEntry = $"{timestamp};{action};{adminId};{adminName};{targetId};{targetName};{details}";
 
-        return LoggerAccess.WriteLogEntry(logEntry);
+        return LoggerAccessService.WriteLogEntry(logEntry);
     }
+
 
     public static bool LogUserEdit(User adminUser, User editedUser, Dictionary<string, string> changedFields)
     {
@@ -38,14 +40,14 @@ public static class Logger
 
         string logEntry = $"{timestamp};{action};{adminId};{adminName};{targetId};{targetName};{details}";
 
-        return LoggerAccess.WriteLogEntry(logEntry);
+        return LoggerAccessService.WriteLogEntry(logEntry);
     }
 
     public static List<LogEntry> ReadLogEntries()
     {
         try
         {
-            var entries = LoggerAccess.ReadAllLogEntries();
+            var entries = LoggerAccessService.ReadAllLogEntries();
 
             // Order by timestamp descending (newest first)
             return entries.OrderByDescending(e => DateTime.TryParse(e.Timestamp, out var dt) ? dt : DateTime.MinValue).ToList();

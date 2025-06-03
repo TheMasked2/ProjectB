@@ -1,7 +1,8 @@
 using Spectre.Console;
-
+using ProjectB.DataAccess;
 public static class AirplaneLogic
 {
+    public static IAirplaneAccess AirplaneAccessService { get; set; } = new AirplaneAccess();
     private static readonly Style primaryStyle = new(new Color(134, 64, 0));
     private static readonly Style highlightStyle = new(new Color(255, 122, 0));
     private static readonly Style errorStyle = new(new Color(162, 52, 0));
@@ -15,7 +16,7 @@ public static class AirplaneLogic
     {
         try
         {
-            AirplaneModel result = AirplaneAccess.GetAirplaneData(airplaneID);
+            AirplaneModel result = AirplaneAccessService.GetAirplaneData(airplaneID);
             if (result == null)
             {
                 AnsiConsole.MarkupLine($"[red]Error:[/] Airplane with ID {airplaneID} not found.");

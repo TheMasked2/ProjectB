@@ -1,7 +1,10 @@
 using Spectre.Console;
-
+using ProjectB.DataAccess;
 public static class FlightLogic
 {
+    public static IFlightAccess FlightAccessService { get; set; } = new FlightAccess();
+    public static IFlightSeatAccess FlightSeatAccessService { get; set; } = new FlightSeatAccess();
+    public static IAirplaneAccess AirplaneAccessService { get; set; } = new AirplaneAccess();
     private static readonly Style primaryStyle = new(new Color(134, 64, 0));
     private static readonly Style highlightStyle = new(new Color(255, 122, 0));
     private static readonly Style errorStyle = new(new Color(162, 52, 0));
@@ -13,7 +16,7 @@ public static class FlightLogic
     /// <returns>A list of all flights.</returns>
     // public static List<FlightModel> GetAllFlights()
     // {
-    //     return FlightAccess.GetAllFlightData();
+    //     return FlightAccessService.GetAllFlightData();
     // }
 
     /// <summary>
@@ -44,7 +47,7 @@ public static class FlightLogic
             throw new ArgumentException("Destination cannot be null or empty.");
         }
 
-        var flights = FlightAccess.GetAllFlightData();
+        var flights = FlightAccessService.GetAllFlightData();
 
         // Mandatory filters
         flights = flights.Where(f => f.DepartureAirport.Equals(origin, StringComparison.OrdinalIgnoreCase)).ToList();
@@ -77,7 +80,7 @@ public static class FlightLogic
             throw new ArgumentException("FlightModel ID must be greater than zero.");
         }
 
-        return FlightAccess.GetById(flightId);
+        return FlightAccessService.GetById(flightId);
     }
 
     /// <summary>
@@ -91,7 +94,7 @@ public static class FlightLogic
             ValidateFlight(flight);
 
             // Set default values for required fields
-            AirplaneModel airplane = AirplaneLogic.GetAllAirplanes(flight.AirplaneID);
+            AirplaneModel airplane = AirplaneAccessService.GetAirplaneData(flight.AirplaneID);
 
             if (airplane == null)
             {
@@ -105,10 +108,10 @@ public static class FlightLogic
             // Get next available ID
             AutoIncrementFlightID(flight);
             
-            FlightAccess.Write(flight);
+            FlightAccessService.Write(flight);
 
             // Initialize seat occupancy for this flight
-            FlightSeatAccess.CreateFlightSeats(flight.FlightID, flight.AirplaneID);
+            FlightSeatAccessService.CreateFlightSeats(flight.FlightID, flight.AirplaneID);
 
             return true;
         }
@@ -127,7 +130,7 @@ public static class FlightLogic
     /// <param name="flight">The flight to assign an ID to.</param>
     private static void AutoIncrementFlightID(FlightModel flight)
     {
-        var existingFlights = FlightAccess.GetAllFlightData();
+        var existingFlights = FlightAccessService.GetAllFlightData();
 
         int nextId = 1;
 
@@ -154,7 +157,7 @@ public static class FlightLogic
         ValidateFlight(flight);
         try
         {
-            FlightAccess.Update(flight);
+            FlightAccessService.Update(flight);
         }
         catch (Exception ex)
         {
@@ -177,7 +180,7 @@ public static class FlightLogic
             return false;
         }
 
-        FlightAccess.Delete(flightId);
+        FlightAccessService.Delete(flightId);
         return true;
     }
 
