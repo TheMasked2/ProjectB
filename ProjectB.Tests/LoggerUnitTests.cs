@@ -179,23 +179,20 @@ namespace ProjectB.Tests
             // Assert
             Assert.AreEqual(expectedResult, result);
             
-            if (expectedResult)
-            {
-                 Assert.IsNotNull(capturedLogEntry, "Log entry should have been captured when write operation was expected to succeed.");
-                 if (capturedLogEntry != null)
-                 {
-                    var logParts = capturedLogEntry.Split(';');
-                    Assert.IsTrue(logParts.Length >= 6, $"Log entry should have at least 6 semicolon-separated columns for content check, but found {logParts.Length}. Entry: {capturedLogEntry}");
-                    var logEntryWithoutTimestamp = string.Join(";", logParts.Skip(1));
-                    Assert.AreEqual(expectedLogEntryPartial, logEntryWithoutTimestamp);
-                 }
-            }
-            else
-            {
-                Assert.IsNull(capturedLogEntry, "Log entry should not have been captured when write operation was expected to fail or not occur.");
-            }
-            
+            // Verify that WriteLogEntry was called exactly once
             mockLoggerAccess.Verify(x => x.WriteLogEntry(It.IsAny<string>()), Times.Once);
+
+            // Assert that the log entry string was captured by the callback.
+            Assert.IsNotNull(capturedLogEntry, "Log entry string should have been captured by the callback.");
+            
+            // Validate the content of the captured log entry, excluding the timestamp.
+            var logParts = capturedLogEntry.Split(';');
+
+            // We expect at least one part (the timestamp). If logParts.Length is 0 or 1,
+            var logEntryWithoutTimestamp = string.Join(";", logParts.Skip(1));
+            
+            // Compare the actual log content (without timestamp) to the expected content.
+            Assert.AreEqual(expectedLogEntryPartial, logEntryWithoutTimestamp, "The content of the log entry (without timestamp) does not match the expected value.");
         }
     }
 }
