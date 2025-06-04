@@ -2,6 +2,7 @@ using Spectre.Console;
 
 public static class BookingUI
 {
+    public static SeatMapLogic SeatMapLogicService { get; set; } = new SeatMapLogic();
     private static readonly Style primaryStyle = new(new Color(134, 64, 0));
     private static readonly Style highlightStyle = new(new Color(255, 122, 0));
     private static readonly Style errorStyle = new(new Color(162, 52, 0));
@@ -77,12 +78,12 @@ public static class BookingUI
             hasFilters |= maxPrice.HasValue;
 
             string seatClass = null;
-            if (!SessionManager.CurrentUser.IsAdmin)
-            {
-                seatClass = AnsiConsole.Prompt(
-                    new TextPrompt<string>("[#864000]*Seat class (e.g., Economy):[/]")
-                        .PromptStyle(highlightStyle));
-            }
+            // if (!SessionManager.CurrentUser.IsAdmin)
+            // {
+            //     seatClass = AnsiConsole.Prompt(
+            //         new TextPrompt<string>("[#864000]*Seat class (e.g., Economy):[/]")
+            //             .PromptStyle(highlightStyle));
+            // }
 
             var flights = FlightLogic.GetFilteredFlights(origin, destination, startDate, endDate, minPrice, maxPrice, seatClass);
 
@@ -160,7 +161,7 @@ public static class BookingUI
 
     private static void BookingAFlight(int flightID)
     {
-        var flight = FlightAccess.GetById(flightID);
+        var flight = FlightLogic.GetFlightById(flightID);
         if (flight == null)
         {
             AnsiConsole.MarkupLine("[red]Flight not found.[/]");
@@ -169,7 +170,7 @@ public static class BookingUI
         }
 
         // Use flightID for seat map and booking
-        var seats = SeatMapLogic.GetSeatMap(flightID);
+        var seats = SeatMapLogicService.GetSeatMap(flightID);
         if (seats == null || seats.Count == 0)
         {
             AnsiConsole.MarkupLine("[red]No seats found for this airplane.[/]");
@@ -178,7 +179,7 @@ public static class BookingUI
         }
 
         // Arrange seat letters for known layouts
-        var (seatLettersRaw, rowNumbers) = SeatMapLogic.GetSeatLayout(seats);
+        var (seatLettersRaw, rowNumbers) = SeatMapLogicService.GetSeatLayout(seats);
         List<string> seatLetters;
         int colCount = seatLettersRaw.Count;
         if (colCount == 2)
@@ -307,7 +308,7 @@ public static class BookingUI
 
             if (int.TryParse(rowPart, out int row))
             {
-                selectedSeat = SeatMapLogic.TryGetAvailableSeat(seats, row, letterPart);
+                selectedSeat = SeatMapLogicService.TryGetAvailableSeat(seats, row, letterPart);
                 if (selectedSeat == null)
                 {
                     AnsiConsole.MarkupLine("[red]Seat does not exist or is already occupied.[/]");
@@ -320,24 +321,77 @@ public static class BookingUI
         }
 
         // Book the seat for this flight
-        SeatMapLogic.BookSeat(flightID, selectedSeat);
+        SeatMapLogicService.BookSeat(flightID, selectedSeat);
 
-        // After SeatMapLogic.BookSeat(flightID, selectedSeat);
-        BookingLogic.CreateBooking(SessionManager.CurrentUser, flight, selectedSeat);
 
-        // Print booking details
-        AnsiConsole.MarkupLine("[green]Booking Confirmation:[/]");
-        AnsiConsole.MarkupLine($"[yellow]Seat[/]: [white]{selectedSeat.RowNumber}{selectedSeat.SeatPosition}[/]");
-        AnsiConsole.MarkupLine($"[yellow]Seat Type[/]: [white]{selectedSeat.SeatType ?? "-"}[/]");
-        AnsiConsole.MarkupLine($"[yellow]Price[/]: [white]€{selectedSeat.Price:F2}[/]");
-        AnsiConsole.MarkupLine($"[yellow]Airplane ID[/]: [white]{selectedSeat.AirplaneID}[/]");
+        // Only create a booking if the user is not a guest
+        // if (SessionManager.CurrentUser != null && !SessionManager.CurrentUser.Guest)
+        // {
+        //     BookingLogic.CreateBooking(SessionManager.CurrentUser, flight, selectedSeat);
+        //     AnsiConsole.MarkupLine("[green]Booking successful![/]");
+        //     AnsiConsole.MarkupLine($"[yellow]Seat[/]: [white]{selectedSeat.RowNumber}{selectedSeat.SeatPosition}[/]");
+        //     AnsiConsole.MarkupLine($"[yellow]Seat Type[/]: [white]{selectedSeat.SeatType ?? "-"}[/]");
+        //     AnsiConsole.MarkupLine($"[yellow]Price[/]: [white]€{selectedSeat.Price:F2}[/]");
+        //     AnsiConsole.MarkupLine($"[yellow]Airplane ID[/]: [white]{selectedSeat.AirplaneID}[/]");
+        //     AnsiConsole.MarkupLine($"[yellow]Flight ID[/]: [white]{flight.FlightID}[/]");
+        //     AnsiConsole.MarkupLine($"[yellow]From[/]: [white]{flight.DepartureAirport}[/]");
+        //     AnsiConsole.MarkupLine($"[yellow]To[/]: [white]{flight.ArrivalAirport}[/]");
+        //     AnsiConsole.MarkupLine($"[yellow]Departure[/]: [white]{flight.DepartureTime:g}[/]");
+        //     AnsiConsole.MarkupLine($"[yellow]Arrival[/]: [white]{flight.ArrivalTime:g}[/]");
+        // }
+        if (SessionManager.CurrentUser == null)
+        {
+            AnsiConsole.MarkupLine("[green]Booking successful![/]");
+            AnsiConsole.MarkupLine("[yellow]You are currently logged in as a guest user. Bookings will not be saved.[/]");
+            string email = AnsiConsole.Prompt(
+                new TextPrompt<string>("[green]Enter your email address for booking confirmation:[/]")
+                    .PromptStyle(highlightStyle)
+            );
+            DisplayBookingDetails(selectedSeat, flight, email);
+            SessionManager.Logout(); // Log out guest user after booking
+    }
+        else // Registered user
+        {
+            BookingLogic.CreateBooking(SessionManager.CurrentUser, flight, selectedSeat);
+            AnsiConsole.MarkupLine("[green]Booking successful![/]");
+
+            // Calculate price and apply discounts
+            decimal finalPrice = (decimal)selectedSeat.Price;
+            if (SessionManager.CurrentUser.FirstTimeDiscount)
+            {
+                finalPrice *= 0.9m;
+                AnsiConsole.MarkupLine("[green]Congratulations! You have received a 10% discount on your first booking![/]");
+                SessionManager.CurrentUser.FirstTimeDiscount = false;
+                UserLogic.UpdateUser(SessionManager.CurrentUser);
+            }
+            else if (DateTime.Now >= SessionManager.CurrentUser.BirthDate.AddYears(65))
+            {
+                finalPrice *= 0.8m;
+                AnsiConsole.MarkupLine("[green]Senior discount (20%) applied![/]");
+            }
+
+            DisplayBookingDetails(selectedSeat, flight, null, finalPrice);
+        }
+
+    WaitForKeyPress();
+    }   
+
+    private static void DisplayBookingDetails(SeatModel seat, FlightModel flight, string email = null, decimal? overridePrice = null)
+    {
+        if (email != null)
+        {
+            AnsiConsole.MarkupLine($"[green]Booking confirmation will be sent to: {email}[/]");
+        }
+
+        AnsiConsole.MarkupLine($"[yellow]Seat[/]: [white]{seat.RowNumber}{seat.SeatPosition}[/]");
+        AnsiConsole.MarkupLine($"[yellow]Seat Type[/]: [white]{seat.SeatType ?? "-"}[/]");
+        AnsiConsole.MarkupLine($"[yellow]Price[/]: [white]€{overridePrice ?? (decimal)seat.Price:F2}[/]");
+        AnsiConsole.MarkupLine($"[yellow]Airplane ID[/]: [white]{seat.AirplaneID}[/]");
         AnsiConsole.MarkupLine($"[yellow]Flight ID[/]: [white]{flight.FlightID}[/]");
         AnsiConsole.MarkupLine($"[yellow]From[/]: [white]{flight.DepartureAirport}[/]");
         AnsiConsole.MarkupLine($"[yellow]To[/]: [white]{flight.ArrivalAirport}[/]");
         AnsiConsole.MarkupLine($"[yellow]Departure[/]: [white]{flight.DepartureTime:g}[/]");
         AnsiConsole.MarkupLine($"[yellow]Arrival[/]: [white]{flight.ArrivalTime:g}[/]");
-
-        WaitForKeyPress();
     }
 
     public static void ViewUserBookings(bool upcoming)

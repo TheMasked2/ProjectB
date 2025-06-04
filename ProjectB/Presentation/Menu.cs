@@ -20,6 +20,7 @@ public static class Menu
                 {
                     "Login",
                     "Register",
+                    "Guest",
                     "Exit"
                 });
             }
@@ -32,6 +33,16 @@ public static class Menu
                     "View all flights",
                     "View user info",
                     "Logout"
+                });
+            }
+            else if (SessionManager.CurrentUser.Guest)
+            {
+                choices.AddRange(new[]
+                {
+                    "Login",
+                    "Register",
+                    "Guest",
+                    "Exit"
                 });
             }
             else
@@ -58,8 +69,23 @@ public static class Menu
                     Console.Clear();
                     Environment.Exit(0);
                     break;
+                
+                case "Guest":
+                    AnsiConsole.Clear();
+                    BookingUI.DisplayAllBookableFlights();
+                    Console.ReadKey();
+                    SessionManager.CurrentUser = new User
+                    {
+                        UserID = 0,
+                        FirstName = "Guest",
+                        LastName = "User",
+                        IsAdmin = false,
+                        Guest = true
+                    };
+                    break;
 
                 case "Login":
+                    UserUI.UserLogout();
                     UserUI.UserLogin();
                     break;
 
