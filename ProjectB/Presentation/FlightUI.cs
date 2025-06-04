@@ -47,34 +47,44 @@ public static class FlightUI
         }
         hasFilters = true;
 
-        string endDateInput = AnsiConsole.Prompt(
-            new TextPrompt<string>("[#864000]*End date (yyyy-MM-dd):[/]")
-                .PromptStyle(highlightStyle));
+        var seatClassOptions = new List<string>
+            {
+                "Luxury",
+                "Business",
+                "Premium",
+                "Standard Extra Legroom",
+                "Standard"
+            };
 
-        DateTime endDate;
-        if (!DateTime.TryParse(endDateInput, out endDate))
+        var input = AnsiConsole.Prompt(
+            new SelectionPrompt<string>()
+                .Title("[#864000]Select seat class (default is 'Standard'):[/]")
+                .PageSize(6)
+                .AddChoices(seatClassOptions));
+
+        string seatClass;
+        switch (input)
         {
-            AnsiConsole.MarkupLine("[red]Invalid end date format. Please use yyyy-MM-dd.[/]");
-            WaitForKeyPress();
-            return; // or handle the error as needed
+            case "Standard":
+                seatClass = "Standard";
+                break;
+            case "Business":
+                seatClass = "Business";
+                break;
+            case "Premium":
+                seatClass = "Premium";
+                break;
+            case "Luxury":
+                seatClass = "Luxury";
+                break;
+            case "Standard Extra Legroom":
+                seatClass = "Standard Extra Legroom";
+                break;
+            default:
+                seatClass = "Standard"; // Any
+                break;
         }
-        hasFilters = true;
 
-        // string minPriceInput = AnsiConsole.Prompt(
-        //     new TextPrompt<string>("[#864000]Minimum price:[/]")
-        //         .PromptStyle(highlightStyle)
-        //         .AllowEmpty());
-        // int? minPrice = !string.IsNullOrWhiteSpace(minPriceInput) && int.TryParse(minPriceInput, out int mp) ? mp : null;
-        // hasFilters |= minPrice.HasValue;
-
-        // string maxPriceInput = AnsiConsole.Prompt(
-        //     new TextPrompt<string>("[#864000]Maximum price:[/]")
-        //         .PromptStyle(highlightStyle)
-        //         .AllowEmpty());
-        // int? maxPrice = !string.IsNullOrWhiteSpace(maxPriceInput) && int.TryParse(maxPriceInput, out int mxp) ? mxp : null;
-        // hasFilters |= maxPrice.HasValue;
-
-        string seatClass = null;
         if (!SessionManager.CurrentUser.IsAdmin)
         {
             seatClass = AnsiConsole.Prompt(

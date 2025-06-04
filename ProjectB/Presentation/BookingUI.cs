@@ -324,26 +324,10 @@ public static class BookingUI
         // Book the seat for this flight
         SeatMapLogicService.BookSeat(flightID, selectedSeat);
 
-
-        // Only create a booking if the user is not a guest
-        // if (SessionManager.CurrentUser != null && !SessionManager.CurrentUser.Guest)
-        // {
-        //     BookingLogic.CreateBooking(SessionManager.CurrentUser, flight, selectedSeat);
-        //     AnsiConsole.MarkupLine("[green]Booking successful![/]");
-        //     AnsiConsole.MarkupLine($"[yellow]Seat[/]: [white]{selectedSeat.RowNumber}{selectedSeat.SeatPosition}[/]");
-        //     AnsiConsole.MarkupLine($"[yellow]Seat Type[/]: [white]{selectedSeat.SeatType ?? "-"}[/]");
-        //     AnsiConsole.MarkupLine($"[yellow]Price[/]: [white]€{selectedSeat.Price:F2}[/]");
-        //     AnsiConsole.MarkupLine($"[yellow]Airplane ID[/]: [white]{selectedSeat.AirplaneID}[/]");
-        //     AnsiConsole.MarkupLine($"[yellow]Flight ID[/]: [white]{flight.FlightID}[/]");
-        //     AnsiConsole.MarkupLine($"[yellow]From[/]: [white]{flight.DepartureAirport}[/]");
-        //     AnsiConsole.MarkupLine($"[yellow]To[/]: [white]{flight.ArrivalAirport}[/]");
-        //     AnsiConsole.MarkupLine($"[yellow]Departure[/]: [white]{flight.DepartureTime:g}[/]");
-        //     AnsiConsole.MarkupLine($"[yellow]Arrival[/]: [white]{flight.ArrivalTime:g}[/]");
-        // }
         if (SessionManager.CurrentUser == null)
         {
             AnsiConsole.MarkupLine("[green]Booking successful![/]");
-            AnsiConsole.MarkupLine("[yellow]You are currently logged in as a guest user. Bookings will not be saved.[/]");
+            AnsiConsole.MarkupLine("[yellow]You are currently logged in as a guest user. Bookings will not be saved to the database.[/]");
             string email = AnsiConsole.Prompt(
                 new TextPrompt<string>("[green]Enter your email address for booking confirmation:[/]")
                     .PromptStyle(highlightStyle)
