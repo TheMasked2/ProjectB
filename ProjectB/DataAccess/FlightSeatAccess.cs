@@ -10,12 +10,10 @@ public class FlightSeatAccess : IFlightSeatAccess
 
     public List<(SeatModel seat, bool isOccupied)> GetSeatsForFlight(int flightId)
     {
-        string sql = @"SELECT * FROM FlightSeats WHERE FlightID = @FlightID";
-        return _connection.Query<SeatModel, bool, (SeatModel, bool)>(
-            sql,
-            (seat, isOccupied) => (seat, isOccupied),
-            new { FlightID = flightId }
-        ).ToList();
+        string sql = @"SELECT *, IsOccupied as isOccupied FROM FlightSeats WHERE FlightID = @FlightID";
+        var result = _connection.Query<SeatModel>(sql, new { FlightID = flightId })
+            .Select(s => (s, s.IsOccupied)).ToList();
+        return result;
     }
 
     public bool HasAnySeatsForFlight(int flightId)

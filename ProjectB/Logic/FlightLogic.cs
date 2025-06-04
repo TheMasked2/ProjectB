@@ -1,10 +1,12 @@
 using Spectre.Console;
 using ProjectB.DataAccess;
+using Microsoft.VisualBasic;
 public static class FlightLogic
 {
     public static IFlightAccess FlightAccessService { get; set; } = new FlightAccess();
     public static IFlightSeatAccess FlightSeatAccessService { get; set; } = new FlightSeatAccess();
     public static IAirplaneAccess AirplaneAccessService { get; set; } = new AirplaneAccess();
+    public static ISeatAccess SeatAccessService { get; set; } = new SeatAccess();
     private static readonly Style primaryStyle = new(new Color(134, 64, 0));
     private static readonly Style highlightStyle = new(new Color(255, 122, 0));
     private static readonly Style errorStyle = new(new Color(162, 52, 0));
@@ -22,57 +24,41 @@ public static class FlightLogic
     /// <summary>
     /// Filters the data from the data access layer based on the provided criteria.
     /// </summary>
-    /// <param name="minPrice">Minimum price filter.</param>
-    /// <param name="maxPrice">Maximum price filter.</param>
-    /// <param name="startDate">Start date filter.</param>
-    /// <param name="endDate">End date filter.</param>
     /// <param name="origin">Origin airport filter.</param>
     /// <param name="destination">Destination airport filter.</param>
-    /// <returns></returns>
+    /// <param name="departureDate">Departure date filter.</param>
+    /// <param name="seatClass">Seat class filter (not used for price here).</param>
+    /// <returns>List of filtered flights.</returns>
     public static List<FlightModel> GetFilteredFlights(
         string origin,
-        string destination, 
-        DateTime startDate,
-        DateTime endDate,
-        int? minPrice,
-        int? maxPrice,
+        string destination,
+        DateTime departureDate,
         string? seatClass)
     {
         if (string.IsNullOrEmpty(origin))
-        {
             throw new ArgumentException("Origin cannot be null or empty.");
-        }
         if (string.IsNullOrEmpty(destination))
-        {
             throw new ArgumentException("Destination cannot be null or empty.");
-        }
 
         var flights = FlightAccessService.GetAllFlightData();
 
-        // Mandatory filters
-        flights = flights.Where(f => f.DepartureAirport.Equals(origin, StringComparison.OrdinalIgnoreCase)).ToList();
-        flights = flights.Where(f => f.ArrivalAirport.Equals(destination, StringComparison.OrdinalIgnoreCase)).ToList();
-        flights = flights.Where(f => f.DepartureTime.Date >= startDate.Date).ToList();
-        flights = flights.Where(f => f.DepartureTime.Date <= endDate.Date).ToList();
+        flights = flights
+            .Where(f => f.DepartureAirport.Equals(origin, StringComparison.OrdinalIgnoreCase))
+            .Where(f => f.ArrivalAirport.Equals(destination, StringComparison.OrdinalIgnoreCase))
+            .Where(f => f.DepartureTime.Date == departureDate.Date)
+            .ToList();
 
-        // Seat class filter (only apply if seatClass is not null or empty)
-        // if (!string.IsNullOrEmpty(seatClass))
-        // {
-        //     flights = flights.Where(f => f.AirplaneID.Equals(seatClass, StringComparison.OrdinalIgnoreCase)).ToList();
-        // }
+        foreach (var item in flights)
+        {
+            Console.WriteLine($"FlightID: {item.FlightID}, Airline: {item.Airline}, " +
+                              $"Departure: {item.DepartureAirport} at {item.DepartureTime}, " +
+                              $"Arrival: {item.ArrivalAirport} at {item.ArrivalTime}, " +
+                              $"Available Seats: {item.AvailableSeats}, Price: {item.Price:C}");
+        }
 
-        // Optional price filters
-        flights = flights.Where(f => !minPrice.HasValue || f.Price >= minPrice.Value).ToList();
-        flights = flights.Where(f => !maxPrice.HasValue || f.Price <= maxPrice.Value).ToList();
-
-        return flights.ToList();
+        return flights;
     }
 
-    /// <summary>
-    /// Retrieves a flight by its ID.
-    /// </summary>
-    /// <param name="flightId">The ID of the flight to retrieve.</param>
-    /// <returns>The flight with the specified ID, or null if not found.</returns>
     public static FlightModel GetFlightById(int flightId)
     {
         if (flightId <= 0)
@@ -83,10 +69,6 @@ public static class FlightLogic
         return FlightAccessService.GetById(flightId);
     }
 
-    /// <summary>
-    /// Adds a new flight after validating its details.
-    /// </summary>
-    /// <param name="flight">The flight to add.</param>
     public static bool AddFlight(FlightModel flight)
     {
         try
@@ -104,10 +86,10 @@ public static class FlightLogic
             flight.AvailableSeats = airplane.TotalSeats;
 
             flight.FlightStatus = "Scheduled";
-            
+
             // Get next available ID
             AutoIncrementFlightID(flight);
-            
+
             FlightAccessService.Write(flight);
 
             // Initialize seat occupancy for this flight
@@ -122,31 +104,6 @@ public static class FlightLogic
         }
     }
 
-    // Temp fix for the autoincrement
-    /// <summary>
-    /// Assigns the next available flight ID to a new flight.
-    /// This is a temporary solution until proper auto-increment is implemented in the database.
-    /// </summary>
-    /// <param name="flight">The flight to assign an ID to.</param>
-    private static void AutoIncrementFlightID(FlightModel flight)
-    {
-        var existingFlights = FlightAccessService.GetAllFlightData();
-
-        int nextId = 1;
-
-        // If flights exist, find highest ID and add 1
-        if (existingFlights.Count > 0)
-        {
-            nextId = existingFlights.Max(f => f.FlightID) + nextId;
-        }
-
-        flight.FlightID = nextId;
-    }
-
-    /// <summary>
-    /// Updates an existing flight after validating its details.
-    /// </summary>
-    /// <param name="flight">The flight to update.</param>
     public static bool UpdateFlight(FlightModel flight)
     {
         if (flight.FlightID <= 0)
@@ -164,14 +121,10 @@ public static class FlightLogic
             Console.WriteLine($"Error updating flight: {ex.Message}");
             return false;
         }
-        
+
         return true;
     }
 
-    /// <summary>
-    /// Deletes a flight by its ID.
-    /// </summary>
-    /// <param name="flightId">The ID of the flight to delete.</param>
     public static bool DeleteFlight(int flightId)
     {
         if (flightId <= 0)
@@ -184,10 +137,23 @@ public static class FlightLogic
         return true;
     }
 
-    /// <summary>
-    /// Validates the details of a flight.
-    /// </summary>
-    /// <param name="flight">The flight to validate.</param>
+    // Helper for AddFlight
+    private static void AutoIncrementFlightID(FlightModel flight)
+    {
+        var existingFlights = FlightAccessService.GetAllFlightData();
+
+        int nextId = 1;
+
+        // If flights exist, find highest ID and add 1
+        if (existingFlights.Count > 0)
+        {
+            nextId = existingFlights.Max(f => f.FlightID) + 1;
+        }
+
+        flight.FlightID = nextId;
+    }
+
+    // Helper for Add/Update
     private static void ValidateFlight(FlightModel flight)
     {
         var today = DateTime.Today;
@@ -218,4 +184,8 @@ public static class FlightLogic
         }
     }
 
+    public static float GetSeatClassPrice(string airplaneID, string seatClass)
+    {
+        return SeatAccessService.GetSeatClassPrice(airplaneID, seatClass);
+    }
 }

@@ -60,19 +60,19 @@ public static class FlightUI
         }
         hasFilters = true;
 
-        string minPriceInput = AnsiConsole.Prompt(
-            new TextPrompt<string>("[#864000]Minimum price:[/]")
-                .PromptStyle(highlightStyle)
-                .AllowEmpty());
-        int? minPrice = !string.IsNullOrWhiteSpace(minPriceInput) && int.TryParse(minPriceInput, out int mp) ? mp : null;
-        hasFilters |= minPrice.HasValue;
+        // string minPriceInput = AnsiConsole.Prompt(
+        //     new TextPrompt<string>("[#864000]Minimum price:[/]")
+        //         .PromptStyle(highlightStyle)
+        //         .AllowEmpty());
+        // int? minPrice = !string.IsNullOrWhiteSpace(minPriceInput) && int.TryParse(minPriceInput, out int mp) ? mp : null;
+        // hasFilters |= minPrice.HasValue;
 
-        string maxPriceInput = AnsiConsole.Prompt(
-            new TextPrompt<string>("[#864000]Maximum price:[/]")
-                .PromptStyle(highlightStyle)
-                .AllowEmpty());
-        int? maxPrice = !string.IsNullOrWhiteSpace(maxPriceInput) && int.TryParse(maxPriceInput, out int mxp) ? mxp : null;
-        hasFilters |= maxPrice.HasValue;
+        // string maxPriceInput = AnsiConsole.Prompt(
+        //     new TextPrompt<string>("[#864000]Maximum price:[/]")
+        //         .PromptStyle(highlightStyle)
+        //         .AllowEmpty());
+        // int? maxPrice = !string.IsNullOrWhiteSpace(maxPriceInput) && int.TryParse(maxPriceInput, out int mxp) ? mxp : null;
+        // hasFilters |= maxPrice.HasValue;
 
         string seatClass = null;
         if (!SessionManager.CurrentUser.IsAdmin)
@@ -82,7 +82,7 @@ public static class FlightUI
                     .PromptStyle(highlightStyle));
         }
 
-        var flights = FlightLogic.GetFilteredFlights(origin, destination, startDate, endDate, minPrice, maxPrice, seatClass);
+        var flights = FlightLogic.GetFilteredFlights(origin, destination, startDate, seatClass);
 
         if (!hasFilters)
         {

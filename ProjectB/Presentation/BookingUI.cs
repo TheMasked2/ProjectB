@@ -24,75 +24,69 @@ public static class BookingUI
                     .Centered()
                     .Color(Color.Orange1));
 
-            bool hasFilters = false;
             AnsiConsole.MarkupLine("\n[#864000]Enter filter criteria (fields that start with * are mandatory!):[/]");
 
             string origin = AnsiConsole.Prompt(
                 new TextPrompt<string>("[#864000]*Origin airport (e.g., LAX):[/]")
                     .PromptStyle(highlightStyle));
-            hasFilters |= !string.IsNullOrWhiteSpace(origin);
 
             string destination = AnsiConsole.Prompt(
                 new TextPrompt<string>("[#864000]*Destination airport (e.g., JFK):[/]")
                     .PromptStyle(highlightStyle));
-            hasFilters |= !string.IsNullOrWhiteSpace(destination);
 
-            string startDateInput = AnsiConsole.Prompt(
-            new TextPrompt<string>("[#864000]*Start date (yyyy-MM-dd):[/]")
-                .PromptStyle(highlightStyle));
-
-            DateTime startDate;
-            if (!DateTime.TryParse(startDateInput, out startDate))
-            {
-                AnsiConsole.MarkupLine("[red]Invalid start date format. Please use yyyy-MM-dd.[/]");
-                WaitForKeyPress();
-                continue;
-            }
-            hasFilters = true;
-
-            string endDateInput = AnsiConsole.Prompt(
-                new TextPrompt<string>("[#864000]*End date (yyyy-MM-dd):[/]")
+            string departureDateInput = AnsiConsole.Prompt(
+                new TextPrompt<string>("[#864000]*Departure date (yyyy-MM-dd):[/]")
+                .DefaultValue(DateTime.Now.ToString("yyyy-MM-dd"))
                     .PromptStyle(highlightStyle));
-
-            DateTime endDate;
-            if (!DateTime.TryParse(endDateInput, out endDate))
+            DateTime departureDate;
+            if (!DateTime.TryParse(departureDateInput, out departureDate))
             {
-                AnsiConsole.MarkupLine("[red]Invalid end date format. Please use yyyy-MM-dd.[/]");
+                AnsiConsole.MarkupLine("[red]Invalid date format. Please use yyyy-MM-dd.[/]");
                 WaitForKeyPress();
                 continue;
             }
-            hasFilters = true;
 
-            string minPriceInput = AnsiConsole.Prompt(
-                new TextPrompt<string>("[#864000]Minimum price:[/]")
-                    .PromptStyle(highlightStyle)
-                    .AllowEmpty());
-            int? minPrice = !string.IsNullOrWhiteSpace(minPriceInput) && int.TryParse(minPriceInput, out int mp) ? mp : null;
-            hasFilters |= minPrice.HasValue;
-
-            string maxPriceInput = AnsiConsole.Prompt(
-                new TextPrompt<string>("[#864000]Maximum price:[/]")
-                    .PromptStyle(highlightStyle)
-                    .AllowEmpty());
-            int? maxPrice = !string.IsNullOrWhiteSpace(maxPriceInput) && int.TryParse(maxPriceInput, out int mxp) ? mxp : null;
-            hasFilters |= maxPrice.HasValue;
-
-            string seatClass = null;
-            // if (!SessionManager.CurrentUser.IsAdmin)
-            // {
-            //     seatClass = AnsiConsole.Prompt(
-            //         new TextPrompt<string>("[#864000]*Seat class (e.g., Economy):[/]")
-            //             .PromptStyle(highlightStyle));
-            // }
-
-            var flights = FlightLogic.GetFilteredFlights(origin, destination, startDate, endDate, minPrice, maxPrice, seatClass);
-
-            if (!hasFilters)
+            var seatClassOptions = new List<string>
             {
-                AnsiConsole.MarkupLine("\n[yellow]No filters applied - showing all flights[/]");
+                "Luxury",
+                "Business",
+                "Premium",
+                "Standard Extra Legroom",
+                "Standard"
+            };
+
+            var input = AnsiConsole.Prompt(
+                new SelectionPrompt<string>()
+                    .Title("[#864000]Select seat class (default is 'Standard'):[/]")
+                    .PageSize(6)
+                    .AddChoices(seatClassOptions));
+
+            string seatClass;
+            switch (input)
+            {
+                case "Standard":
+                    seatClass = "Standard";
+                    break;
+                case "Business":
+                    seatClass = "Business";
+                    break;
+                case "Premium":
+                    seatClass = "Premium";
+                    break;
+                case "Luxury":
+                    seatClass = "Luxury";
+                    break;
+                case "Standard Extra Legroom":
+                    seatClass = "Standard Extra Legroom";
+                    break;
+                default:
+                    seatClass = "Standard"; // Any
+                    break;
             }
 
-            if (flights == null || !flights.Any())
+            var flights = FlightLogic.GetFilteredFlights(origin, destination, departureDate, seatClass);
+
+            if (flights == null || flights.Count == 0)
             {
                 var panel = new Panel("[yellow]No flights found matching the criteria. Please try again.[/]\n[grey]Press [bold]Escape[/] to return to the main menu, or any other key to try again.[/]")
                     .Border(BoxBorder.Rounded)
@@ -101,12 +95,19 @@ public static class BookingUI
 
                 var key = Console.ReadKey(true);
                 if (key.Key == ConsoleKey.Escape)
-                    break; // Return to main menu
+                    break;
 
-                continue; // Prompt again for filter criteria
+                continue;
             }
 
-            DisplayFilteredFlights(flights);
+            // Do NOT filter out flights based on price/seat class availability
+            DisplayFilteredFlights(flights, seatClass);
+
+            if (!flights.Any())
+            {
+                WaitForKeyPress();
+                break;
+            }
 
             AnsiConsole.MarkupLine("\n[green]Select a flight to book:[/]");
             int flightIdInput = AnsiConsole.Prompt(
@@ -119,7 +120,7 @@ public static class BookingUI
         }
     }
 
-    private static void DisplayFilteredFlights(List<FlightModel> flights)
+    private static void DisplayFilteredFlights(List<FlightModel> flights, string seatClass)
     {
         if (flights == null || !flights.Any())
         {
@@ -151,7 +152,7 @@ public static class BookingUI
                 flight.ArrivalAirport,
                 flight.DepartureTime.ToString("g"),
                 flight.ArrivalTime.ToString("g"),
-                $"€{flight.Price:F2}",
+                $"€{FlightLogic.GetSeatClassPrice(flight.AirplaneID, seatClass):F2}",
                 flight.FlightStatus
             );
         }
