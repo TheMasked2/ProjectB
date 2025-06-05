@@ -343,10 +343,22 @@ public static class BookingUI
         {
             AnsiConsole.MarkupLine("[yellow]You are currently logged in as a guest user. Bookings will not be saved.[/]");
             int AmountLuggage = PurchaseExtraLuggage();
+            bool insuranceStatus = AnsiConsole.Prompt(
+                new SelectionPrompt<bool>()
+                    .Title("[#864000]Do you want to purchase travel insurance?[/]")
+                    .AddChoices(new[] { true, false })
+                    .UseConverter(choice => choice ? "Yes" : "No")
+                    .HighlightStyle(highlightStyle)
+            );
             decimal finalPrice = (decimal)selectedSeat.Price;
             if (AmountLuggage > 0)
             {
                 finalPrice += 500 * AmountLuggage;
+            }
+            if (insuranceStatus)
+            {
+                finalPrice += 100000000000;
+                AnsiConsole.MarkupLine("[green]Travel insurance purchased![/]");
             }
             string email = AnsiConsole.Prompt(
                 new TextPrompt<string>("[green]Enter your email address for booking confirmation:[/]")
@@ -359,16 +371,27 @@ public static class BookingUI
         else // Registered user
         {
             int AmountLuggage = PurchaseExtraLuggage();
+            bool insuranceStatus = AnsiConsole.Prompt(
+                new SelectionPrompt<bool>()
+                    .Title("[#864000]Do you want to purchase travel insurance?[/]")
+                    .AddChoices(new[] { true, false })
+                    .UseConverter(choice => choice ? "Yes" : "No")
+                    .HighlightStyle(highlightStyle)
+            );
 
-            BookingLogic.CreateBooking(SessionManager.CurrentUser, flight, selectedSeat, AmountLuggage);
+            BookingLogic.CreateBooking(SessionManager.CurrentUser, flight, selectedSeat, AmountLuggage, insuranceStatus);
             AnsiConsole.MarkupLine("[green]Booking successful![/]");
 
-            // Calculate price and apply discounts
             decimal finalPrice = (decimal)selectedSeat.Price;
             
             if (AmountLuggage > 0)
             {
                 finalPrice += 500 * AmountLuggage;
+            }
+            if (insuranceStatus)
+            {
+                finalPrice += 100000000000;
+                AnsiConsole.MarkupLine("[green]Travel insurance purchased![/]");
             }
             if (SessionManager.CurrentUser.FirstTimeDiscount)
             {
