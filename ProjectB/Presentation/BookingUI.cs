@@ -343,12 +343,17 @@ public static class BookingUI
         {
             AnsiConsole.MarkupLine("[yellow]You are currently logged in as a guest user. Bookings will not be saved.[/]");
             int AmountLuggage = PurchaseExtraLuggage();
+            decimal finalPrice = (decimal)selectedSeat.Price;
+            if (AmountLuggage > 0)
+            {
+                finalPrice += 500 * AmountLuggage;
+            }
             string email = AnsiConsole.Prompt(
                 new TextPrompt<string>("[green]Enter your email address for booking confirmation:[/]")
                     .PromptStyle(highlightStyle)
             );
             AnsiConsole.MarkupLine("[green]Booking successful![/]");
-            DisplayBookingDetails(selectedSeat, flight, AmountLuggage, email);
+            DisplayBookingDetails(selectedSeat, flight, AmountLuggage, email, finalPrice);
             SessionManager.Logout(); // Log out guest user after booking
     }
         else // Registered user
