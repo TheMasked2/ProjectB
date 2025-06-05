@@ -1,7 +1,8 @@
 using Microsoft.Data.Sqlite;
 using Dapper;
 using ProjectB.DataAccess;
-
+using System.Collections.Generic;
+using System.Linq;
 
 public class FlightSeatAccess : IFlightSeatAccess
 {
@@ -10,11 +11,25 @@ public class FlightSeatAccess : IFlightSeatAccess
 
     public List<(SeatModel seat, bool isOccupied)> GetSeatsForFlight(int flightId)
     {
-        string sql = @"SELECT * FROM FlightSeats WHERE FlightID = @FlightID";
-        return _connection.Query<SeatModel, bool, (SeatModel, bool)>(
+        string sql = @"
+            SELECT 
+                S.*,
+                FS.IsOccupied
+            FROM 
+                Seats S
+            INNER JOIN 
+                FlightSeats FS ON S.SeatID = FS.SeatID
+            WHERE 
+                FS.FlightID = @FlightID";
+
+        return _connection.Query<SeatModel, long, (SeatModel seat, bool isOccupied)>(
             sql,
-            (seat, isOccupied) => (seat, isOccupied),
-            new { FlightID = flightId }
+            (seat, isOccupiedLong) => {
+                bool isOccupied = isOccupiedLong == 1; 
+                return (seat, isOccupied);
+            },
+            new { FlightID = flightId },
+            splitOn: "IsOccupied"
         ).ToList();
     }
 
