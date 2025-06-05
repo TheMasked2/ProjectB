@@ -32,8 +32,7 @@ public static class FlightLogic
     public static List<FlightModel> GetFilteredFlights(
         string origin,
         string destination,
-        DateTime departureDate,
-        string? seatClass)
+        DateTime departureDate)
     {
         if (string.IsNullOrEmpty(origin))
             throw new ArgumentException("Origin cannot be null or empty.");
@@ -48,15 +47,47 @@ public static class FlightLogic
             .Where(f => f.DepartureTime.Date == departureDate.Date)
             .ToList();
 
-        foreach (var item in flights)
+        return flights;
+    }
+
+    public static Spectre.Console.Rendering.IRenderable DisplayFilteredFlights(List<FlightModel> flights, string seatClass)
+    {
+        if (flights == null || !flights.Any())
         {
-            Console.WriteLine($"FlightID: {item.FlightID}, Airline: {item.Airline}, " +
-                              $"Departure: {item.DepartureAirport} at {item.DepartureTime}, " +
-                              $"Arrival: {item.ArrivalAirport} at {item.ArrivalTime}, " +
-                              $"Available Seats: {item.AvailableSeats}, Price: {item.Price:C}");
+            var panel = new Panel("[yellow]No flights found matching the criteria.[/]")
+                .Border(BoxBorder.Rounded)
+                .BorderStyle(errorStyle);
+            AnsiConsole.Write(panel);
+            return null;
         }
 
-        return flights;
+        var table = new Table()
+            .Border(TableBorder.Rounded)
+            .BorderStyle(primaryStyle)
+            .Expand();
+
+        table.AddColumns(
+            "[#864000]ID[/]", "[#864000]Aircraft ID[/]", "[#864000]Airline[/]",
+            "[#864000]From[/]", "[#864000]To[/]", "[#864000]Departure[/]",
+            "[#864000]Arrival[/]", "[#864000]Price[/]", "[#864000]Status[/]"
+        );
+
+        foreach (var flight in flights)
+        {
+            table.AddRow(
+                flight.FlightID.ToString(),
+                flight.AirplaneID,
+                flight.Airline,
+                flight.DepartureAirport,
+                flight.ArrivalAirport,
+                flight.DepartureTime.ToString("g"),
+                flight.ArrivalTime.ToString("g"),
+                $"€{FlightLogic.GetSeatClassPrice(flight.AirplaneID, seatClass):F2}",
+                flight.FlightStatus
+            );
+        }
+
+        return table;
     }
 
     public static FlightModel GetFlightById(int flightId)
@@ -129,7 +160,6 @@ public static class FlightLogic
     {
         if (flightId <= 0)
         {
-            // throw new ArgumentException("FlightModel ID must be greater than zero.");
             return false;
         }
 
@@ -184,8 +214,9 @@ public static class FlightLogic
         }
     }
 
-    public static float GetSeatClassPrice(string airplaneID, string seatClass)
+    private static float GetSeatClassPrice(string airplaneID, string seatClass)
     {
         return SeatAccessService.GetSeatClassPrice(airplaneID, seatClass);
     }
+ 
 }

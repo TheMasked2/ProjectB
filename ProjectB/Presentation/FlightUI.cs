@@ -22,21 +22,22 @@ public static class FlightUI
                 .Color(Color.Orange1));
 
         bool hasFilters = false;
-        AnsiConsole.MarkupLine("\n[#864000]Enter filter criteria (fields that start with * are mandatory!):[/]");
+        AnsiConsole.MarkupLine("\n[#864000]Enter filter criteria:[/]");
 
         string origin = AnsiConsole.Prompt(
-            new TextPrompt<string>("[#864000]*Origin airport (e.g., LAX):[/]")
+            new TextPrompt<string>("[#864000]Origin airport (e.g., LAX):[/]")
                 .PromptStyle(highlightStyle));
         hasFilters |= !string.IsNullOrWhiteSpace(origin);
 
         string destination = AnsiConsole.Prompt(
-            new TextPrompt<string>("[#864000]*Destination airport (e.g., JFK):[/]")
+            new TextPrompt<string>("[#864000]Destination airport (e.g., JFK):[/]")
                 .PromptStyle(highlightStyle));
         hasFilters |= !string.IsNullOrWhiteSpace(destination);
 
         string startDateInput = AnsiConsole.Prompt(
-        new TextPrompt<string>("[#864000]*Start date (yyyy-MM-dd):[/]")
-            .PromptStyle(highlightStyle));
+            new TextPrompt<string>("[#864000]Start date (yyyy-MM-dd):[/]")
+                .DefaultValue(DateTime.Now.ToString("yyyy-MM-dd"))
+                .PromptStyle(highlightStyle));
 
         DateTime startDate;
         if (!DateTime.TryParse(startDateInput, out startDate))
@@ -85,62 +86,15 @@ public static class FlightUI
                 break;
         }
 
-        if (!SessionManager.CurrentUser.IsAdmin)
-        {
-            seatClass = AnsiConsole.Prompt(
-                new TextPrompt<string>("[#864000]*Seat class (e.g., Economy):[/]")
-                    .PromptStyle(highlightStyle));
-        }
-
-        var flights = FlightLogic.GetFilteredFlights(origin, destination, startDate, seatClass);
+        var flights = FlightLogic.GetFilteredFlights(origin, destination, startDate);
 
         if (!hasFilters)
         {
             AnsiConsole.MarkupLine("\n[yellow]No filters applied - showing all flights[/]");
         }
 
-        DisplayFilteredFlights(flights);
+        AnsiConsole.Write(FlightLogic.DisplayFilteredFlights(flights, seatClass));
         WaitForKeyPress();
-    }
-
-    private static void DisplayFilteredFlights(List<FlightModel> flights)
-    {
-        if (flights == null || !flights.Any())
-        {
-            var panel = new Panel("[yellow]No flights found matching the criteria.[/]")
-                .Border(BoxBorder.Rounded)
-                .BorderStyle(errorStyle);
-            AnsiConsole.Write(panel);
-            return;
-        }
-
-        var table = new Table()
-            .Border(TableBorder.Rounded)
-            .BorderStyle(primaryStyle)
-            .Expand();
-
-        table.AddColumns(
-            "[#864000]ID[/]", "[#864000]Aircraft ID[/]", "[#864000]Airline[/]",
-            "[#864000]From[/]", "[#864000]To[/]", "[#864000]Departure[/]",
-            "[#864000]Arrival[/]", "[#864000]Price[/]", "[#864000]Status[/]" 
-        );
-
-        foreach (var flight in flights)
-        {
-            table.AddRow(
-                flight.FlightID.ToString(),
-                flight.AirplaneID,
-                flight.Airline,
-                flight.DepartureAirport,
-                flight.ArrivalAirport,
-                flight.DepartureTime.ToString("g"),
-                flight.ArrivalTime.ToString("g"),
-                $"€{flight.Price:F2}",
-                flight.FlightStatus
-            );
-        }
-
-        AnsiConsole.Write(table);
     }
 
     public static void AddFlight()
