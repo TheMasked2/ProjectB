@@ -327,13 +327,13 @@ public static class FlightUI
         table.AddColumn(new TableColumn("[rgb(134,64,0)]Flight Information[/]").Centered());
 
         var profileData = new Panel($"""
-            [rgb(134,64,0)]Airline: [/] [rgb(255,122,0)]{Flight.Airline}[/]
-            [rgb(134,64,0)]AirplaneID:[/] [rgb(255,122,0)]{Flight.AirplaneID}[/]
-            [rgb(134,64,0)]DepartureAirport:[/] [rgb(255,122,0)]{Flight.DepartureAirport}[/]
-            [rgb(134,64,0)]ArrivalAirport:[/] [rgb(255,122,0)]{Flight.ArrivalAirport}[/]
-            [rgb(134,64,0)]DepartureTime:[/] [rgb(255,122,0)]{Flight.DepartureTime:yyyy-MM-dd}[/]
-            [rgb(134,64,0)]ArrivalTime:[/] [rgb(255,122,0)]{Flight.ArrivalTime:yyyy-MM-dd}[/]
-            [rgb(134,64,0)]Price:[/] [rgb(255,122,0)]{Flight.Price}[/]
+            [rgb(134,64,0)]Airline:[/] [rgb(255,122,0)]{Flight.Airline}[/]
+            [rgb(134,64,0)]Airplane Model:[/] [rgb(255,122,0)]{Flight.AirplaneID}[/]
+            [rgb(134,64,0)]Departure Airport:[/] [rgb(255,122,0)]{Flight.DepartureAirport}[/]
+            [rgb(134,64,0)]Arrival Airport:[/] [rgb(255,122,0)]{Flight.ArrivalAirport}[/]
+            [rgb(134,64,0)]Departure Time:[/] [rgb(255,122,0)]{Flight.DepartureTime:yyyy-MM-dd}[/]
+            [rgb(134,64,0)]Arrival Time:[/] [rgb(255,122,0)]{Flight.ArrivalTime:yyyy-MM-dd}[/]
+            [rgb(134,64,0)]Price:[/] [rgb(255,122,0)]{Flight.Price + "$"}[/]
             [rgb(134,64,0)]FlightStatus:[/] [rgb(255,122,0)]{Flight.FlightStatus}[/]
             """)
             .Border(BoxBorder.Rounded)
