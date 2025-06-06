@@ -12,7 +12,7 @@ public static class FlightUI
         AnsiConsole.MarkupLine("\n[grey]Press any key to return to the main menu...[/]");
         Console.ReadKey(true);
     }
-    
+
     public static void DisplayAllFlights()
     {
         AnsiConsole.Clear();
@@ -112,7 +112,7 @@ public static class FlightUI
         table.AddColumns(
             "[#864000]ID[/]", "[#864000]Aircraft ID[/]", "[#864000]Airline[/]",
             "[#864000]From[/]", "[#864000]To[/]", "[#864000]Departure[/]",
-            "[#864000]Arrival[/]", "[#864000]Price[/]", "[#864000]Status[/]" 
+            "[#864000]Arrival[/]", "[#864000]Price[/]", "[#864000]Status[/]"
         );
 
         foreach (var flight in flights)
@@ -299,4 +299,52 @@ public static class FlightUI
             return false;
         }
     }
+
+    public static void SearchFlights()
+    {
+        AnsiConsole.Clear();
+        AnsiConsole.Write(
+            new FigletText("Flight Search")
+                .Centered()
+                .Color(Color.Orange1));
+        int FlightID = AnsiConsole.Prompt(
+            new TextPrompt<int>("[#864000]Enter Flight ID to search:[/]")
+                .PromptStyle(highlightStyle)
+                .Validate(id => id > 0));
+
+        FlightModel flight = FlightLogic.GetFlightById(FlightID);
+        DisplayFlight(flight);
+
+    }
+
+    public static void DisplayFlight(FlightModel Flight)
+    {
+        var table = new Table()
+            .Border(TableBorder.Rounded)
+            .BorderStyle(new Style(new Color(184, 123, 74)))
+            .Expand();
+
+        table.AddColumn(new TableColumn("[rgb(134,64,0)]Flight Information[/]").Centered());
+
+        var profileData = new Panel($"""
+            [rgb(134,64,0)]Airline: [/] [rgb(255,122,0)]{Flight.Airline}[/]
+            [rgb(134,64,0)]AirplaneID:[/] [rgb(255,122,0)]{Flight.AirplaneID}[/]
+            [rgb(134,64,0)]DepartureAirport:[/] [rgb(255,122,0)]{Flight.DepartureAirport}[/]
+            [rgb(134,64,0)]ArrivalAirport:[/] [rgb(255,122,0)]{Flight.ArrivalAirport}[/]
+            [rgb(134,64,0)]DepartureTime:[/] [rgb(255,122,0)]{Flight.DepartureTime:yyyy-MM-dd}[/]
+            [rgb(134,64,0)]ArrivalTime:[/] [rgb(255,122,0)]{Flight.ArrivalTime:yyyy-MM-dd}[/]
+            [rgb(134,64,0)]Price:[/] [rgb(255,122,0)]{Flight.Price}[/]
+            [rgb(134,64,0)]FlightStatus:[/] [rgb(255,122,0)]{Flight.FlightStatus}[/]
+            """)
+            .Border(BoxBorder.Rounded)
+            .BorderStyle(new Style(new Color(184, 123, 74)))
+            .Padding(1, 1);
+
+        table.AddRow(profileData);
+        AnsiConsole.Write(table);
+
+        AnsiConsole.MarkupLine("\n[grey]Press any key to return to the main menu...[/]");
+        Console.ReadKey(true);
+    }
+
 }
