@@ -239,18 +239,25 @@ public static class BookingLogic
             AnsiConsole.MarkupLine("[yellow]You are currently logged in as a guest user. Bookings will not be saved to the database.[/]");
             string email = AnsiConsole.Prompt(
                 new TextPrompt<string>("[green]Enter your email address for booking confirmation:[/]")
-                    .PromptStyle(highlightStyle)
-            );
+                    .PromptStyle(highlightStyle));
+
             BookingUI.DisplayBookingDetails(selectedSeat, flight, email);
             SessionManager.Logout(); // Log out guest user after booking
         }
         else // Registered user
         {
-            BookingLogic.CreateBooking(SessionManager.CurrentUser, flight, selectedSeat);
+            int AmountLuggage = PurchaseExtraLuggage();
+
+            BookingLogic.CreateBooking(SessionManager.CurrentUser, flight, selectedSeat, AmountLuggage);
             AnsiConsole.MarkupLine("[green]Booking successful![/]");
 
             // Calculate price and apply discounts
             decimal finalPrice = (decimal)selectedSeat.Price;
+
+            if (AmountLuggage > 0)
+            {
+                finalPrice += 500 * AmountLuggage;
+            }
             if (SessionManager.CurrentUser.FirstTimeDiscount)
             {
                 finalPrice *= 0.9m;
@@ -306,5 +313,28 @@ public static class BookingLogic
         }
         AnsiConsole.Write(table);
         BookingUI.WaitForKeyPress();
-    } 
+    }
+
+    private static int PurchaseExtraLuggage()
+    {
+        var user = SessionManager.CurrentUser;
+        bool extraLuggage = AnsiConsole.Prompt(
+            new SelectionPrompt<bool>()
+                .Title("[#864000]Do you want to purchase extra luggage?[/]")
+                .AddChoices(new[] { true, false })
+                .UseConverter(choice => choice ? "Yes" : "No")
+                .HighlightStyle(highlightStyle)
+        );
+        if (extraLuggage)
+        {
+            int additionalLuggage = AnsiConsole.Prompt(
+            new TextPrompt<int>("[#864000]Enter the number of additional luggage pieces (1 or 2):[/]")
+                .PromptStyle(highlightStyle)
+                .Validate(input => input >= 1 && input <= 2, "Please enter a number between 1 or 2.")
+            );
+            AnsiConsole.MarkupLine($"[green]Successfully purchased {additionalLuggage} extra luggage piece(s)![/]");
+            return additionalLuggage;
+        }
+        return 0;
+    }
 }
