@@ -355,7 +355,7 @@ public static class BookingUI
             AnsiConsole.MarkupLine("[green]Booking successful![/]");
             DisplayBookingDetails(selectedSeat, flight, AmountLuggage, email, finalPrice);
             SessionManager.Logout(); // Log out guest user after booking
-    }
+        }
         else // Registered user
         {
             int AmountLuggage = PurchaseExtraLuggage();
@@ -365,7 +365,7 @@ public static class BookingUI
 
             // Calculate price and apply discounts
             decimal finalPrice = (decimal)selectedSeat.Price;
-            
+
             if (AmountLuggage > 0)
             {
                 finalPrice += 500 * AmountLuggage;
@@ -387,7 +387,7 @@ public static class BookingUI
             DisplayBookingDetails(selectedSeat, flight, AmountLuggage, null, finalPrice);
         }
 
-    WaitForKeyPress();
+        WaitForKeyPress();
     }
 
     private static void DisplayBookingDetails(SeatModel seat, FlightModel flight, int AmountLuggage, string email = null, decimal? overridePrice = null)
@@ -435,7 +435,7 @@ public static class BookingUI
         }
         return 0;
 
-        
+
     }
 
     public static void ViewUserBookings(bool upcoming)
@@ -474,5 +474,243 @@ public static class BookingUI
         }
         AnsiConsole.Write(table);
         WaitForKeyPress();
+
     }
+
+    public static void CancelBookingPrompt() // DONT INCLUDE CANCELLATION FEE IF THE USER HAS INSURANCE
+    {
+        if (!SessionManager.IsLoggedIn())
+        {
+            AnsiConsole.MarkupLine("[red]You must be logged in to cancel a booking.[/]");
+            return;
+        }
+
+        var user = SessionManager.CurrentUser;
+        var bookings = BookingLogic.GetBookingsForUser(user.UserID, true);
+        if (!bookings.Any())
+        {
+            AnsiConsole.MarkupLine("[yellow]You have no upcoming bookings to cancel.[/]");
+            return;
+        }
+
+
+        var table = new Table()
+            .Border(TableBorder.Rounded)
+            .BorderStyle(primaryStyle)
+            .Expand();
+        table.AddColumns("BookingID", "FlightID", "Seat", "Class", "BookingDate", "BoardingTime", "Status", "Payment");
+        foreach (var b in bookings)
+        {
+            table.AddRow(
+                b.BookingID.ToString(),
+                b.FlightID.ToString(),
+                b.SeatID,
+                b.SeatClass,
+                b.BookingDate,
+                b.BoardingTime,
+                b.BookingStatus,
+                b.PaymentStatus
+            );
+        }
+        AnsiConsole.Write(table);
+
+
+        int bookingId = AnsiConsole.Prompt(
+            new TextPrompt<int>("[#864000]Enter the Booking ID to cancel:[/]")
+                .PromptStyle(highlightStyle)
+                .Validate(id => bookings.Any(b => b.BookingID == id), "[red]Invalid Booking ID.[/]")
+        );
+
+        var selectedBooking = bookings.First(b => b.BookingID == bookingId);
+
+
+        if (selectedBooking.BookingStatus?.ToLower() == "cancelled")
+        {
+            AnsiConsole.MarkupLine("[yellow]This booking is already cancelled.[/]");
+            WaitForKeyPress();
+            return;
+        }
+
+        bool cancelled = BookingLogic.CancelBooking(bookingId);
+        if (cancelled)
+        {
+            AnsiConsole.MarkupLine("[green]Booking successfully cancelled![/]");
+            AnsiConsole.MarkupLine("[yellow]A cancellation fee of $100 has been applied.[/]");
+
+            var flight = FlightLogic.GetFlightById(selectedBooking.FlightID);
+            var seat = SeatMapLogicService.GetSeatMap(selectedBooking.FlightID)
+                .FirstOrDefault(s => s.SeatID == selectedBooking.SeatID);
+
+            if (flight != null && seat != null)
+            {
+                DisplayBookingDetails(seat, flight, selectedBooking.AmountLuggage);
+            }
+            else
+            {
+                AnsiConsole.MarkupLine($"[yellow]BookingID:[/] {selectedBooking.BookingID}");
+                AnsiConsole.MarkupLine($"[yellow]FlightID:[/] {selectedBooking.FlightID}");
+                AnsiConsole.MarkupLine($"[yellow]Seat:[/] {selectedBooking.SeatID}");
+                AnsiConsole.MarkupLine($"[yellow]Class:[/] {selectedBooking.SeatClass}");
+                AnsiConsole.MarkupLine($"[yellow]BookingDate:[/] {selectedBooking.BookingDate}");
+                AnsiConsole.MarkupLine($"[yellow]BoardingTime:[/] {selectedBooking.BoardingTime}");
+            }
+        }
+        else
+        {
+            AnsiConsole.MarkupLine("[red]Cancellation failed.[/]");
+        }
+        WaitForKeyPress();
+    }
+public static void ModifyBookingPrompt()
+{
+    if (!SessionManager.IsLoggedIn())
+    {
+        AnsiConsole.MarkupLine("[red]You must be logged in to modify a booking.[/]");
+        return;
+    }
+
+    var user = SessionManager.CurrentUser;
+    var bookings = BookingLogic.GetBookingsForUser(user.UserID, true);
+    if (!bookings.Any())
+    {
+        AnsiConsole.MarkupLine("[yellow]You have no upcoming bookings to modify.[/]");
+        return;
+    }
+
+    // Display bookings in a table
+    var table = new Table()
+        .Border(TableBorder.Rounded)
+        .BorderStyle(primaryStyle)
+        .Expand();
+    table.AddColumns("BookingID", "FlightID", "Seat", "Class", "BookingDate", "BoardingTime", "Status", "Payment");
+    foreach (var b in bookings)
+    {
+        table.AddRow(
+            b.BookingID.ToString(),
+            b.FlightID.ToString(),
+            b.SeatID,
+            b.SeatClass,
+            b.BookingDate,
+            b.BoardingTime,
+            b.BookingStatus,
+            b.PaymentStatus
+        );
+    }
+    AnsiConsole.Write(table);
+
+
+    int bookingId = AnsiConsole.Prompt(
+        new TextPrompt<int>("[#864000]Enter the Booking ID to modify:[/]")
+            .PromptStyle(highlightStyle)
+            .Validate(id => bookings.Any(b => b.BookingID == id), "[red]Invalid Booking ID.[/]")
+    );
+
+    var selectedBooking = bookings.First(b => b.BookingID == bookingId);
+
+
+    if (selectedBooking.BookingStatus?.ToLower() == "cancelled")
+    {
+        AnsiConsole.MarkupLine("[yellow]This booking is already cancelled and cannot be modified.[/]");
+        WaitForKeyPress();
+        return;
+    }
+
+
+    var flight = FlightLogic.GetFlightById(selectedBooking.FlightID);
+    var seat = SeatMapLogicService.GetSeatMap(selectedBooking.FlightID)
+        .FirstOrDefault(s => s.SeatID == selectedBooking.SeatID);
+
+    AnsiConsole.MarkupLine("[yellow]Current booking details:[/]");
+    if (flight != null && seat != null)
+    {
+        DisplayBookingDetails(seat, flight, selectedBooking.AmountLuggage);
+    }
+    else
+    {
+        AnsiConsole.MarkupLine($"[yellow]BookingID:[/] {selectedBooking.BookingID}");
+        AnsiConsole.MarkupLine($"[yellow]FlightID:[/] {selectedBooking.FlightID}");
+        AnsiConsole.MarkupLine($"[yellow]Seat:[/] {selectedBooking.SeatID}");
+        AnsiConsole.MarkupLine($"[yellow]Class:[/] {selectedBooking.SeatClass}");
+        AnsiConsole.MarkupLine($"[yellow]BookingDate:[/] {selectedBooking.BookingDate}");
+        AnsiConsole.MarkupLine($"[yellow]BoardingTime:[/] {selectedBooking.BoardingTime}");
+    }
+
+    var seats = SeatMapLogicService.GetSeatMap(selectedBooking.FlightID);
+    if (seats == null || seats.Count == 0)
+    {
+        AnsiConsole.MarkupLine("[red]No seats found for this flight.[/]");
+        WaitForKeyPress();
+        return;
+    }
+
+    string newSeatId = null;
+    while (true)
+    {
+        AnsiConsole.MarkupLine("[yellow]Enter the new seat (e.g., 12A or A12):[/]");
+        var seatInput = AnsiConsole.Prompt(
+            new TextPrompt<string>("[#864000]Seat:[/]").PromptStyle(highlightStyle)
+        ).Trim().ToUpper();
+
+        string rowPart = "";
+        string letterPart = "";
+
+        // Try row+letter (e.g., 12A)
+        var rowFirst = new string(seatInput.TakeWhile(char.IsDigit).ToArray());
+        var letterAfter = new string(seatInput.SkipWhile(char.IsDigit).ToArray()).ToUpper();
+
+        // Try letter+row (e.g., A12)
+        var letterFirst = new string(seatInput.TakeWhile(char.IsLetter).ToArray()).ToUpper();
+        var rowAfter = new string(seatInput.SkipWhile(char.IsLetter).ToArray());
+
+        if (!string.IsNullOrEmpty(rowFirst) && !string.IsNullOrEmpty(letterAfter))
+        {
+            rowPart = rowFirst;
+            letterPart = letterAfter;
+        }
+        else if (!string.IsNullOrEmpty(letterFirst) && !string.IsNullOrEmpty(rowAfter))
+        {
+            rowPart = rowAfter;
+            letterPart = letterFirst;
+        }
+        else
+        {
+            AnsiConsole.MarkupLine("[red]Invalid seat format. Please enter a row number and seat letter (e.g., 12A or A12).[/]");
+            continue;
+        }
+
+        if (int.TryParse(rowPart, out int row))
+        {
+            var seatObj = seats.FirstOrDefault(s =>
+                s.RowNumber == row &&
+                s.SeatPosition.Equals(letterPart, StringComparison.OrdinalIgnoreCase)
+            );
+
+            if (seatObj == null)
+            {
+                AnsiConsole.MarkupLine("[red]Seat does not exist.[/]");
+                continue;
+            }
+            if (seatObj.IsOccupied && seatObj.SeatID != selectedBooking.SeatID)
+            {
+                AnsiConsole.MarkupLine("[red]Seat is already occupied.[/]");
+                continue;
+            }
+            newSeatId = seatObj.SeatID;
+            break;
+        }
+        else
+        {
+            AnsiConsole.MarkupLine("[red]Invalid row number in seat format.[/]");
+        }
+    }
+
+    int newLuggage = AnsiConsole.Prompt(
+        new TextPrompt<int>("[#864000]Enter new luggage amount (0-2):[/]")
+            .PromptStyle(highlightStyle)
+            .Validate(l => l >= 0 && l <= 2, "[red]Luggage must be 0, 1, or 2.[/]")
+    );
+
+    BookingLogic.ModifyBooking(bookingId, newSeatId, newLuggage);
+    WaitForKeyPress();
+}
 }

@@ -410,12 +410,22 @@ public static class UserUI
             var action = AnsiConsole.Prompt(
                 new SelectionPrompt<string>()
                     .Title("[#864000]Bookings menu:[/]")
-                    .AddChoices("View upcoming bookings", "View past bookings", "Back to main menu")
+                    .AddChoices("View upcoming bookings", "Cancel a booking", "Modify a booking", "View past bookings", "Back to main menu")
             );
 
             if (action == "View upcoming bookings")
             {
                 BookingUI.ViewUserBookings(true);
+                AnsiConsole.Clear();
+            }
+            else if (action == "Cancel a booking")
+            {
+                BookingUI.CancelBookingPrompt();
+                AnsiConsole.Clear();
+            }
+            else if (action == "Modify a booking")
+            {
+                BookingUI.ModifyBookingPrompt();
                 AnsiConsole.Clear();
             }
             else if (action == "View past bookings")
