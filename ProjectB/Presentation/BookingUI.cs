@@ -126,6 +126,10 @@ public static class BookingUI
         {
             AnsiConsole.MarkupLine($"[green]Booking confirmation will be sent to: {email}[/]");
         }
+        if (AmountLuggage > 0)
+        {
+            overridePrice += 500 * AmountLuggage;
+        }
 
         AnsiConsole.MarkupLine($"[yellow]Seat[/]: [white]{seat.RowNumber}{seat.SeatPosition}[/]");
         AnsiConsole.MarkupLine($"[yellow]Seat Type[/]: [white]{seat.SeatType ?? "-"}[/]");
@@ -136,5 +140,31 @@ public static class BookingUI
         AnsiConsole.MarkupLine($"[yellow]To[/]: [white]{flight.ArrivalAirport}[/]");
         AnsiConsole.MarkupLine($"[yellow]Departure[/]: [white]{flight.DepartureTime:g}[/]");
         AnsiConsole.MarkupLine($"[yellow]Arrival[/]: [white]{flight.ArrivalTime:g}[/]");
+        AnsiConsole.MarkupLine($"[yellow]Luggage[/]: [white]{AmountLuggage:g}[/]");
+    }
+
+    private static int PurchaseExtraLuggage()
+    {
+        var user = SessionManager.CurrentUser;
+        bool extraLuggage = AnsiConsole.Prompt(
+            new SelectionPrompt<bool>()
+                .Title("[#864000]Do you want to purchase extra luggage?[/]")
+                .AddChoices(new[] { true, false })
+                .UseConverter(choice => choice ? "Yes" : "No")
+                .HighlightStyle(highlightStyle)
+        );
+        if (extraLuggage)
+        {
+            int additionalLuggage = AnsiConsole.Prompt(
+            new TextPrompt<int>("[#864000]Enter the number of additional luggage pieces (1 or 2):[/]")
+                .PromptStyle(highlightStyle)
+                .Validate(input => input >= 1 && input <= 2, "Please enter a number between 1 or 2.")
+            );
+            AnsiConsole.MarkupLine($"[green]Successfully purchased {additionalLuggage} extra luggage piece(s)![/]");
+            return additionalLuggage;
+        }
+        return 0;
+
+        
     }
 }

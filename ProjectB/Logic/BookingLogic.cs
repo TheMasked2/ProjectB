@@ -34,7 +34,7 @@ public static class BookingLogic
         }
     }
 
-    public static void CreateBooking(User user, FlightModel flight, SeatModel seat)
+    public static void CreateBooking(User user, FlightModel flight, SeatModel seat, int amountLuggage)
     {
         var booking = new BookingModel
         {
@@ -46,7 +46,8 @@ public static class BookingLogic
             SeatID = seat.SeatID,
             SeatClass = seat.SeatType,
             BookingStatus = "Confirmed",
-            PaymentStatus = "Paid"
+            PaymentStatus = "Paid",
+            AmountLuggage = amountLuggage
         };
         BookingAccessService.AddBooking(booking);
     }
