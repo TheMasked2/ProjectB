@@ -11,4 +11,5 @@ public class BookingModel
     public string BookingStatus { get; set; }
     public string PaymentStatus { get; set; }
     public int AmountLuggage { get; set; } = 0; 
+    public decimal TotalPrice { get; set; } = 0;
 }

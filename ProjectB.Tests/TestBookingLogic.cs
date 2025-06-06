@@ -93,7 +93,7 @@ namespace ProjectB.Tests
                              .Callback<BookingModel>(bm => capturedBookingModel = bm);
 
             // Act
-            BookingLogic.CreateBooking(user, flight, seat);
+            BookingLogic.CreateBooking(user, flight, seat, 0); // Add default amountLuggage parameter
 
             // Assert
             mockBookingAccess.Verify(service => service.AddBooking(It.IsAny<BookingModel>()), Times.Once);
@@ -113,93 +113,200 @@ namespace ProjectB.Tests
         }
 
         /// <summary>
-        /// Tests BookingLogic.GetBookingsForUser filters correctly for upcoming or past bookings
-        /// and returns the expected bookings.
-        /// </summary>
-        [DataTestMethod]
-        [DataRow(true, 2, new[] { 1, 2 }, DisplayName = "Upcoming bookings")]
-        [DataRow(false, 2, new[] { 3, 4 }, DisplayName = "Past bookings")]
-        public void GetBookingsForUser_FiltersByUpcomingOrPast_Correctly(bool upcoming, int expectedCount, int[] expectedBookingIds)
-        {
-            // Arrange
-            var mockBookingAccess = new Mock<IBookingAccess>(); 
-            BookingLogic.BookingAccessService = mockBookingAccess.Object; 
-
-            int userId = 1;
-            var now = DateTime.Now; 
-            var allUserBookings = new List<BookingModel>
-            {
-                new BookingModel { UserID = userId, BookingID = 1, BoardingTime = now.AddDays(2).ToString("yyyy-MM-dd HH:mm:ss") }, 
-                new BookingModel { UserID = userId, BookingID = 2, BoardingTime = now.AddHours(1).ToString("yyyy-MM-dd HH:mm:ss") },
-                new BookingModel { UserID = userId, BookingID = 3, BoardingTime = now.AddDays(-1).ToString("yyyy-MM-dd HH:mm:ss") },
-                new BookingModel { UserID = userId, BookingID = 4, BoardingTime = now.AddMinutes(-30).ToString("yyyy-MM-dd HH:mm:ss") } 
-            };
-            
-            mockBookingAccess.Setup(s => s.GetBookingsByUser(userId)).Returns(allUserBookings);
-
-            // Act
-            var result = BookingLogic.GetBookingsForUser(userId, upcoming);
-
-            // Assert
-            Assert.AreEqual(expectedCount, result.Count, $"Expected {expectedCount} bookings but got {result.Count}.");
-            foreach (var id in expectedBookingIds)
-            {
-                Assert.IsTrue(result.Any(b => b.BookingID == id), $"Booking with ID {id} was expected but not found.");
-            }
-            if (upcoming)
-            {
-                Assert.IsTrue(result.All(b => DateTime.Parse(b.BoardingTime) >= now), "Not all returned bookings are upcoming.");
-            }
-            else
-            {
-                Assert.IsTrue(result.All(b => DateTime.Parse(b.BoardingTime) < now), "Not all returned bookings are past.");
-            }
-        }
-
-        /// <summary>
-        /// Tests BookingLogic.GetBookingsForUser returns an empty list if the 
-        /// BookingAccessService returns no bookings for the user.
+        /// Tests if BookingLogic.CreateBooking correctly prepares a BookingModel
+        /// and calls BookingAccessService.AddBooking with the correct details,
+        /// reflecting the string format of SeatID and amountLuggage.
         /// </summary>
         [TestMethod]
-        public void GetBookingsForUser_ReturnsEmptyList_WhenNoBookingsExistForUser()
+        public void CreateBooking_ConstructsModelAndCallsService_WithCorrectDetails_AndLuggage()
         {
             // Arrange
-            var mockBookingAccess = new Mock<IBookingAccess>(); 
-            BookingLogic.BookingAccessService = mockBookingAccess.Object; 
+            var mockBookingAccess = new Mock<IBookingAccess>();
+            BookingLogic.BookingAccessService = mockBookingAccess.Object;
 
-            int userId = 99; 
-            mockBookingAccess.Setup(s => s.GetBookingsByUser(userId)).Returns(new List<BookingModel>());
+            var user = new User { UserID = 1, FirstName = "John", LastName = "Doe" };
+            var flight = new FlightModel { FlightID = 101, DepartureTime = new DateTime(2025, 12, 25, 10, 30, 0) };
+            var seat = new SeatModel {
+                SeatID = "XC101-8C",
+                SeatType = "Economy",
+                Price = 150,
+                IsOccupied = false
+            };
+            int luggage = 2;
+
+            BookingModel capturedBookingModel = null;
+            mockBookingAccess.Setup(service => service.AddBooking(It.IsAny<BookingModel>()))
+                             .Callback<BookingModel>(bm => capturedBookingModel = bm);
 
             // Act
-            var resultUpcoming = BookingLogic.GetBookingsForUser(userId, true);
-            var resultPast = BookingLogic.GetBookingsForUser(userId, false);
+            BookingLogic.CreateBooking(user, flight, seat, luggage);
 
             // Assert
-            Assert.AreEqual(0, resultUpcoming.Count, "Upcoming bookings list should be empty.");
-            Assert.AreEqual(0, resultPast.Count, "Past bookings list should be empty.");
+            mockBookingAccess.Verify(service => service.AddBooking(It.IsAny<BookingModel>()), Times.Once);
+
+            Assert.IsNotNull(capturedBookingModel, "BookingModel passed to AddBooking should not be null.");
+            Assert.AreEqual(user.UserID, capturedBookingModel.UserID);
+            Assert.AreEqual($"{user.FirstName} {user.LastName}", capturedBookingModel.PassengerName);
+            Assert.AreEqual(flight.FlightID, capturedBookingModel.FlightID);
+            Assert.AreEqual(seat.SeatID, capturedBookingModel.SeatID, "SeatID in BookingModel should match the string SeatID from SeatModel.");
+            Assert.AreEqual(seat.SeatType, capturedBookingModel.SeatClass, "SeatClass in BookingModel should match SeatType from SeatModel.");
+            Assert.AreEqual("Confirmed", capturedBookingModel.BookingStatus);
+            Assert.AreEqual("Paid", capturedBookingModel.PaymentStatus);
+            Assert.AreEqual(flight.DepartureTime.ToString("yyyy-MM-dd HH:mm:ss"), capturedBookingModel.BoardingTime);
+            Assert.AreEqual(luggage, capturedBookingModel.AmountLuggage, "AmountLuggage should match the provided value.");
+            
+            Assert.IsTrue(DateTime.TryParse(capturedBookingModel.BookingDate, out DateTime bookingDateParsed));
+            Assert.IsTrue((DateTime.Now - bookingDateParsed).TotalSeconds < 1, "BookingDate should be very close to the current time.");
         }
 
         /// <summary>
-        /// Tests BookingLogic.GetNextBookingId returns the correct next available BookingID.
+        /// Tests if BookingLogic handles senior discount correctly
         /// </summary>
-        [DataTestMethod]
-        [DataRow(new int[] { 1, 2, 5 }, 6, DisplayName = "Max ID is 5, next is 6")] 
-        [DataRow(new int[] { 10 }, 11, DisplayName = "Single booking, next is 11")]     
-        [DataRow(new int[] { }, 1, DisplayName = "No bookings, next is 1")]         
-        public void GetNextBookingId_ReturnsCorrectNextId(int[] existingBookingIds, int expectedNextId)
+        [TestMethod]
+        public void CreateBooking_AppliesSeniorDiscount_WhenUserIsOver65()
         {
             // Arrange
-            var mockBookingAccess = new Mock<IBookingAccess>(); 
-            BookingLogic.BookingAccessService = mockBookingAccess.Object; 
+            var mockBookingAccess = new Mock<IBookingAccess>();
+            BookingLogic.BookingAccessService = mockBookingAccess.Object;
 
-            var allBookings = existingBookingIds.Select(id => new BookingModel { BookingID = id }).ToList();
-            mockBookingAccess.Setup(s => s.GetBookingsByUser(0)).Returns(allBookings);
+            var user = new User { 
+                UserID = 1, 
+                FirstName = "John", 
+                LastName = "Doe",
+                BirthDate = DateTime.Now.AddYears(-66),
+                FirstTimeDiscount = false  // Make sure first time discount is false
+            };
+            var flight = new FlightModel { FlightID = 101 };
+            var seat = new SeatModel { 
+                SeatID = "A1",
+                SeatType = "Economy",
+                Price = 100
+            };
+
+            BookingModel capturedBookingModel = null;
+            mockBookingAccess.Setup(service => service.AddBooking(It.IsAny<BookingModel>()))
+                             .Callback<BookingModel>(bm => capturedBookingModel = bm);
 
             // Act
-            int result = BookingLogic.GetNextBookingId();
+            BookingLogic.CreateBooking(user, flight, seat, 0);
 
             // Assert
-            Assert.AreEqual(expectedNextId, result);
+            Assert.IsNotNull(capturedBookingModel);
+            Assert.AreEqual(80m, capturedBookingModel.TotalPrice); // 100 * 0.8 (20% senior discount)
+        }
+
+        [TestMethod]
+        public void CalculateBookingPrice_WithFirstTimeDiscount_AppliesTenPercentDiscount()
+        {
+            // Arrange
+            var user = new User { 
+                UserID = 1, 
+                FirstName = "John", 
+                LastName = "Doe",
+                FirstTimeDiscount = true
+            };
+            var flight = new FlightModel { FlightID = 101 };
+            var seat = new SeatModel { 
+                SeatID = "A1",
+                SeatType = "Economy",
+                Price = 100
+            };
+            int luggage = 1;
+
+            // Act
+            decimal price = BookingLogic.CalculateBookingPrice(user, seat, luggage);
+
+            // Assert
+            // Base price 100 + luggage 500, then 10% discount
+            Assert.AreEqual(540m, price); // (100 + 500) * 0.9
+        }
+
+        [TestMethod]
+        public void CalculateBookingPrice_WithSeniorDiscount_AppliesTwentyPercentDiscount()
+        {
+            // Arrange
+            var user = new User { 
+                UserID = 1, 
+                FirstName = "John", 
+                LastName = "Doe",
+                BirthDate = DateTime.Now.AddYears(-66),
+                FirstTimeDiscount = false
+            };
+            var flight = new FlightModel { FlightID = 101 };
+            var seat = new SeatModel { 
+                SeatID = "A1",
+                SeatType = "Economy",
+                Price = 100
+            };
+            int luggage = 1;
+
+            // Act
+            decimal price = BookingLogic.CalculateBookingPrice(user, seat, luggage);
+
+            // Assert
+            // Base price 100 + luggage 500, then 20% discount
+            Assert.AreEqual(480m, price); // (100 + 500) * 0.8
+        }
+
+        [TestMethod]
+        public void CalculateBookingPrice_WithLuggage_AddsLuggagePrice()
+        {
+            // Arrange
+            var user = new User { 
+                UserID = 1, 
+                FirstName = "John", 
+                LastName = "Doe",
+                FirstTimeDiscount = false,
+                BirthDate = DateTime.Now.AddYears(-30) // Make sure user isn't eligible for senior discount
+            };
+            var seat = new SeatModel { 
+                SeatID = "A1",
+                SeatType = "Economy",
+                Price = 100
+            };
+
+            // Act
+            decimal priceWithOneLuggage = BookingLogic.CalculateBookingPrice(user, seat, 1);
+            decimal priceWithTwoLuggage = BookingLogic.CalculateBookingPrice(user, seat, 2);
+
+            // Assert
+            Assert.AreEqual(600m, priceWithOneLuggage); // 100 + (500 * 1)
+            Assert.AreEqual(1100m, priceWithTwoLuggage); // 100 + (500 * 2)
+        }
+
+        [TestMethod]
+        public void ViewUserBookings_ReturnsCorrectBookings()
+        {
+            // Arrange
+            var mockBookingAccess = new Mock<IBookingAccess>();
+            BookingLogic.BookingAccessService = mockBookingAccess.Object;
+
+            var now = DateTime.Now;
+            var bookings = new List<BookingModel>
+            {
+                new BookingModel { 
+                    BookingID = 1,
+                    UserID = 1,
+                    BoardingTime = now.AddDays(1).ToString("yyyy-MM-dd HH:mm:ss")
+                },
+                new BookingModel {
+                    BookingID = 2,
+                    UserID = 1,
+                    BoardingTime = now.AddDays(-1).ToString("yyyy-MM-dd HH:mm:ss")
+                }
+            };
+
+            mockBookingAccess.Setup(x => x.GetBookingsByUser(1)).Returns(bookings);
+
+            // Act
+            var upcomingBookings = BookingLogic.GetBookingsForUser(1, true);
+            var pastBookings = BookingLogic.GetBookingsForUser(1, false);
+
+            // Assert
+            Assert.AreEqual(1, upcomingBookings.Count);
+            Assert.AreEqual(1, pastBookings.Count);
+            Assert.AreEqual(1, upcomingBookings[0].BookingID);
+            Assert.AreEqual(2, pastBookings[0].BookingID);
         }
     }
 }

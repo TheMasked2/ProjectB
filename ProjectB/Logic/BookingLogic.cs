@@ -34,8 +34,33 @@ public static class BookingLogic
         }
     }
 
-    public static void CreateBooking(User user, FlightModel flight, SeatModel seat, int amountLuggage)
+    public static decimal CalculateBookingPrice(User user, SeatModel seat, int amountLuggage)
     {
+        decimal finalPrice = (decimal)seat.Price;
+
+        // Add luggage cost
+        if (amountLuggage > 0)
+        {
+            finalPrice += 500 * amountLuggage;
+        }
+
+        // Apply discounts
+        if (user.FirstTimeDiscount)
+        {
+            finalPrice *= 0.9m; // 10% discount
+        }
+        else if (DateTime.Now >= user.BirthDate.AddYears(65))
+        {
+            finalPrice *= 0.8m; // 20% discount
+        }
+
+        return finalPrice;
+    }
+
+    public static void CreateBooking(User user, FlightModel flight, SeatModel seat, int amountLuggage = 0)
+    {
+        decimal totalPrice = CalculateBookingPrice(user, seat, amountLuggage);
+
         var booking = new BookingModel
         {
             UserID = user.UserID,
@@ -47,7 +72,8 @@ public static class BookingLogic
             SeatClass = seat.SeatType,
             BookingStatus = "Confirmed",
             PaymentStatus = "Paid",
-            AmountLuggage = amountLuggage
+            AmountLuggage = amountLuggage,
+            TotalPrice = totalPrice
         };
         BookingAccessService.AddBooking(booking);
     }
