@@ -57,8 +57,7 @@ public static class FlightLogic
             var panel = new Panel("[yellow]No flights found matching the criteria.[/]")
                 .Border(BoxBorder.Rounded)
                 .BorderStyle(errorStyle);
-            AnsiConsole.Write(panel);
-            return null;
+            return panel;
         }
 
         var table = new Table()
