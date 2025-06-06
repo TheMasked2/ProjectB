@@ -5,7 +5,7 @@ using ProjectB.DataAccess;
 public class BookingAccess : IBookingAccess
 {
     private static SqliteConnection _connection = new SqliteConnection($"Data Source=DataSources/database.db");
-    private static string Table = "Bookings";
+    private static string Table = "BOOKINGS";
     
     public void AddBooking(BookingModel booking)
     {
