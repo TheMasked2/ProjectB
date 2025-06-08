@@ -1,3 +1,4 @@
+using Microsoft.VisualBasic;
 using Spectre.Console;
 
 public static class FlightUI
@@ -7,7 +8,7 @@ public static class FlightUI
     private static readonly Style errorStyle = new(new Color(162, 52, 0));
     private static readonly Style successStyle = new(new Color(194, 87, 0));
 
-    private static void WaitForKeyPress()
+    public static void WaitForKeyPress()
     {
         AnsiConsole.MarkupLine("\n[grey]Press any key to return to the main menu...[/]");
         Console.ReadKey(true);
@@ -136,15 +137,6 @@ public static class FlightUI
                         new TextPrompt<DateTime>("[#864000]Enter Arrival Time (yyyy-MM-dd HH:mm):[/]")
                             .PromptStyle(highlightStyle));
 
-                    // flight.AvailableSeats = AnsiConsole.Prompt(
-                    //     new TextPrompt<int>("[#864000]Enter Available Seats:[/]")
-                    //         .PromptStyle(highlightStyle));
-
-                    // flight.Price = AnsiConsole.Prompt(
-                    //     new TextPrompt<int>("[#864000]Enter Price:[/]")
-                    //         .PromptStyle(highlightStyle));
-
-                    // Validate and add flight
                     if (FlightLogic.AddFlight(flight))
                     {
                         AnsiConsole.MarkupLine("[green]Flight added successfully![/]");

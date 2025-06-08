@@ -60,7 +60,9 @@ public static class AdminUI
             {
                 "Add a flight",
                 "Edit a flight",
-                "Delete a flight",
+                "Remove a flight",
+                // "View all flights", // Uncomment if you want to add a view flights option	
+                "View past flights",
                 "Back to main menu"
             };
 

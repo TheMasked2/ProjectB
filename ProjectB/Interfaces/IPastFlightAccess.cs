@@ -1,7 +1,9 @@
-
-public interface IPastFlightAccess
+namespace ProjectB.DataAccess
 {
-    void DeletePastFlights(DateTime monthAgo);
-    void WritePastFlight(FlightModel flight);
+    public interface IPastFlightAccess
+    {
+        void DeletePastFlights(DateTime monthAgo);
+        void WritePastFlight(FlightModel flight);
+        List<FlightModel> GetPastFlights(DateTime currentDate);
+    }
 }
-

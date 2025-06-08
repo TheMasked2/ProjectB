@@ -251,4 +251,9 @@ public static class FlightLogic
         return;
     }
 
+    public static List<FlightModel> GetPastFlights(DateTime departureDate)
+    {
+        return PastFlightAccessService.GetPastFlights(departureDate);
+    }
+
 }
