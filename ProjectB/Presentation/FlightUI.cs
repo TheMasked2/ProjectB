@@ -14,7 +14,7 @@ public static class FlightUI
         Console.ReadKey(true);
     }
     
-    public static void DisplayAllFlights()
+    public static void DisplayFilteredUpcomingFlights()
     {
         AnsiConsole.Clear();
         AnsiConsole.Write(
@@ -165,7 +165,7 @@ public static class FlightUI
 
     public static void EditFlight()
     {
-        DisplayAllFlights();
+        DisplayFilteredUpcomingFlights();
 
         var flightId = AnsiConsole.Prompt(
             new TextPrompt<int>("[#864000]Enter Flight ID to edit:[/]")
@@ -222,7 +222,7 @@ public static class FlightUI
 
     public static void RemoveFlight()
     {
-        DisplayAllFlights();
+        DisplayFilteredUpcomingFlights();
 
         var flightId = AnsiConsole.Prompt(
             new TextPrompt<int>("[#864000]Enter Flight ID to remove:[/]")

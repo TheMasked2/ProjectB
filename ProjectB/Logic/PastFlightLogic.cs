@@ -16,18 +16,8 @@ public static class PastFlightLogic
     public static List<FlightModel> GetFilteredPastFlights(
         string? origin,
         string? destination,
-        DateTime departureDate)
-    {
-        var flights = FlightLogic.GetPastFlights(departureDate);
+        DateTime departureDate) => PastFlightAccessService.GetFilteredPastFlights(origin, destination, departureDate);  
 
-        if (!string.IsNullOrEmpty(origin))
-            flights = flights.Where(f => f.DepartureAirport.Equals(origin, StringComparison.OrdinalIgnoreCase)).ToList();
+    public static List<FlightModel> GetAllPastFlights() => PastFlightAccessService.GetAllPastFlights();
 
-        if (!string.IsNullOrEmpty(destination))
-            flights = flights.Where(f => f.ArrivalAirport.Equals(destination, StringComparison.OrdinalIgnoreCase)).ToList();
-
-        flights = flights.Where(f => f.DepartureTime.Date == departureDate.Date).ToList();
-
-        return flights;
-    }
 }

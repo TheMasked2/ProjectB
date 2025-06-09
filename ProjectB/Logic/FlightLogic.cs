@@ -31,25 +31,10 @@ public static class FlightLogic
     /// <param name="seatClass">Seat class filter (not used for price here).</param>
     /// <returns>List of filtered flights.</returns>
     public static List<FlightModel> GetFilteredFlights(
-        string origin,
-        string destination,
-        DateTime departureDate)
-    {
-        if (string.IsNullOrEmpty(origin))
-            throw new ArgumentException("Origin cannot be null or empty.");
-        if (string.IsNullOrEmpty(destination))
-            throw new ArgumentException("Destination cannot be null or empty.");
-
-        var flights = FlightAccessService.GetAllFlightData();
-
-        flights = flights
-            .Where(f => f.DepartureAirport.Equals(origin, StringComparison.OrdinalIgnoreCase))
-            .Where(f => f.ArrivalAirport.Equals(destination, StringComparison.OrdinalIgnoreCase))
-            .Where(f => f.DepartureTime.Date == departureDate.Date)
-            .ToList();
-
-        return flights;
-    }
+        string? origin,
+        string? destination,
+        DateTime departureDate) => FlightAccessService.GetFilteredFlights(origin, destination, departureDate);
+    
 
     public static Spectre.Console.Rendering.IRenderable DisplayFilteredFlights(List<FlightModel> flights, string seatClass)
     {
@@ -218,6 +203,7 @@ public static class FlightLogic
     {
         return SeatAccessService.GetSeatClassPrice(airplaneID, seatClass);
     }
+
     // Grab all flights from yesterday (and before) and update their status to "Departed", then move them to the past flights table.
     public static void UpdateFlightDB()
     {
@@ -250,10 +236,4 @@ public static class FlightLogic
         }
         return;
     }
-
-    public static List<FlightModel> GetPastFlights(DateTime departureDate)
-    {
-        return PastFlightAccessService.GetPastFlights(departureDate);
-    }
-
 }

@@ -19,7 +19,8 @@ public class FlightAccess : IFlightAccess
                         VALUES 
                         (@flightID, @airline, @airplaneID, @availableSeats, 
                          @departureAirport, @arrivalAirport, @departureTime, @arrivalTime, @flightStatus)";
-        _connection.Execute(sql, new {
+        _connection.Execute(sql, new
+        {
             flightID = flight.FlightID,
             airline = flight.Airline,
             airplaneID = flight.AirplaneID,
@@ -59,7 +60,8 @@ public class FlightAccess : IFlightAccess
                             ArrivalTime = @arrivalTime,
                             FlightStatus = @flightStatus 
                         WHERE FlightID = @flightID";
-        _connection.Execute(sql, new {
+        _connection.Execute(sql, new
+        {
             flightID = flight.FlightID,
             airline = flight.Airline,
             airplaneID = flight.AirplaneID,
@@ -108,4 +110,24 @@ public class FlightAccess : IFlightAccess
 
         return _connection.Query<FlightModel>(sql, new { SoonDate = departingSoonDate }).ToList();
     }
+
+        public List<FlightModel> GetFilteredFlights(
+            string? origin,
+            string? destination,
+            DateTime departureDate)
+        {
+            string sql = $@"SELECT * FROM {Table}
+                            WHERE DepartureTime = @DepartureDate
+                            AND DepartureAirport LIKE @Origin
+                            AND ArrivalAirport LIKE @Destination";
+            
+            var parameters = new
+            {
+                DepartureDate = departureDate.Date,
+                Origin = string.IsNullOrEmpty(origin) ? "%" : origin,
+                Destination = string.IsNullOrEmpty(destination) ? "%" : destination
+            };
+
+            return _connection.Query<FlightModel>(sql, parameters).ToList();
+        }
 }

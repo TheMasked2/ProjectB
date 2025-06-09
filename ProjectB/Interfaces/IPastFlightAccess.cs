@@ -4,6 +4,10 @@ namespace ProjectB.DataAccess
     {
         void DeletePastFlights(DateTime monthAgo);
         void WritePastFlight(FlightModel flight);
-        List<FlightModel> GetPastFlights(DateTime currentDate);
+        List<FlightModel> GetAllPastFlights();
+        List<FlightModel> GetFilteredPastFlights(
+            string? origin,
+            string? destination,
+            DateTime departureDate);
     }
 }

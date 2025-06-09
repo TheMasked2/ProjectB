@@ -7,7 +7,7 @@ public class PastFlightUI
     private static readonly Style highlightStyle = new(new Color(255, 122, 0));
     private static readonly Style errorStyle = new(new Color(162, 52, 0));
     private static readonly Style successStyle = new(new Color(194, 87, 0));
-    public static void DisplayAllFlights()
+    public static void DisplayFilteredPastFlights()
     {
         AnsiConsole.Clear();
         AnsiConsole.Write(

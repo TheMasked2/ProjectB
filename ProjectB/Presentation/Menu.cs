@@ -30,8 +30,6 @@ public static class Menu
                 {
                     "Flight management",
                     "User management",
-                    "View all flights",
-                    "View past flights",
                     "View user info",
                     "Logout"
                 });
@@ -100,14 +98,6 @@ public static class Menu
 
                 case "Book a flight":
                     BookingUI.DisplayAllBookableFlights();
-                    break;
-
-                case "View all flights" when SessionManager.CurrentUser?.IsAdmin == true:
-                    FlightUI.DisplayAllFlights();
-                    break;
-
-                case "View past flights" when SessionManager.CurrentUser?.IsAdmin == true:
-                    PastFlightUI.DisplayAllFlights();
                     break;
 
                 case "Flight management" when SessionManager.CurrentUser?.IsAdmin == true:

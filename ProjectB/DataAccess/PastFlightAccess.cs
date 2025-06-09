@@ -39,12 +39,29 @@ namespace ProjectB.DataAccess
                 flightStatus = flight.FlightStatus
             });
         }
-        
-        public List<FlightModel> GetPastFlights(DateTime currentDate)
+
+        public List<FlightModel> GetAllPastFlights()
+        {
+            string sql = $@"SELECT * FROM {Table}";
+            return _connection.Query<FlightModel>(sql).ToList();
+        }
+
+        public List<FlightModel> GetFilteredPastFlights(
+            string? origin,
+            string? destination,
+            DateTime departureDate)
         {
             string sql = $@"SELECT * FROM {Table}
-                            WHERE DepartureTime < @CurrentDate";
-            var parameters = new { CurrentDate = currentDate };
+                            WHERE DepartureTime = @DepartureDate
+                            AND DepartureAirport LIKE @Origin
+                            AND ArrivalAirport LIKE @Destination";
+            
+            var parameters = new
+            {
+                DepartureDate = departureDate.Date,
+                Origin = string.IsNullOrEmpty(origin) ? "%" : origin,
+                Destination = string.IsNullOrEmpty(destination) ? "%" : destination
+            };
 
             return _connection.Query<FlightModel>(sql, parameters).ToList();
         }
