@@ -577,7 +577,6 @@ public static void ModifyBookingPrompt()
         return;
     }
 
-    // Display bookings in a table
     var table = new Table()
         .Border(TableBorder.Rounded)
         .BorderStyle(primaryStyle)
@@ -709,6 +708,11 @@ public static void ModifyBookingPrompt()
             .PromptStyle(highlightStyle)
             .Validate(l => l >= 0 && l <= 2, "[red]Luggage must be 0, 1, or 2.[/]")
     );
+    
+    if (newLuggage > 0)
+        {
+            AnsiConsole.MarkupLine($"[yellow]A surcharge of ${newLuggage * 50} has been added for extra luggage.[/]");
+        }
 
     BookingLogic.ModifyBooking(bookingId, newSeatId, newLuggage);
     WaitForKeyPress();
