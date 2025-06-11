@@ -10,4 +10,6 @@ public class BookingModel
     public string SeatClass { get; set; }
     public string BookingStatus { get; set; }
     public string PaymentStatus { get; set; }
+    public int AmountLuggage { get; set; } = 0; 
+    public bool InsuranceStatus { get; set; } = false;
 }

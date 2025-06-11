@@ -22,7 +22,6 @@ public class FlightModel
         string arrivalAirport,
         DateTime departureTime,
         DateTime arrivalTime,
-        float price,
         string status
     )
     {
@@ -34,7 +33,6 @@ public class FlightModel
         ArrivalAirport = arrivalAirport;
         DepartureTime = departureTime;
         ArrivalTime = arrivalTime;
-        Price = price;
         FlightStatus = status;
     }
 
@@ -62,7 +60,6 @@ public class FlightModel
            [#FF7A00]Arrival:[/] {ArrivalTime:g}
            [#FF7A00]Available Seats:[/] {AvailableSeats}
            [#FF7A00]Status:[/] {FlightStatus}
-           [#FF7A00]Price:[/] €{Price}
            """;
     }
 }
