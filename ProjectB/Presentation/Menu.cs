@@ -34,16 +34,7 @@ public static class Menu
                     "Logout"
                 });
             }
-            else if (SessionManager.CurrentUser.Guest)
-            {
-                choices.AddRange(new[]
-                {
-                    "Login",
-                    "Register",
-                    "Guest",
-                    "Exit"
-                });
-            }
+
             else
             {
                 choices.AddRange(new[]
@@ -52,6 +43,7 @@ public static class Menu
                     "View bookings",
                     "View user info",
                     "Edit user info",
+                    "Search for flights",
                     "Logout"
                 });
             }
@@ -68,19 +60,9 @@ public static class Menu
                     Console.Clear();
                     Environment.Exit(0);
                     break;
-                
+
                 case "Guest":
-                    AnsiConsole.Clear();
-                    BookingUI.DisplayAllBookableFlights();
-                    Console.ReadKey();
-                    SessionManager.CurrentUser = new User
-                    {
-                        UserID = 0,
-                        FirstName = "Guest",
-                        LastName = "User",
-                        IsAdmin = false,
-                        Guest = true
-                    };
+                    UserUI.ShowGuestMenu();
                     break;
 
                 case "Login":
@@ -119,6 +101,11 @@ public static class Menu
                 case "Edit user info":
                     UserUI.UserEditUser();
                     break;
+
+                case "Search for flights":
+                    FlightUI.SearchFlights();
+                    break;
+                
             }
         }
     }
