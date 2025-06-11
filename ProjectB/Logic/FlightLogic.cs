@@ -6,6 +6,7 @@ public static class FlightLogic
     public static IFlightAccess FlightAccessService { get; set; } = new FlightAccess();
     public static IFlightSeatAccess FlightSeatAccessService { get; set; } = new FlightSeatAccess();
     public static IAirplaneAccess AirplaneAccessService { get; set; } = new AirplaneAccess();
+    public static IPastFlightAccess PastFlightAccessService { get; set; } = new PastFlightAccess();
     public static ISeatAccess SeatAccessService { get; set; } = new SeatAccess();
     private static readonly Style primaryStyle = new(new Color(134, 64, 0));
     private static readonly Style highlightStyle = new(new Color(255, 122, 0));
@@ -30,25 +31,10 @@ public static class FlightLogic
     /// <param name="seatClass">Seat class filter (not used for price here).</param>
     /// <returns>List of filtered flights.</returns>
     public static List<FlightModel> GetFilteredFlights(
-        string origin,
-        string destination,
-        DateTime departureDate)
-    {
-        if (string.IsNullOrEmpty(origin))
-            throw new ArgumentException("Origin cannot be null or empty.");
-        if (string.IsNullOrEmpty(destination))
-            throw new ArgumentException("Destination cannot be null or empty.");
-
-        var flights = FlightAccessService.GetAllFlightData();
-
-        flights = flights
-            .Where(f => f.DepartureAirport.Equals(origin, StringComparison.OrdinalIgnoreCase))
-            .Where(f => f.ArrivalAirport.Equals(destination, StringComparison.OrdinalIgnoreCase))
-            .Where(f => f.DepartureTime.Date == departureDate.Date)
-            .ToList();
-
-        return flights;
-    }
+        string? origin,
+        string? destination,
+        DateTime departureDate) => FlightAccessService.GetFilteredFlights(origin, destination, departureDate);
+    
 
     public static Spectre.Console.Rendering.IRenderable DisplayFilteredFlights(List<FlightModel> flights, string seatClass)
     {
@@ -91,12 +77,12 @@ public static class FlightLogic
 
     public static FlightModel GetFlightById(int flightId)
     {
-        if (flightId <= 0)
+        FlightModel flight = FlightAccessService.GetById(flightId);
+        if (flight == null)
         {
-            throw new ArgumentException("FlightModel ID must be greater than zero.");
+            return null;
         }
-
-        return FlightAccessService.GetById(flightId);
+        return flight;
     }
 
     public static bool AddFlight(FlightModel flight)
@@ -217,5 +203,37 @@ public static class FlightLogic
     {
         return SeatAccessService.GetSeatClassPrice(airplaneID, seatClass);
     }
- 
+
+    // Grab all flights from yesterday (and before) and update their status to "Departed", then move them to the past flights table.
+    public static void UpdateFlightDB()
+    {
+        DateTime currentDate = DateTime.Now;
+        DateTime monthAgo = currentDate.AddMonths(-1);
+
+        // Update flights that have already departed
+        List<FlightModel> pastFlights = FlightAccessService.GetPastFlights(currentDate);
+        foreach (var flight in pastFlights)
+        {
+            // Update flight
+            flight.FlightStatus = "Departed";
+            FlightAccessService.Update(flight);
+            // Move to past flights
+            PastFlightAccessService.WritePastFlight(flight);
+            // Remove from current flights
+            FlightAccessService.Delete(flight.FlightID);
+        }
+        // Remove past flights older than a month
+        PastFlightAccessService.DeletePastFlights(monthAgo);
+
+        // Update flights that are departing soon (3 hours or less)
+        DateTime departingSoonDate = currentDate.AddHours(3);
+        List<FlightModel> upcomingFlights = FlightAccessService.GetUpcomingFlights(departingSoonDate);
+        foreach (var flight in upcomingFlights)
+        {
+            // Update flight status to "Boarding"
+            flight.FlightStatus = "Boarding";
+            FlightAccessService.Update(flight);
+        }
+        return;
+    }
 }

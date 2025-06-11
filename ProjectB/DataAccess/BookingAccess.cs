@@ -10,8 +10,8 @@ public class BookingAccess : IBookingAccess
     public void AddBooking(BookingModel booking)
     {
         string sql = $@"INSERT INTO {Table} 
-            (PassengerName, FlightID, BookingDate, BoardingTime, SeatID, SeatClass, BookingStatus, PaymentStatus, UserID, AmountLuggage)
-            VALUES (@PassengerName, @FlightID, @BookingDate, @BoardingTime, @SeatID, @SeatClass, @BookingStatus, @PaymentStatus, @UserID, @AmountLuggage)";
+            (PassengerName, FlightID, BookingDate, BoardingTime, SeatID, SeatClass, BookingStatus, PaymentStatus, UserID, AmountLuggage, InsuranceStatus)
+            VALUES (@PassengerName, @FlightID, @BookingDate, @BoardingTime, @SeatID, @SeatClass, @BookingStatus, @PaymentStatus, @UserID, @AmountLuggage, @InsuranceStatus)";
         _connection.Execute(sql, booking);
     }
 

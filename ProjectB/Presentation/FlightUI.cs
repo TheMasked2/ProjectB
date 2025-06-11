@@ -1,3 +1,4 @@
+using Microsoft.VisualBasic;
 using Spectre.Console;
 
 public static class FlightUI
@@ -7,13 +8,15 @@ public static class FlightUI
     private static readonly Style errorStyle = new(new Color(162, 52, 0));
     private static readonly Style successStyle = new(new Color(194, 87, 0));
 
-    private static void WaitForKeyPress()
+    public static void WaitForKeyPress()
     {
         AnsiConsole.MarkupLine("\n[grey]Press any key to return to the main menu...[/]");
         Console.ReadKey(true);
     }
+
+
     
-    public static void DisplayAllFlights()
+    public static void DisplayFilteredUpcomingFlights()
     {
         AnsiConsole.Clear();
         AnsiConsole.Write(
@@ -97,6 +100,46 @@ public static class FlightUI
         WaitForKeyPress();
     }
 
+    private static void DisplayFilteredFlights(List<FlightModel> flights)
+    {
+        if (flights == null || !flights.Any())
+        {
+            var panel = new Panel("[yellow]No flights found matching the criteria.[/]")
+                .Border(BoxBorder.Rounded)
+                .BorderStyle(errorStyle);
+            AnsiConsole.Write(panel);
+            return;
+        }
+
+        var table = new Table()
+            .Border(TableBorder.Rounded)
+            .BorderStyle(primaryStyle)
+            .Expand();
+
+        table.AddColumns(
+            "[#864000]ID[/]", "[#864000]Aircraft ID[/]", "[#864000]Airline[/]",
+            "[#864000]From[/]", "[#864000]To[/]", "[#864000]Departure[/]",
+            "[#864000]Arrival[/]", "[#864000]Price[/]", "[#864000]Status[/]"
+        );
+
+        foreach (var flight in flights)
+        {
+            table.AddRow(
+                flight.FlightID.ToString(),
+                flight.AirplaneID,
+                flight.Airline,
+                flight.DepartureAirport,
+                flight.ArrivalAirport,
+                flight.DepartureTime.ToString("g"),
+                flight.ArrivalTime.ToString("g"),
+                $"€{flight.Price:F2}",
+                flight.FlightStatus
+            );
+        }
+
+        AnsiConsole.Write(table);
+    }
+
     public static void AddFlight()
     {
         AnsiConsole.Clear();
@@ -136,15 +179,6 @@ public static class FlightUI
                         new TextPrompt<DateTime>("[#864000]Enter Arrival Time (yyyy-MM-dd HH:mm):[/]")
                             .PromptStyle(highlightStyle));
 
-                    // flight.AvailableSeats = AnsiConsole.Prompt(
-                    //     new TextPrompt<int>("[#864000]Enter Available Seats:[/]")
-                    //         .PromptStyle(highlightStyle));
-
-                    // flight.Price = AnsiConsole.Prompt(
-                    //     new TextPrompt<int>("[#864000]Enter Price:[/]")
-                    //         .PromptStyle(highlightStyle));
-
-                    // Validate and add flight
                     if (FlightLogic.AddFlight(flight))
                     {
                         AnsiConsole.MarkupLine("[green]Flight added successfully![/]");
@@ -173,7 +207,7 @@ public static class FlightUI
 
     public static void EditFlight()
     {
-        DisplayAllFlights();
+        DisplayFilteredUpcomingFlights();
 
         var flightId = AnsiConsole.Prompt(
             new TextPrompt<int>("[#864000]Enter Flight ID to edit:[/]")
@@ -230,7 +264,7 @@ public static class FlightUI
 
     public static void RemoveFlight()
     {
-        DisplayAllFlights();
+        DisplayFilteredUpcomingFlights();
 
         var flightId = AnsiConsole.Prompt(
             new TextPrompt<int>("[#864000]Enter Flight ID to remove:[/]")
@@ -263,4 +297,57 @@ public static class FlightUI
             return false;
         }
     }
+
+    public static void SearchFlights()
+    {
+        AnsiConsole.Clear();
+        AnsiConsole.Write(
+            new FigletText("Flight Search")
+                .Centered()
+                .Color(Color.Orange1));
+        int FlightID = AnsiConsole.Prompt(
+            new TextPrompt<int>("[#864000]Enter Flight ID to search:[/]")
+                .PromptStyle(highlightStyle)
+                .Validate(id => id > 0));
+
+        FlightModel flight = FlightLogic.GetFlightById(FlightID);
+        if (flight == null)
+        {
+            AnsiConsole.MarkupLine("[red]Flight not found.[/]");
+            WaitForKeyPress();
+            return;
+        }
+        DisplayFlight(flight);
+    }
+
+    public static void DisplayFlight(FlightModel Flight)
+    {
+        var table = new Table()
+            .Border(TableBorder.Rounded)
+            .BorderStyle(new Style(new Color(184, 123, 74)))
+            .Expand();
+
+        table.AddColumn(new TableColumn("[rgb(134,64,0)]Flight Information[/]").Centered());
+
+        var profileData = new Panel($"""
+            [rgb(134,64,0)]Airline:[/] [rgb(255,122,0)]{Flight.Airline}[/]
+            [rgb(134,64,0)]Airplane Model:[/] [rgb(255,122,0)]{Flight.AirplaneID}[/]
+            [rgb(134,64,0)]Departure Airport:[/] [rgb(255,122,0)]{Flight.DepartureAirport}[/]
+            [rgb(134,64,0)]Arrival Airport:[/] [rgb(255,122,0)]{Flight.ArrivalAirport}[/]
+            [rgb(134,64,0)]Departure Time:[/] [rgb(255,122,0)]{Flight.DepartureTime:yyyy-MM-dd}[/]
+            [rgb(134,64,0)]Arrival Time:[/] [rgb(255,122,0)]{Flight.ArrivalTime:yyyy-MM-dd}[/]
+            [rgb(134,64,0)]Price:[/] [rgb(255,122,0)]{Flight.Price + "$"}[/]
+            [rgb(134,64,0)]FlightStatus:[/] [rgb(255,122,0)]{Flight.FlightStatus}[/]
+            """)
+            .Border(BoxBorder.Rounded)
+            .BorderStyle(new Style(new Color(184, 123, 74)))
+            .Padding(1, 1);
+
+        table.AddRow(profileData);
+        AnsiConsole.Write(table);
+
+        AnsiConsole.MarkupLine("\n[grey]Press any key to return to the main menu...[/]");
+        Console.ReadKey(true);
+    }
+
 }
