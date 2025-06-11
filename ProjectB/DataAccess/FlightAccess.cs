@@ -19,7 +19,18 @@ public class FlightAccess : IFlightAccess
                         VALUES 
                         (@flightID, @airline, @airplaneID, @availableSeats, 
                          @departureAirport, @arrivalAirport, @departureTime, @arrivalTime, @flightStatus)";
-        _connection.Execute(sql, flight);
+        _connection.Execute(sql, new
+        {
+            flightID = flight.FlightID,
+            airline = flight.Airline,
+            airplaneID = flight.AirplaneID,
+            availableSeats = flight.AvailableSeats,
+            departureAirport = flight.DepartureAirport,
+            arrivalAirport = flight.ArrivalAirport,
+            departureTime = flight.DepartureTime,
+            arrivalTime = flight.ArrivalTime,
+            flightStatus = flight.FlightStatus
+        });
     }
 
     /// <summary>
@@ -48,8 +59,19 @@ public class FlightAccess : IFlightAccess
                             DepartureTime = @departureTime, 
                             ArrivalTime = @arrivalTime,
                             FlightStatus = @flightStatus 
-                        WHERE FlightID = @FlightID";
-        _connection.Execute(sql, flight);
+                        WHERE FlightID = @flightID";
+        _connection.Execute(sql, new
+        {
+            flightID = flight.FlightID,
+            airline = flight.Airline,
+            airplaneID = flight.AirplaneID,
+            availableSeats = flight.AvailableSeats,
+            departureAirport = flight.DepartureAirport,
+            arrivalAirport = flight.ArrivalAirport,
+            departureTime = flight.DepartureTime,
+            arrivalTime = flight.ArrivalTime,
+            flightStatus = flight.FlightStatus
+        });
     }
 
     /// <summary>
@@ -73,4 +95,39 @@ public class FlightAccess : IFlightAccess
         return result;
     }
 
+    public List<FlightModel> GetPastFlights(DateTime currentDate)
+    {
+        string sql = $@"SELECT * FROM {Table} 
+                        WHERE DepartureTime < @CurrentTime";
+
+        return _connection.Query<FlightModel>(sql, new { CurrentTime = currentDate }).ToList();
+    }
+
+    public List<FlightModel> GetUpcomingFlights(DateTime departingSoonDate)
+    {
+        string sql = $@"SELECT * FROM {Table} 
+                        WHERE DepartureTime <= @SoonDate";
+
+        return _connection.Query<FlightModel>(sql, new { SoonDate = departingSoonDate }).ToList();
+    }
+
+        public List<FlightModel> GetFilteredFlights(
+            string? origin,
+            string? destination,
+            DateTime departureDate)
+        {
+            string sql = $@"SELECT * FROM {Table}
+                            WHERE DepartureTime = @DepartureDate
+                            AND DepartureAirport LIKE @Origin
+                            AND ArrivalAirport LIKE @Destination";
+            
+            var parameters = new
+            {
+                DepartureDate = departureDate.Date,
+                Origin = string.IsNullOrEmpty(origin) ? "%" : origin,
+                Destination = string.IsNullOrEmpty(destination) ? "%" : destination
+            };
+
+            return _connection.Query<FlightModel>(sql, parameters).ToList();
+        }
 }
