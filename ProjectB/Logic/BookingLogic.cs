@@ -34,7 +34,7 @@ public static class BookingLogic
         }
     }
 
-    public static void CreateBooking(User user, FlightModel flight, SeatModel seat, int amountLuggage, bool insuranceStatus)
+    public static void CreateBooking(User user, FlightModel flight, SeatModel seat, int amountLuggage, bool isInsurance = false)
     {
         var booking = new BookingModel
         {
@@ -48,7 +48,7 @@ public static class BookingLogic
             BookingStatus = "Confirmed",
             PaymentStatus = "Paid",
             AmountLuggage = amountLuggage,
-            InsuranceStatus = insuranceStatus
+            InsuranceStatus = isInsurance // Default to false, can be set later if needed
         };
         BookingAccessService.AddBooking(booking);
     }
@@ -236,33 +236,63 @@ public static class BookingLogic
 
         if (SessionManager.CurrentUser == null)
         {
-            AnsiConsole.MarkupLine("[green]Booking successful![/]");
+            int AmountLuggage = PurchaseExtraLuggage();
+            bool insuranceStatus = AnsiConsole.Prompt(
+            new SelectionPrompt<bool>()
+            .Title("[#864000]Do you want to purchase travel insurance?[/]")
+            .AddChoices(new[] { true, false })
+            .UseConverter(choice => choice ? "Yes" : "No")
+            .HighlightStyle(highlightStyle)
+            );
+
+            decimal finalPrice = (decimal)selectedSeat.Price;
+            if (AmountLuggage > 0)
+            {
+                finalPrice += 500 * AmountLuggage; // FIX PRICE <================================================================================================
+            }
+            if (insuranceStatus)
+            {
+                finalPrice += 100000000000; //FIX PRICE <================================================================================================
+                AnsiConsole.MarkupLine("[green]Travel insurance purchased![/]");
+            }
+
             AnsiConsole.MarkupLine("[yellow]You are currently logged in as a guest user. Bookings will not be saved to the database.[/]");
             string email = AnsiConsole.Prompt(
                 new TextPrompt<string>("[green]Enter your email address for booking confirmation:[/]")
                     .PromptStyle(highlightStyle));
 
-            BookingUI.DisplayBookingDetails(selectedSeat, flight, email);
+            BookingUI.DisplayBookingDetails(selectedSeat, flight, email, finalPrice);
             SessionManager.Logout(); // Log out guest user after booking
         }
         else // Registered user
         {
             int AmountLuggage = PurchaseExtraLuggage();
 
-            BookingLogic.CreateBooking(SessionManager.CurrentUser, flight, selectedSeat, AmountLuggage);
-            AnsiConsole.MarkupLine("[green]Booking successful![/]");
+            CreateBooking(SessionManager.CurrentUser, flight, selectedSeat, AmountLuggage);
 
-            // Calculate price and apply discounts
+            bool insuranceStatus = AnsiConsole.Prompt(
+            new SelectionPrompt<bool>()
+            .Title("[#864000]Do you want to purchase travel insurance?[/]")
+            .AddChoices(new[] { true, false })
+            .UseConverter(choice => choice ? "Yes" : "No")
+            .HighlightStyle(highlightStyle)
+            );
+
             decimal finalPrice = (decimal)selectedSeat.Price;
-
             if (AmountLuggage > 0)
             {
-                finalPrice += 500 * AmountLuggage;
+                finalPrice += 500 * AmountLuggage; //FIX PRICE <================================================================================================
             }
+            if (insuranceStatus)
+            {
+                finalPrice += 100000000000; //FIX PRICE <================================================================================================
+                AnsiConsole.MarkupLine("[green]Travel insurance purchased![/]");
+            }
+
             if (SessionManager.CurrentUser.FirstTimeDiscount)
             {
-                finalPrice *= 0.9m;
-                AnsiConsole.MarkupLine("[green]Congratulations! You have received a 10% discount on your first booking![/]");
+                finalPrice *= 0.75m;
+                AnsiConsole.MarkupLine("[green]Congratulations! You have received a 25% discount on your first booking![/]");
                 SessionManager.CurrentUser.FirstTimeDiscount = false;
                 UserLogic.UpdateUser(SessionManager.CurrentUser);
             }
@@ -271,7 +301,6 @@ public static class BookingLogic
                 finalPrice *= 0.8m;
                 AnsiConsole.MarkupLine("[green]Senior discount (20%) applied![/]");
             }
-
             BookingUI.DisplayBookingDetails(selectedSeat, flight, null, finalPrice);
         }
 
