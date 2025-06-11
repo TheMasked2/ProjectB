@@ -420,12 +420,12 @@ public static class UserUI
             }
             else if (action == "Cancel a booking")
             {
-                BookingUI.CancelBookingPrompt();
+                BookingLogic.CancelBookingPrompt();
                 AnsiConsole.Clear();
             }
             else if (action == "Modify a booking")
             {
-                BookingUI.ModifyBookingPrompt();
+                BookingLogic.ModifyBookingPrompt();
                 AnsiConsole.Clear();
             }
             else if (action == "View past bookings")
