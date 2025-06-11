@@ -60,14 +60,16 @@ public static class AdminUI
             {
                 "Add a flight",
                 "Edit a flight",
-                "Delete a flight",
+                "Remove a flight",
+                "View upcoming flights",
+                "View past flights",
                 "Back to main menu"
             };
 
             var input = AnsiConsole.Prompt(
                 new SelectionPrompt<string>()
                     .Title("[yellow]Select a flight management option:[/]")
-                    .PageSize(5)
+                    .PageSize(6)
                     .AddChoices(choices));
 
             switch (input)
@@ -80,6 +82,12 @@ public static class AdminUI
                     break;
                 case "Remove a flight":
                     FlightUI.RemoveFlight();
+                    break;
+                case "View upcoming flights":
+                    FlightUI.DisplayFilteredUpcomingFlights(); 
+                    break;
+                case "View past flights":
+                    PastFlightUI.DisplayFilteredPastFlights(); 
                     break;
                 case "Back to main menu":
                     return;

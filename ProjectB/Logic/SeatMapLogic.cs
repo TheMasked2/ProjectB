@@ -6,10 +6,7 @@ public class SeatMapLogic
 
     public List<SeatModel> GetSeatMap(int flightId)
     {
-        var seatTuples = FlightSeatAccessService.GetSeatsForFlight(flightId);
-        foreach (var (seat, isOccupied) in seatTuples)
-            seat.IsOccupied = isOccupied;
-        return seatTuples.Select(t => t.seat).ToList();
+        return FlightSeatAccessService.GetSeatsForFlight(flightId);
     }
 
     public (List<string> seatLetters, List<int> rowNumbers) GetSeatLayout(List<SeatModel> seats)

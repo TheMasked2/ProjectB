@@ -1,3 +1,4 @@
+using Microsoft.VisualBasic;
 using Spectre.Console;
 
 public static class FlightUI
@@ -7,13 +8,15 @@ public static class FlightUI
     private static readonly Style errorStyle = new(new Color(162, 52, 0));
     private static readonly Style successStyle = new(new Color(194, 87, 0));
 
-    private static void WaitForKeyPress()
+    public static void WaitForKeyPress()
     {
         AnsiConsole.MarkupLine("\n[grey]Press any key to return to the main menu...[/]");
         Console.ReadKey(true);
     }
 
-    public static void DisplayAllFlights()
+
+    
+    public static void DisplayFilteredUpcomingFlights()
     {
         AnsiConsole.Clear();
         AnsiConsole.Write(
@@ -22,21 +25,22 @@ public static class FlightUI
                 .Color(Color.Orange1));
 
         bool hasFilters = false;
-        AnsiConsole.MarkupLine("\n[#864000]Enter filter criteria (fields that start with * are mandatory!):[/]");
+        AnsiConsole.MarkupLine("\n[#864000]Enter filter criteria:[/]");
 
         string origin = AnsiConsole.Prompt(
-            new TextPrompt<string>("[#864000]*Origin airport (e.g., LAX):[/]")
+            new TextPrompt<string>("[#864000]Origin airport (e.g., LAX):[/]")
                 .PromptStyle(highlightStyle));
         hasFilters |= !string.IsNullOrWhiteSpace(origin);
 
         string destination = AnsiConsole.Prompt(
-            new TextPrompt<string>("[#864000]*Destination airport (e.g., JFK):[/]")
+            new TextPrompt<string>("[#864000]Destination airport (e.g., JFK):[/]")
                 .PromptStyle(highlightStyle));
         hasFilters |= !string.IsNullOrWhiteSpace(destination);
 
         string startDateInput = AnsiConsole.Prompt(
-        new TextPrompt<string>("[#864000]*Start date (yyyy-MM-dd):[/]")
-            .PromptStyle(highlightStyle));
+            new TextPrompt<string>("[#864000]Start date (yyyy-MM-dd):[/]")
+                .DefaultValue(DateTime.Now.ToString("yyyy-MM-dd"))
+                .PromptStyle(highlightStyle));
 
         DateTime startDate;
         if (!DateTime.TryParse(startDateInput, out startDate))
@@ -47,49 +51,52 @@ public static class FlightUI
         }
         hasFilters = true;
 
-        string endDateInput = AnsiConsole.Prompt(
-            new TextPrompt<string>("[#864000]*End date (yyyy-MM-dd):[/]")
-                .PromptStyle(highlightStyle));
+        var seatClassOptions = new List<string>
+            {
+                "Luxury",
+                "Business",
+                "Premium",
+                "Standard Extra Legroom",
+                "Standard"
+            };
 
-        DateTime endDate;
-        if (!DateTime.TryParse(endDateInput, out endDate))
+        var input = AnsiConsole.Prompt(
+            new SelectionPrompt<string>()
+                .Title("[#864000]Select seat class (default is 'Standard'):[/]")
+                .PageSize(6)
+                .AddChoices(seatClassOptions));
+
+        string seatClass;
+        switch (input)
         {
-            AnsiConsole.MarkupLine("[red]Invalid end date format. Please use yyyy-MM-dd.[/]");
-            WaitForKeyPress();
-            return; // or handle the error as needed
-        }
-        hasFilters = true;
-
-        string minPriceInput = AnsiConsole.Prompt(
-            new TextPrompt<string>("[#864000]Minimum price:[/]")
-                .PromptStyle(highlightStyle)
-                .AllowEmpty());
-        int? minPrice = !string.IsNullOrWhiteSpace(minPriceInput) && int.TryParse(minPriceInput, out int mp) ? mp : null;
-        hasFilters |= minPrice.HasValue;
-
-        string maxPriceInput = AnsiConsole.Prompt(
-            new TextPrompt<string>("[#864000]Maximum price:[/]")
-                .PromptStyle(highlightStyle)
-                .AllowEmpty());
-        int? maxPrice = !string.IsNullOrWhiteSpace(maxPriceInput) && int.TryParse(maxPriceInput, out int mxp) ? mxp : null;
-        hasFilters |= maxPrice.HasValue;
-
-        string seatClass = null;
-        if (!SessionManager.CurrentUser.IsAdmin)
-        {
-            seatClass = AnsiConsole.Prompt(
-                new TextPrompt<string>("[#864000]*Seat class (e.g., Economy):[/]")
-                    .PromptStyle(highlightStyle));
+            case "Standard":
+                seatClass = "Standard";
+                break;
+            case "Business":
+                seatClass = "Business";
+                break;
+            case "Premium":
+                seatClass = "Premium";
+                break;
+            case "Luxury":
+                seatClass = "Luxury";
+                break;
+            case "Standard Extra Legroom":
+                seatClass = "Standard Extra Legroom";
+                break;
+            default:
+                seatClass = "Standard"; // Any
+                break;
         }
 
-        var flights = FlightLogic.GetFilteredFlights(origin, destination, startDate, endDate, minPrice, maxPrice, seatClass);
+        var flights = FlightLogic.GetFilteredFlights(origin, destination, startDate);
 
         if (!hasFilters)
         {
             AnsiConsole.MarkupLine("\n[yellow]No filters applied - showing all flights[/]");
         }
 
-        DisplayFilteredFlights(flights);
+        AnsiConsole.Write(FlightLogic.DisplayFilteredFlights(flights, seatClass));
         WaitForKeyPress();
     }
 
@@ -172,15 +179,6 @@ public static class FlightUI
                         new TextPrompt<DateTime>("[#864000]Enter Arrival Time (yyyy-MM-dd HH:mm):[/]")
                             .PromptStyle(highlightStyle));
 
-                    // flight.AvailableSeats = AnsiConsole.Prompt(
-                    //     new TextPrompt<int>("[#864000]Enter Available Seats:[/]")
-                    //         .PromptStyle(highlightStyle));
-
-                    // flight.Price = AnsiConsole.Prompt(
-                    //     new TextPrompt<int>("[#864000]Enter Price:[/]")
-                    //         .PromptStyle(highlightStyle));
-
-                    // Validate and add flight
                     if (FlightLogic.AddFlight(flight))
                     {
                         AnsiConsole.MarkupLine("[green]Flight added successfully![/]");
@@ -209,7 +207,7 @@ public static class FlightUI
 
     public static void EditFlight()
     {
-        DisplayAllFlights();
+        DisplayFilteredUpcomingFlights();
 
         var flightId = AnsiConsole.Prompt(
             new TextPrompt<int>("[#864000]Enter Flight ID to edit:[/]")
@@ -266,7 +264,7 @@ public static class FlightUI
 
     public static void RemoveFlight()
     {
-        DisplayAllFlights();
+        DisplayFilteredUpcomingFlights();
 
         var flightId = AnsiConsole.Prompt(
             new TextPrompt<int>("[#864000]Enter Flight ID to remove:[/]")
