@@ -1,41 +1,35 @@
 using Microsoft.Data.Sqlite;
 using Dapper;
 using ProjectB.DataAccess;
-using System.Collections.Generic;
-using System.Linq;
 
 public class FlightSeatAccess : IFlightSeatAccess
 {
     private readonly SqliteConnection _connection = new SqliteConnection($"Data Source=DataSources/database.db");
-    private const string Table = "FlightSeats";
+    private const string FlightSeatsTable = "FlightSeats";
+    private const string SeatsTable = "Seats";
 
-    public List<(SeatModel seat, bool isOccupied)> GetSeatsForFlight(int flightId)
+    public List<SeatModel> GetSeatsForFlight(int flightId)
     {
-        string sql = @"
+        string sql = $@"
             SELECT 
-                S.*,
-                FS.IsOccupied
-            FROM 
-                Seats S
-            INNER JOIN 
-                FlightSeats FS ON S.SeatID = FS.SeatID
-            WHERE 
-                FS.FlightID = @FlightID";
-
-        return _connection.Query<SeatModel, long, (SeatModel seat, bool isOccupied)>(
-            sql,
-            (seat, isOccupiedLong) => {
-                bool isOccupied = isOccupiedLong == 1; 
-                return (seat, isOccupied);
-            },
-            new { FlightID = flightId },
-            splitOn: "IsOccupied"
-        ).ToList();
+                s.SeatID,
+                s.AirplaneID,
+                s.RowNumber,
+                s.SeatPosition,
+                s.SeatType,
+                s.Price,
+                fs.IsOccupied
+            FROM {FlightSeatsTable} fs
+            INNER JOIN {SeatsTable} s ON fs.SeatID = s.SeatID
+            WHERE fs.FlightID = @FlightID
+            ORDER BY s.RowNumber, s.SeatPosition
+        ";
+        return _connection.Query<SeatModel>(sql, new { FlightID = flightId }).ToList();
     }
 
     public bool HasAnySeatsForFlight(int flightId)
     {
-        string sql = $"SELECT 1 FROM {Table} WHERE FlightID = @FlightID LIMIT 1";
+        string sql = $"SELECT 1 FROM {FlightSeatsTable} WHERE FlightID = @FlightID LIMIT 1";
         return _connection.QueryFirstOrDefault<int?>(sql, new { FlightID = flightId }) != null;
     }
 
@@ -43,20 +37,20 @@ public class FlightSeatAccess : IFlightSeatAccess
     {
         foreach (var (flightId, airplaneId) in toBackfill)
         {
-            string sql = $@"INSERT INTO {Table} (FlightID, SeatID, IsOccupied) VALUES (@FlightID, @SeatID, 0)";
+            string sql = $@"INSERT INTO {FlightSeatsTable} (FlightID, SeatID, IsOccupied) VALUES (@FlightID, @SeatID, 0)";
             _connection.Execute(sql, new { FlightID = flightId, SeatID = airplaneId });
         }
     }
 
     public void SetSeatOccupied(int flightId, string seatId, bool isOccupied)
     {
-        string sql = $"UPDATE {Table} SET IsOccupied = @IsOccupied WHERE FlightID = @FlightID AND SeatID = @SeatID";
+        string sql = $"UPDATE {FlightSeatsTable} SET IsOccupied = @IsOccupied WHERE FlightID = @FlightID AND SeatID = @SeatID";
         _connection.Execute(sql, new { IsOccupied = isOccupied, FlightID = flightId, SeatID = seatId });
     }
 
     public void CreateFlightSeats(int flightId, string airplaneId)
     {
-        string sql = $@"INSERT INTO {Table} (FlightID, SeatID, IsOccupied) VALUES (@FlightID, @SeatID, 0)";
+        string sql = $@"INSERT INTO {FlightSeatsTable} (FlightID, SeatID, IsOccupied) VALUES (@FlightID, @SeatID, 0)";
         _connection.Execute(sql, new { FlightID = flightId, SeatID = airplaneId });
     }
 }

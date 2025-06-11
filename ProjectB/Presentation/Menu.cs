@@ -11,9 +11,9 @@ public static class Menu
                 new FigletText("Airtreides Booking")
                     .Centered()
                     .Color(Color.Cyan1));
-    
+
             var choices = new List<string>();
-    
+
             if (SessionManager.CurrentUser == null)
             {
                 choices.AddRange(new[]
@@ -30,21 +30,11 @@ public static class Menu
                 {
                     "Flight management",
                     "User management",
-                    "View all flights",
                     "View user info",
                     "Logout"
                 });
             }
-            else if (SessionManager.CurrentUser.Guest)
-            {
-                choices.AddRange(new[]
-                {
-                    "Login",
-                    "Register",
-                    "Guest",
-                    "Exit"
-                });
-            }
+
             else
             {
                 choices.AddRange(new[]
@@ -53,6 +43,7 @@ public static class Menu
                     "View bookings",
                     "View user info",
                     "Edit user info",
+                    "Search for flights",
                     "Logout"
                 });
             }
@@ -69,19 +60,9 @@ public static class Menu
                     Console.Clear();
                     Environment.Exit(0);
                     break;
-                
+
                 case "Guest":
-                    AnsiConsole.Clear();
-                    BookingUI.DisplayAllBookableFlights();
-                    Console.ReadKey();
-                    SessionManager.CurrentUser = new User
-                    {
-                        UserID = 0,
-                        FirstName = "Guest",
-                        LastName = "User",
-                        IsAdmin = false,
-                        Guest = true
-                    };
+                    UserUI.ShowGuestMenu();
                     break;
 
                 case "Login":
@@ -99,10 +80,6 @@ public static class Menu
 
                 case "Book a flight":
                     BookingUI.DisplayAllBookableFlights();
-                    break;
-
-                case "View all flights" when SessionManager.CurrentUser?.IsAdmin == true:
-                    FlightUI.DisplayAllFlights();
                     break;
 
                 case "Flight management" when SessionManager.CurrentUser?.IsAdmin == true:
@@ -124,6 +101,11 @@ public static class Menu
                 case "Edit user info":
                     UserUI.UserEditUser();
                     break;
+
+                case "Search for flights":
+                    FlightUI.SearchFlights();
+                    break;
+                
             }
         }
     }

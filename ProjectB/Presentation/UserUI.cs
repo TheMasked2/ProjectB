@@ -172,21 +172,21 @@ public static class UserUI
                 .Border(BoxBorder.Double)
                 .BorderStyle(errorStyle);
             AnsiConsole.Write(errorPanel);
-            
+
             AnsiConsole.MarkupLine("\n[grey]Press any key to continue...[/]");
             Console.ReadKey(true);
             return;
         }
-    
+
         AnsiConsole.Clear();
         AnsiConsole.Write(new Rule("[#FF7A00]Edit Your Profile[/]").RuleStyle(primaryStyle));
         AnsiConsole.WriteLine();
-    
+
         User currentUser = SessionManager.CurrentUser;
-        
+
         DisplayUserInfo();
         AnsiConsole.WriteLine();
-        
+
         // Create a copy of the user
         User editedUser = new User
         {
@@ -202,47 +202,47 @@ public static class UserUI
             AccCreatedAt = currentUser.AccCreatedAt,  // Can't be changed
             IsAdmin = currentUser.IsAdmin             // Can't be changed
         };
-        
+
         // Edit personal information fields
         editedUser.FirstName = AnsiConsole.Prompt(
             new TextPrompt<string>("[#864000]First name:[/]")
                 .DefaultValue(currentUser.FirstName)
                 .PromptStyle(highlightStyle));
-        
+
         editedUser.LastName = AnsiConsole.Prompt(
             new TextPrompt<string>("[#864000]Last name:[/]")
                 .DefaultValue(currentUser.LastName)
                 .PromptStyle(highlightStyle));
-        
+
         editedUser.PhoneNumber = AnsiConsole.Prompt(
             new TextPrompt<string>("[#864000]Phone number:[/]")
                 .DefaultValue(currentUser.PhoneNumber)
                 .PromptStyle(highlightStyle));
-        
+
         editedUser.City = AnsiConsole.Prompt(
             new TextPrompt<string>("[#864000]City:[/]")
                 .DefaultValue(currentUser.City)
                 .PromptStyle(highlightStyle));
-        
+
         editedUser.Country = AnsiConsole.Prompt(
             new TextPrompt<string>("[#864000]Country:[/]")
                 .DefaultValue(currentUser.Country)
                 .PromptStyle(highlightStyle));
-        
+
         bool changePassword = AnsiConsole.Prompt(
             new SelectionPrompt<string>()
                 .Title("[#864000]Do you want to change your password?[/]")
                 .PageSize(3)
                 .HighlightStyle(highlightStyle)
                 .AddChoices(new[] { "No", "Yes" })) == "Yes";
-        
+
         if (changePassword)
         {
             string currentPassword = AnsiConsole.Prompt(
                 new TextPrompt<string>("[#864000]Enter your current password:[/]")
                     .Secret()
                     .PromptStyle(highlightStyle));
-            
+
             if (UserLogic.VerifyPassword(currentUser.EmailAddress, currentPassword))
             {
                 bool passwordsMatch = false;
@@ -252,12 +252,12 @@ public static class UserUI
                         new TextPrompt<string>("[#864000]Enter new password:[/]")
                             .Secret()
                             .PromptStyle(highlightStyle));
-                    
+
                     string confirmPassword = AnsiConsole.Prompt(
                         new TextPrompt<string>("[#864000]Confirm new password:[/]")
                             .Secret()
                             .PromptStyle(highlightStyle));
-                    
+
                     if (newPassword == confirmPassword)
                     {
                         editedUser.Password = newPassword;
@@ -269,7 +269,7 @@ public static class UserUI
                             .Border(BoxBorder.Rounded)
                             .BorderStyle(errorStyle);
                         AnsiConsole.Write(passwordMismatchPanel);
-                        
+
                         AnsiConsole.MarkupLine("\n[grey]Press any key to try again or ESC to exit...[/]");
                         try
                         {
@@ -294,7 +294,7 @@ public static class UserUI
                 AnsiConsole.Write(wrongPasswordPanel);
             }
         }
-        
+
         // Confirm changes
         bool confirmChanges = AnsiConsole.Prompt(
             new SelectionPrompt<string>()
@@ -302,27 +302,27 @@ public static class UserUI
                 .PageSize(3)
                 .HighlightStyle(highlightStyle)
                 .AddChoices(new[] { "Yes", "No" })) == "Yes";
-        
+
         if (!confirmChanges)
         {
             var cancelPanel = new Panel("[yellow]Profile update canceled.[/]")
                 .Border(BoxBorder.Rounded)
                 .BorderStyle(primaryStyle);
             AnsiConsole.Write(cancelPanel);
-            
+
             AnsiConsole.MarkupLine("\n[grey]Press any key to continue...[/]");
             Console.ReadKey(true);
             return;
         }
-        
+
         // Save changes
         bool updateSuccess = UserLogic.UpdateUser(editedUser);
-        
+
         if (updateSuccess)
         {
             // Update the session with the new user data
             SessionManager.SetCurrentUser(editedUser);
-            
+
             var successPanel = new Panel("[#FFD58A]Your profile has been updated successfully![/]")
                 .Border(BoxBorder.Double)
                 .BorderStyle(successStyle);
@@ -334,7 +334,7 @@ public static class UserUI
                 .Border(BoxBorder.Double)
                 .BorderStyle(errorStyle);
             AnsiConsole.Write(errorPanel);
-            
+
             if (UserLogic.errors.Count > 0)
             {
                 var escapedErrors = string.Join("\n", UserLogic.errors.Select(Spectre.Console.Markup.Escape));
@@ -348,7 +348,7 @@ public static class UserUI
                 UserLogic.errors.Clear();
             }
         }
-        
+
         AnsiConsole.MarkupLine("\n[grey]Press any key to continue...[/]");
         Console.ReadKey(true);
     }
@@ -415,7 +415,7 @@ public static class UserUI
 
             if (action == "View upcoming bookings")
             {
-                BookingUI.ViewUserBookings(true);
+                BookingLogic.ViewUserBookings(true);
                 AnsiConsole.Clear();
             }
             else if (action == "Cancel a booking")
@@ -430,7 +430,7 @@ public static class UserUI
             }
             else if (action == "View past bookings")
             {
-                BookingUI.ViewUserBookings(false);
+                BookingLogic.ViewUserBookings(false);
                 AnsiConsole.Clear();
             }
             else // Back to main menu
@@ -440,4 +440,53 @@ public static class UserUI
             }
         }
     }
+
+
+    public static void ShowGuestMenu()
+        {
+            SessionManager.CurrentUser = new User
+                        {
+                            UserID = 0,
+                            FirstName = "Guest",
+                            LastName = "User",
+                            IsAdmin = false,
+                            Guest = true
+                        };
+            
+            while (true)
+            {
+                AnsiConsole.Clear();
+                AnsiConsole.Write(new FigletText("Guest Menu").Centered().Color(Color.Orange1));
+
+                var choices = new List<string>
+                {
+                    "Book a flight",
+                    "Search for flights",
+                    "Back to main menu"
+                };
+
+                var input = AnsiConsole.Prompt(
+                    new SelectionPrompt<string>()
+                        .Title("[yellow]Select an option:[/]")
+                        .PageSize(5)
+                        .AddChoices(choices));
+
+                switch (input)
+                {
+                    case "Book a flight":
+                        BookingUI.DisplayAllBookableFlights();
+                        break;
+                    case "Search for flights":
+                        FlightUI.SearchFlights();
+                        break;
+                    case "Back to main menu":
+                        UserLogout();
+                        break;
+                }
+                
+                if (input == "Back to main menu")
+                    break;
+                AnsiConsole.MarkupLine("[yellow]Returning to main menu...[/]");
+            }
+        }
 }
