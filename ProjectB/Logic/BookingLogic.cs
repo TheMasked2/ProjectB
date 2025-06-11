@@ -34,7 +34,7 @@ public static class BookingLogic
         }
     }
 
-    public static void CreateBooking(User user, FlightModel flight, SeatModel seat, int amountLuggage, bool isInsurance = false)
+    public static void CreateBooking(User user, FlightModel flight, SeatModel seat, int amountLuggage, bool isInsurance)
     {
         var booking = new BookingModel
         {
@@ -48,7 +48,7 @@ public static class BookingLogic
             BookingStatus = "Confirmed",
             PaymentStatus = "Paid",
             AmountLuggage = amountLuggage,
-            InsuranceStatus = isInsurance // Default to false, can be set later if needed
+            InsuranceStatus = isInsurance
         };
         BookingAccessService.AddBooking(booking);
     }
@@ -267,9 +267,6 @@ public static class BookingLogic
         else // Registered user
         {
             int AmountLuggage = PurchaseExtraLuggage();
-
-            CreateBooking(SessionManager.CurrentUser, flight, selectedSeat, AmountLuggage);
-
             bool insuranceStatus = AnsiConsole.Prompt(
             new SelectionPrompt<bool>()
             .Title("[#864000]Do you want to purchase travel insurance?[/]")
@@ -277,6 +274,8 @@ public static class BookingLogic
             .UseConverter(choice => choice ? "Yes" : "No")
             .HighlightStyle(highlightStyle)
             );
+
+            CreateBooking(SessionManager.CurrentUser, flight, selectedSeat, AmountLuggage, insuranceStatus);
 
             decimal finalPrice = (decimal)selectedSeat.Price;
             if (AmountLuggage > 0)
