@@ -93,9 +93,52 @@ public static class BookingLogic
 
     public static int GetNextBookingId()
     {
-        var all = BookingAccessService.GetBookingsByUser(0); // or a method to get all bookings
+        var all = BookingAccessService.GetBookingsByUser(0);
         return all.Any() ? all.Max(b => b.BookingID) + 1 : 1;
     }
+
+
+    public static bool CancelBooking(int bookingId)
+    {
+        var booking = BookingAccessService.GetBookingById(bookingId);
+        if (booking == null)
+        {
+            AnsiConsole.MarkupLine($"[red]Booking with ID {bookingId} not found.[/]");
+            return false;
+        }
+
+        booking.BookingStatus = "Cancelled";
+        BookingAccessService.UpdateBooking(booking);
+
+        // Free up the seat
+        var flight = FlightAccessService.GetById(booking.FlightID);
+        if (flight != null)
+        {
+            FlightSeatAccessService.SetSeatOccupied(booking.FlightID, booking.SeatID, false);
+        }
+
+        AnsiConsole.MarkupLine($"[green]Booking with ID {bookingId} has been cancelled.[/]");
+        return true;
+    }
+    public static bool ModifyBooking(int bookingId, string newSeatId, int newLuggageAmount)
+    {
+        var booking = BookingAccessService.GetBookingById(bookingId);
+        if (booking == null)
+        {
+            AnsiConsole.MarkupLine($"[red]Booking with ID {bookingId} not found.[/]");
+            return false;
+        }
+
+        FlightSeatAccessService.SetSeatOccupied(booking.FlightID, booking.SeatID, false);
+
+        FlightSeatAccessService.SetSeatOccupied(booking.FlightID, newSeatId, true);
+
+        booking.SeatID = newSeatId;
+        booking.AmountLuggage = newLuggageAmount;
+        BookingAccessService.UpdateBooking(booking);
+
+        AnsiConsole.MarkupLine($"[green]Booking with ID {bookingId} has been updated.[/]");
+        return true;
 
     public static void BookingAFlight(int flightID)
     {
