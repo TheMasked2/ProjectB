@@ -69,6 +69,8 @@ public class FlightAccess : IFlightAccess
     public List<FlightModel> GetAllFlightData()
     {
         string sql = $@"SELECT * FROM {Table}";
-        return _connection.Query<FlightModel>(sql).ToList();
+        var result = _connection.Query<FlightModel>(sql).ToList();
+        return result;
     }
+
 }

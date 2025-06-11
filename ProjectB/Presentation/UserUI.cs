@@ -415,12 +415,12 @@ public static class UserUI
 
             if (action == "View upcoming bookings")
             {
-                BookingUI.ViewUserBookings(true);
+                BookingLogic.ViewUserBookings(true);
                 AnsiConsole.Clear();
             }
             else if (action == "View past bookings")
             {
-                BookingUI.ViewUserBookings(false);
+                BookingLogic.ViewUserBookings(false);
                 AnsiConsole.Clear();
             }
             else // Back to main menu
