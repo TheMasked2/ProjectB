@@ -119,6 +119,260 @@ public static class BookingUI
         }
     }   
 
+    private static void BookingAFlight(int flightID)
+    {
+        var flight = FlightLogic.GetFlightById(flightID);
+        if (flight == null)
+        {
+            AnsiConsole.MarkupLine("[red]Flight not found.[/]");
+            WaitForKeyPress();
+            return;
+        }
+
+        // Use flightID for seat map and booking
+        var seats = SeatMapLogicService.GetSeatMap(flightID);
+        if (seats == null || seats.Count == 0)
+        {
+            AnsiConsole.MarkupLine("[red]No seats found for this airplane.[/]");
+            WaitForKeyPress();
+            return;
+        }
+
+        // Arrange seat letters for known layouts
+        var (seatLettersRaw, rowNumbers) = SeatMapLogicService.GetSeatLayout(seats);
+        List<string> seatLetters;
+        int colCount = seatLettersRaw.Count;
+        if (colCount == 2)
+            seatLetters = new List<string> { "A", "B" };
+        else if (colCount == 4)
+            seatLetters = new List<string> { "A", "B", "C", "D" };
+        else if (colCount == 6)
+            seatLetters = new List<string> { "A", "B", "C", "D", "E", "F" };
+        else if (colCount == 8)
+            seatLetters = new List<string> { "A", "B", "C", "D", "E", "F", "G", "H" };
+        else if (colCount == 10)
+            seatLetters = new List<string> { "A", "B", "C", "D", "E", "F", "G", "H", "J", "K" };
+        else
+            seatLetters = seatLettersRaw; // fallback to whatever is in the DB
+
+        // Determine aisle positions based on column count and arrangement
+        List<int> aisleAfter = new();
+        if (colCount == 2) aisleAfter.Add(0); // A | B
+        else if (colCount == 4) aisleAfter.Add(1); // A B | C D
+        else if (colCount == 6) aisleAfter.Add(2); // A B C | D E F
+        else if (colCount == 8) { aisleAfter.Add(2); aisleAfter.Add(4); } // A B C | D E | F G H
+        else if (colCount == 10) { aisleAfter.Add(2); aisleAfter.Add(6); } // A B C | D E F G | H J K
+
+        AnsiConsole.MarkupLine("[green]Seat Map:[/]");
+        var seatArt = new List<string>();
+
+        // Header with aisle separation (4 spaces for each aisle)
+        string header = "    ";
+        for (int i = 0; i < seatLetters.Count; i++)
+        {
+            header += $" {seatLetters[i]} ";
+            if (aisleAfter.Contains(i))
+                header += "    ";
+        }
+        seatArt.Add(header);
+
+        foreach (var row in rowNumbers)
+        {
+            string line = $"{row,3} ";
+            for (int i = 0; i < seatLetters.Count; i++)
+            {
+                var letter = seatLetters[i];
+                var seat = seats.FirstOrDefault(s => s.RowNumber == row && s.SeatPosition == letter);
+                if (seat == null)
+                {
+                    line += "   ";
+                }
+                else if (seat.IsOccupied)
+                {
+                    line += "[red] X [/]";
+                }
+                else
+                {
+                    var seatType = (seat.SeatType ?? "").Trim().ToLower();
+                    switch (seatType)
+                    {
+                        case "luxury":
+                            line += "[yellow] L [/]";
+                            break;
+                        case "premium":
+                            line += "[magenta] P [/]";
+                            break;
+                        case "standard extra legroom":
+                            line += "[blue] E [/]";
+                            break;
+                        case "business":
+                            line += "[cyan] B [/]";
+                            break;
+                        case "standard":
+                            line += "[green] O [/]";
+                            break;
+                        default:
+                            // Default to Economy if seat type is missing or unknown
+                            line += "[grey] ? [/]";
+                            break;
+                    }
+                }
+                if (aisleAfter.Contains(i))
+                    line += "    ";
+            }
+            seatArt.Add(line);
+        }
+
+        foreach (var l in seatArt)
+            AnsiConsole.MarkupLine(l);
+
+        AnsiConsole.MarkupLine(
+            "[yellow]L[/]=Luxury  [magenta]P[/]=Premium  [blue]E[/]=Standard Extra Legroom  [cyan]B[/]=Business  [green]O[/]=Standard  [red]X[/]=Occupied"
+        );
+
+        // Seat selection input
+        SeatModel selectedSeat = null;
+        while (selectedSeat == null)
+        {
+            var seatInput = AnsiConsole.Prompt(
+                new TextPrompt<string>("[#864000]Enter seat (e.g., 12A or A12):[/]")
+                    .PromptStyle(highlightStyle)
+            ).Trim();
+
+            string rowPart = "";
+            string letterPart = "";
+
+            // Try row+letter (e.g., 12A)
+            var rowFirst = new string(seatInput.TakeWhile(char.IsDigit).ToArray());
+            var letterAfter = new string(seatInput.SkipWhile(char.IsDigit).ToArray()).ToUpper();
+
+            // Try letter+row (e.g., A12)
+            var letterFirst = new string(seatInput.TakeWhile(char.IsLetter).ToArray()).ToUpper();
+            var rowAfter = new string(seatInput.SkipWhile(char.IsLetter).ToArray());
+
+            if (!string.IsNullOrEmpty(rowFirst) && !string.IsNullOrEmpty(letterAfter))
+            {
+                rowPart = rowFirst;
+                letterPart = letterAfter;
+            }
+            else if (!string.IsNullOrEmpty(letterFirst) && !string.IsNullOrEmpty(rowAfter))
+            {
+                rowPart = rowAfter;
+                letterPart = letterFirst;
+            }
+            else
+            {
+                AnsiConsole.MarkupLine("[red]Invalid seat format. Please enter a row number and seat letter (e.g., 12A or A12).[/]");
+                continue;
+            }
+
+            if (int.TryParse(rowPart, out int row))
+            {
+                selectedSeat = SeatMapLogicService.TryGetAvailableSeat(seats, row, letterPart);
+                if (selectedSeat == null)
+                {
+                    AnsiConsole.MarkupLine("[red]Seat does not exist or is already occupied.[/]");
+                }
+            }
+            else
+            {
+                AnsiConsole.MarkupLine("[red]Invalid row number in seat format.[/]");
+            }
+        }
+
+        // Book the seat for this flight
+        SeatMapLogicService.BookSeat(flightID, selectedSeat);
+
+
+        // Only create a booking if the user is not a guest
+        // if (SessionManager.CurrentUser != null && !SessionManager.CurrentUser.Guest)
+        // {
+        //     BookingLogic.CreateBooking(SessionManager.CurrentUser, flight, selectedSeat);
+        //     AnsiConsole.MarkupLine("[green]Booking successful![/]");
+        //     AnsiConsole.MarkupLine($"[yellow]Seat[/]: [white]{selectedSeat.RowNumber}{selectedSeat.SeatPosition}[/]");
+        //     AnsiConsole.MarkupLine($"[yellow]Seat Type[/]: [white]{selectedSeat.SeatType ?? "-"}[/]");
+        //     AnsiConsole.MarkupLine($"[yellow]Price[/]: [white]€{selectedSeat.Price:F2}[/]");
+        //     AnsiConsole.MarkupLine($"[yellow]Airplane ID[/]: [white]{selectedSeat.AirplaneID}[/]");
+        //     AnsiConsole.MarkupLine($"[yellow]Flight ID[/]: [white]{flight.FlightID}[/]");
+        //     AnsiConsole.MarkupLine($"[yellow]From[/]: [white]{flight.DepartureAirport}[/]");
+        //     AnsiConsole.MarkupLine($"[yellow]To[/]: [white]{flight.ArrivalAirport}[/]");
+        //     AnsiConsole.MarkupLine($"[yellow]Departure[/]: [white]{flight.DepartureTime:g}[/]");
+        //     AnsiConsole.MarkupLine($"[yellow]Arrival[/]: [white]{flight.ArrivalTime:g}[/]");
+        // }
+        if (SessionManager.CurrentUser == null)
+        {
+            AnsiConsole.MarkupLine("[yellow]You are currently logged in as a guest user. Bookings will not be saved.[/]");
+            int AmountLuggage = PurchaseExtraLuggage();
+            bool insuranceStatus = AnsiConsole.Prompt(
+                new SelectionPrompt<bool>()
+                    .Title("[#864000]Do you want to purchase travel insurance?[/]")
+                    .AddChoices(new[] { true, false })
+                    .UseConverter(choice => choice ? "Yes" : "No")
+                    .HighlightStyle(highlightStyle)
+            );
+            decimal finalPrice = (decimal)selectedSeat.Price;
+            if (AmountLuggage > 0)
+            {
+                finalPrice += 500 * AmountLuggage;
+            }
+            if (insuranceStatus)
+            {
+                finalPrice += 100000000000;
+                AnsiConsole.MarkupLine("[green]Travel insurance purchased![/]");
+            }
+            string email = AnsiConsole.Prompt(
+                new TextPrompt<string>("[green]Enter your email address for booking confirmation:[/]")
+                    .PromptStyle(highlightStyle)
+            );
+            AnsiConsole.MarkupLine("[green]Booking successful![/]");
+            DisplayBookingDetails(selectedSeat, flight, AmountLuggage, email, finalPrice);
+            SessionManager.Logout(); // Log out guest user after booking
+    }
+        else // Registered user
+        {
+            int AmountLuggage = PurchaseExtraLuggage();
+            bool insuranceStatus = AnsiConsole.Prompt(
+                new SelectionPrompt<bool>()
+                    .Title("[#864000]Do you want to purchase travel insurance?[/]")
+                    .AddChoices(new[] { true, false })
+                    .UseConverter(choice => choice ? "Yes" : "No")
+                    .HighlightStyle(highlightStyle)
+            );
+
+            BookingLogic.CreateBooking(SessionManager.CurrentUser, flight, selectedSeat, AmountLuggage, insuranceStatus);
+            AnsiConsole.MarkupLine("[green]Booking successful![/]");
+
+            decimal finalPrice = (decimal)selectedSeat.Price;
+            
+            if (AmountLuggage > 0)
+            {
+                finalPrice += 500 * AmountLuggage;
+            }
+            if (insuranceStatus)
+            {
+                finalPrice += 100000000000;
+                AnsiConsole.MarkupLine("[green]Travel insurance purchased![/]");
+            }
+            if (SessionManager.CurrentUser.FirstTimeDiscount)
+            {
+                finalPrice *= 0.75m;
+                AnsiConsole.MarkupLine("[green]Congratulations! You have received a 25% discount on your first booking![/]");
+                SessionManager.CurrentUser.FirstTimeDiscount = false;
+                UserLogic.UpdateUser(SessionManager.CurrentUser);
+            }
+            else if (DateTime.Now >= SessionManager.CurrentUser.BirthDate.AddYears(65))
+            {
+                finalPrice *= 0.8m;
+                AnsiConsole.MarkupLine("[green]Senior discount (20%) applied![/]");
+            }
+
+
+            DisplayBookingDetails(selectedSeat, flight, AmountLuggage, null, finalPrice);
+        }
+
+    WaitForKeyPress();
+    }
+
     public static void DisplayBookingDetails(SeatModel seat, FlightModel flight, string email = null, decimal? overridePrice = null)
     {
         if (email != null)
