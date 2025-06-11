@@ -311,8 +311,13 @@ public static class FlightUI
                 .Validate(id => id > 0));
 
         FlightModel flight = FlightLogic.GetFlightById(FlightID);
+        if (flight == null)
+        {
+            AnsiConsole.MarkupLine("[red]Flight not found.[/]");
+            WaitForKeyPress();
+            return;
+        }
         DisplayFlight(flight);
-
     }
 
     public static void DisplayFlight(FlightModel Flight)

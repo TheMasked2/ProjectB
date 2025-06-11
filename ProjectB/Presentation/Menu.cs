@@ -11,9 +11,9 @@ public static class Menu
                 new FigletText("Airtreides Booking")
                     .Centered()
                     .Color(Color.Cyan1));
-    
+
             var choices = new List<string>();
-    
+
             if (SessionManager.CurrentUser == null)
             {
                 choices.AddRange(new[]

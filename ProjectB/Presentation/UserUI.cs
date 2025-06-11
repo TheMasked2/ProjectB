@@ -444,7 +444,6 @@ public static class UserUI
                         };
             
             while (true)
-
             {
                 AnsiConsole.Clear();
                 AnsiConsole.Write(new FigletText("Guest Menu").Centered().Color(Color.Orange1));
@@ -475,9 +474,9 @@ public static class UserUI
                         break;
                 }
                 
+                if (input == "Back to main menu")
+                    break;
                 AnsiConsole.MarkupLine("[yellow]Returning to main menu...[/]");
-                break;
-
             }
         }
 }

@@ -77,12 +77,12 @@ public static class FlightLogic
 
     public static FlightModel GetFlightById(int flightId)
     {
-        if (flightId <= 0)
+        FlightModel flight = FlightAccessService.GetById(flightId);
+        if (flight == null)
         {
-            throw new ArgumentException("FlightModel ID must be greater than zero.");
+            return null;
         }
-
-        return FlightAccessService.GetById(flightId);
+        return flight;
     }
 
     public static bool AddFlight(FlightModel flight)

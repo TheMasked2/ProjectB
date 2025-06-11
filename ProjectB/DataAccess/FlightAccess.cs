@@ -111,23 +111,23 @@ public class FlightAccess : IFlightAccess
         return _connection.Query<FlightModel>(sql, new { SoonDate = departingSoonDate }).ToList();
     }
 
-        public List<FlightModel> GetFilteredFlights(
-            string? origin,
-            string? destination,
-            DateTime departureDate)
+    public List<FlightModel> GetFilteredFlights(
+        string? origin,
+        string? destination,
+        DateTime departureDate)
+    {
+        string sql = $@"SELECT * FROM {Table}
+                        WHERE date(DepartureTime) = date(@DepartureDate)
+                        AND DepartureAirport LIKE @Origin
+                        AND ArrivalAirport LIKE @Destination";
+        
+        var parameters = new
         {
-            string sql = $@"SELECT * FROM {Table}
-                            WHERE DepartureTime = @DepartureDate
-                            AND DepartureAirport LIKE @Origin
-                            AND ArrivalAirport LIKE @Destination";
-            
-            var parameters = new
-            {
-                DepartureDate = departureDate.Date,
-                Origin = string.IsNullOrEmpty(origin) ? "%" : origin,
-                Destination = string.IsNullOrEmpty(destination) ? "%" : destination
-            };
+            DepartureDate = departureDate.Date.ToString("yyyy-MM-dd"),
+            Origin = string.IsNullOrEmpty(origin) ? "%" : origin,
+            Destination = string.IsNullOrEmpty(destination) ? "%" : destination
+        };
 
-            return _connection.Query<FlightModel>(sql, parameters).ToList();
-        }
+        return _connection.Query<FlightModel>(sql, parameters).ToList();
+    }
 }
