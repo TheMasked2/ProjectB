@@ -1,7 +1,7 @@
 using Microsoft.VisualBasic;
 using ProjectB.DataAccess;
 using Spectre.Console;
-
+using System.Linq;
 public static class BookingLogic
 {
     public static IBookingAccess BookingAccessService { get; set; } = new BookingAccess();
@@ -62,8 +62,6 @@ public static class BookingLogic
     public static void CreateBooking(User user, FlightModel flight, SeatModel seat, int amountLuggage = 0, bool insuranceStatus = false)
     {
         decimal totalPrice = CalculateBookingPrice(user, flight, seat, amountLuggage, insuranceStatus);
-
-        var booking = new BookingModel
         {
             UserID = user.UserID,
             PassengerName = $"{user.FirstName} {user.LastName}",
@@ -144,12 +142,6 @@ public static class BookingLogic
 
     public static void CheckFlightAvailability(int flightID)
     {
-        var flight = FlightLogic.GetFlightById(flightID);
-        if (flight == null)
-        {
-            throw new ArgumentException($"Flight with ID {flightID} does not exist.");
-        }
-
         // Use flightID for seat map and booking
         List<SeatModel> seats = SeatMapLogic.GetSeatMap(flightID);
         if (seats == null || seats.Count == 0)
@@ -159,22 +151,22 @@ public static class BookingLogic
         BookingAFlight(flightID, seats);
     }
 
-    private static List<int> BuildSeatmapLayout(List<SeatModel> seats) // Spectre.Console.Rendering.IRenderable if we want to refactor to table return <--
+    private static (List<int>, List<string>, List<int>) BuildSeatmapLayout(List<SeatModel> seats) // Spectre.Console.Rendering.IRenderable if we want to refactor to table return <--
     {
         var (seatLettersRaw, rowNumbers) = SeatMapLogic.GetSeatLayout(seats);
-        List<char> seatLetters;
+        List<string> seatLetters;
         int colCount = seatLettersRaw.Count;
         if (colCount == 2)
-            seatLetters = new List<char> { 'A' , 'B' };
+            seatLetters = new List<string> { "A" , "B" };
         else if (colCount == 4)
-            seatLetters = new List<char> { 'A', 'B', 'C', 'D' };
+            seatLetters = new List<string> { "A", "B", "C", "D" };
         else if (colCount == 6)
-            seatLetters = new List<char> { 'A', 'B', 'C', 'D', 'E', 'F' };
+            seatLetters = new List<string> { "A", "B", "C", "D", "E", "F" };
         else if (colCount == 8)
-            seatLetters = new List<char> { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H' };
+            seatLetters = new List<string> { "A", "B", "C", "D", "E", "F", "G", "H" };
         else if (colCount == 10)
-            seatLetters = new List<char> { 'A','B', 'C', 'D', 'E', 'F', 'G','H', 'J', 'K' };
-        else
+            seatLetters = new List<string> { "A", "B", "C", "D", "E", "G" ,"H", "J", "K" };
+        else 
             seatLetters = seatLettersRaw; // fallback to whatever is in the DB
 
         // Determine aisle positions based on column count and arrangement
@@ -185,11 +177,11 @@ public static class BookingLogic
         else if (colCount == 8) { aisleAfter.Add(2); aisleAfter.Add(4); } // A B C | D E | F G H
         else if (colCount == 10) { aisleAfter.Add(2); aisleAfter.Add(6); } // A B C | D E F G | H J K
 
-        return (aisleAfter, seatLetters);
+        return (aisleAfter, seatLetters, rowNumbers);
     }
     private static void BookingAFlight(int flightID, List<SeatModel> seats)
     {
-        BuildSeatmapLayout(seats);
+        var (aisleAfter, seatLetters, rowNumbers) = BuildSeatmapLayout(seats);
         AnsiConsole.MarkupLine("[green]Seat Map:[/]");
         var seatArt = new List<string>();
 
