@@ -34,7 +34,21 @@ public static class FlightLogic
         string? origin,
         string? destination,
         DateTime departureDate) => FlightAccessService.GetFilteredFlights(origin, destination, departureDate);
-    
+
+    public static List<FlightModel> GetBookableFlights(
+        string? origin,
+        string? destination,
+        DateTime departureDate,
+        string seatClass)
+    {
+        List<FlightModel> flights = GetFilteredFlights(origin, destination, departureDate);
+
+        List<FlightModel> bookableFlights =
+            flights.Where(flight => flight.AvailableSeats > 0 && // TODO: Add seat class availibility filter
+            GetSeatClassPrice(flight.AirplaneID, seatClass) > 0).ToList();
+
+        return bookableFlights;
+    }
 
     public static Spectre.Console.Rendering.IRenderable DisplayFilteredFlights(List<FlightModel> flights, string seatClass)
     {

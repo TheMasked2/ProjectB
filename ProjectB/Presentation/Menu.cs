@@ -79,7 +79,7 @@ public static class Menu
                     break;
 
                 case "Book a flight":
-                    BookingUI.DisplayAllBookableFlights();
+                    BookingUI.BookADamnFlight();
                     break;
 
                 case "Flight management" when SessionManager.CurrentUser?.IsAdmin == true:

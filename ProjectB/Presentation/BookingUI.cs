@@ -12,8 +12,26 @@ public static class BookingUI
         AnsiConsole.MarkupLine("\n[grey]Press any key to return to the main menu...[/]");
         Console.ReadKey(true);
     }
+    public static void BookADamnFlight() // MAIN OBJECTIVE <--------------------
+    {
+        // Display all bookable flights based on user input
+        List<FlightModel> bookableFlights = DisplayAllBookableFlights();
+        FlightModel selectedFlight = SelectBookableFlight(bookableFlights);
+        // Get seat map for the selected flight
+        // Display seat map
+        List<SeatModel> seatMapModelList = SeatMapLogic.GetSeatMap(selectedFlight.FlightID);
+        List<string> seatMap = SeatMapLogic.BuildSeatMapLayout(seatMapModelList);
+        DisplaySeatMap(seatMap);
+        // Get seat input from user
+        SeatModel selectedSeat = SeatInput(seatMapModelList);
+        SeatMapLogic.BookSeat(selectedFlight.FlightID, selectedSeat);
+        
 
-    public static void DisplayAllBookableFlights()
+
+    }
+
+
+    public static List<FlightModel> DisplayAllBookableFlights()
     {
         while (true)
         {
@@ -83,7 +101,7 @@ public static class BookingUI
                     break;
             }
 
-            var flights = FlightLogic.GetFilteredFlights(origin, destination, departureDate);
+            List<FlightModel> flights = FlightLogic.GetBookableFlights(origin, destination, departureDate, seatClass);
 
             if (flights == null || flights.Count == 0)
             {
@@ -91,12 +109,6 @@ public static class BookingUI
                     .Border(BoxBorder.Rounded)
                     .BorderStyle(errorStyle);
                 AnsiConsole.Write(panel);
-
-                var key = Console.ReadKey(true);
-                if (key.Key == ConsoleKey.Escape)
-                    break;
-
-                continue;
             }
 
             // Do NOT filter out flights based on price/seat class availability
@@ -107,24 +119,31 @@ public static class BookingUI
                 WaitForKeyPress();
                 break;
             }
+            return flights;
+        }
+        return null;
+    }
 
+    private static FlightModel SelectBookableFlight(List<FlightModel> flights)
+    {
+        FlightModel flight = null;
+        do
+        {
             AnsiConsole.MarkupLine("\n[green]Select a flight to book:[/]");
             int flightIdInput = AnsiConsole.Prompt(
                 new TextPrompt<int>("[#864000]Flight ID:[/]")
                     .PromptStyle(highlightStyle)
                     .Validate(flightIdInput => flightIdInput > 0));
-
-            try
+            flight = flights.FirstOrDefault(f => f.FlightID == flightIdInput);
+            if (flight == null)
             {
-                BookingLogic.CheckFlightAvailability(flightIdInput);
-            }
-            catch (ArgumentException ex)
-            {
-                AnsiConsole.MarkupLine($"[red]{ex.Message}[/]");
-                AnsiConsole.MarkupLine("[yellow]Please try selecting a different flight or search again.[/]");
+                AnsiConsole.MarkupLine("[red]Flight not found. Please try again.[/]");
                 WaitForKeyPress();
-            }      
-        }
+                continue;
+            }
+        } while (flight == null);
+
+        return flight;
     }
 
     public static void DisplayBookingDetails(SeatModel seat, FlightModel flight, string email = null, decimal? overridePrice = null, int AmountLuggage = 0)
@@ -168,4 +187,37 @@ public static class BookingUI
         }
         return 0;
     }
+
+    public static void DisplaySeatMap(List<string> seatMap)
+    {
+        AnsiConsole.MarkupLine("[green]Seat Map:[/]");
+        foreach (string seat in seatMap)
+            AnsiConsole.MarkupLine(seat);
+
+        AnsiConsole.MarkupLine(
+            "[yellow]L[/]=Luxury  [magenta]P[/]=Premium  [blue]E[/]=Standard Extra Legroom  [cyan]B[/]=Business  [green]O[/]=Standard  [red]X[/]=Occupied"
+        );
+    }
+
+    public static SeatModel SeatInput(List<SeatModel> seats)
+    {   
+        string seatInput;
+        SeatModel? selectedSeat;
+        do
+        {
+            seatInput = AnsiConsole.Prompt(
+            new TextPrompt<string>("[#864000]Enter seat (e.g., 12A or A12):[/]")
+                .PromptStyle(highlightStyle)
+            ).Trim();
+            selectedSeat = SeatMapLogic.ValidateSeatInput(seatInput, seats);
+            if (selectedSeat == null || selectedSeat.IsOccupied)
+            {
+                AnsiConsole.MarkupLine("[red]Invalid seat input or seat is occupied. Please try again.[/]");
+                continue;
+            }
+        } while (selectedSeat == null || selectedSeat.IsOccupied);
+        return selectedSeat;
+    }
+
+
 }
