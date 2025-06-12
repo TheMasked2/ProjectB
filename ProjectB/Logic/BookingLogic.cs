@@ -1,3 +1,4 @@
+using Microsoft.VisualBasic;
 using ProjectB.DataAccess;
 using Spectre.Console;
 
@@ -6,7 +7,6 @@ public static class BookingLogic
     public static IBookingAccess BookingAccessService { get; set; } = new BookingAccess();
     public static IFlightAccess FlightAccessService { get; set; } = new FlightAccess();
     public static IFlightSeatAccess FlightSeatAccessService { get; set; } = new FlightSeatAccess();
-    public static SeatMapLogic SeatMapLogicService { get; set; } = new SeatMapLogic();
     private static readonly Style primaryStyle = new(new Color(134, 64, 0));
     private static readonly Style highlightStyle = new(new Color(255, 122, 0));
     private static readonly Style errorStyle = new(new Color(162, 52, 0));
@@ -142,39 +142,38 @@ public static class BookingLogic
         return true;
     }
 
-    public static void BookingAFlight(int flightID)
+    public static void CheckFlightAvailability(int flightID)
     {
         var flight = FlightLogic.GetFlightById(flightID);
         if (flight == null)
         {
-            AnsiConsole.MarkupLine("[red]Flight not found.[/]");
-            BookingUI.WaitForKeyPress();
-            return;
+            throw new ArgumentException($"Flight with ID {flightID} does not exist.");
         }
 
         // Use flightID for seat map and booking
-        var seats = SeatMapLogicService.GetSeatMap(flightID);
+        List<SeatModel> seats = SeatMapLogic.GetSeatMap(flightID);
         if (seats == null || seats.Count == 0)
         {
-            AnsiConsole.MarkupLine("[red]No seats found for this airplane.[/]");
-            BookingUI.WaitForKeyPress();
-            return;
+            throw new ArgumentException($"No seats available for flight ID {flightID}.");
         }
+        BookingAFlight(flightID, seats);
+    }
 
-        // Arrange seat letters for known layouts
-        var (seatLettersRaw, rowNumbers) = SeatMapLogicService.GetSeatLayout(seats);
-        List<string> seatLetters;
+    private static List<int> BuildSeatmapLayout(List<SeatModel> seats) // Spectre.Console.Rendering.IRenderable if we want to refactor to table return <--
+    {
+        var (seatLettersRaw, rowNumbers) = SeatMapLogic.GetSeatLayout(seats);
+        List<char> seatLetters;
         int colCount = seatLettersRaw.Count;
         if (colCount == 2)
-            seatLetters = new List<string> { "A", "B" };
+            seatLetters = new List<char> { 'A' , 'B' };
         else if (colCount == 4)
-            seatLetters = new List<string> { "A", "B", "C", "D" };
+            seatLetters = new List<char> { 'A', 'B', 'C', 'D' };
         else if (colCount == 6)
-            seatLetters = new List<string> { "A", "B", "C", "D", "E", "F" };
+            seatLetters = new List<char> { 'A', 'B', 'C', 'D', 'E', 'F' };
         else if (colCount == 8)
-            seatLetters = new List<string> { "A", "B", "C", "D", "E", "F", "G", "H" };
+            seatLetters = new List<char> { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H' };
         else if (colCount == 10)
-            seatLetters = new List<string> { "A", "B", "C", "D", "E", "F", "G", "H", "J", "K" };
+            seatLetters = new List<char> { 'A','B', 'C', 'D', 'E', 'F', 'G','H', 'J', 'K' };
         else
             seatLetters = seatLettersRaw; // fallback to whatever is in the DB
 
@@ -186,6 +185,11 @@ public static class BookingLogic
         else if (colCount == 8) { aisleAfter.Add(2); aisleAfter.Add(4); } // A B C | D E | F G H
         else if (colCount == 10) { aisleAfter.Add(2); aisleAfter.Add(6); } // A B C | D E F G | H J K
 
+        return (aisleAfter, seatLetters);
+    }
+    private static void BookingAFlight(int flightID, List<SeatModel> seats)
+    {
+        BuildSeatmapLayout(seats);
         AnsiConsole.MarkupLine("[green]Seat Map:[/]");
         var seatArt = new List<string>();
 
@@ -291,7 +295,7 @@ public static class BookingLogic
 
             if (int.TryParse(rowPart, out int row))
             {
-                selectedSeat = SeatMapLogicService.TryGetAvailableSeat(seats, row, letterPart);
+                selectedSeat = SeatMapLogic.TryGetAvailableSeat(seats, row, letterPart);
                 if (selectedSeat == null)
                 {
                     AnsiConsole.MarkupLine("[red]Seat does not exist or is already occupied.[/]");
@@ -304,7 +308,7 @@ public static class BookingLogic
         }
 
         // Book the seat for this flight
-        SeatMapLogicService.BookSeat(flightID, selectedSeat);
+        SeatMapLogic.BookSeat(flightID, selectedSeat);
 
         if (SessionManager.CurrentUser == null)
         {
@@ -500,7 +504,7 @@ public static class BookingLogic
             AnsiConsole.MarkupLine("[yellow]A cancellation fee of $100 has been applied.[/]");
 
             var flight = FlightLogic.GetFlightById(selectedBooking.FlightID);
-            var seat = SeatMapLogicService.GetSeatMap(selectedBooking.FlightID)
+            var seat = SeatMapLogic.GetSeatMap(selectedBooking.FlightID)
                 .FirstOrDefault(s => s.SeatID == selectedBooking.SeatID);
 
             if (flight != null && seat != null)
@@ -578,7 +582,7 @@ public static class BookingLogic
 
 
         var flight = FlightLogic.GetFlightById(selectedBooking.FlightID);
-        var seat = SeatMapLogicService.GetSeatMap(selectedBooking.FlightID)
+        var seat = SeatMapLogic.GetSeatMap(selectedBooking.FlightID)
             .FirstOrDefault(s => s.SeatID == selectedBooking.SeatID);
 
         AnsiConsole.MarkupLine("[yellow]Current booking details:[/]");
@@ -596,7 +600,7 @@ public static class BookingLogic
             AnsiConsole.MarkupLine($"[yellow]BoardingTime:[/] {selectedBooking.BoardingTime}");
         }
 
-        var seats = SeatMapLogicService.GetSeatMap(selectedBooking.FlightID);
+        var seats = SeatMapLogic.GetSeatMap(selectedBooking.FlightID);
         if (seats == null || seats.Count == 0)
         {
             AnsiConsole.MarkupLine("[red]No seats found for this flight.[/]");

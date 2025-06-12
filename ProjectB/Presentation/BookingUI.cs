@@ -114,11 +114,90 @@ public static class BookingUI
                     .PromptStyle(highlightStyle)
                     .Validate(flightIdInput => flightIdInput > 0));
 
-            BookingLogic.BookingAFlight(flightIdInput);
+            try
+            {
+                BookingLogic.CheckFlightAvailability(flightIdInput);
+            }
+            catch(Exception ex)
+            {
+                AnsiConsole.MarkupLine($"[red]Error: {ex.Message}[/]");
+                WaitForKeyPress();
+                continue;
+            }
             break;
         }
     }
 
+    public static void DisplaySeatMap(List<int> seatMap)
+    {
+        AnsiConsole.MarkupLine("[green]Seat Map:[/]");
+        var seatArt = new List<string>();
+
+        // Header with aisle separation (4 spaces for each aisle)
+        string header = "    ";
+        for (int i = 0; i < seatLetters.Count; i++)
+        {
+            header += $" {seatLetters[i]} ";
+            if (aisleAfter.Contains(i))
+                header += "    ";
+        }
+        seatArt.Add(header);
+
+        foreach (var row in rowNumbers)
+        {
+            string line = $"{row,3} ";
+            for (int i = 0; i < seatLetters.Count; i++)
+            {
+                var letter = seatLetters[i];
+                var seat = seats.FirstOrDefault(s => s.RowNumber == row && s.SeatPosition == letter);
+                if (seat == null)
+                {
+                    line += "   ";
+                }
+                else if (seat.IsOccupied)
+                {
+                    line += "[red] X [/]";
+                }
+                else
+                {
+                    var seatType = (seat.SeatType ?? "").Trim().ToLower();
+                    switch (seatType)
+                    {
+                        case "luxury":
+                            line += "[yellow] L [/]";
+                            break;
+                        case "premium":
+                            line += "[magenta] P [/]";
+                            break;
+                        case "standard extra legroom":
+                            line += "[blue] E [/]";
+                            break;
+                        case "business":
+                            line += "[cyan] B [/]";
+                            break;
+                        case "standard":
+                            line += "[green] O [/]";
+                            break;
+                        default:
+                            // Default to Economy if seat type is missing or unknown
+                            line += "[grey] ? [/]";
+                            break;
+                    }
+                }
+                if (aisleAfter.Contains(i))
+                    line += "    ";
+            }
+            seatArt.Add(line);
+        }
+
+        foreach (var l in seatArt)
+            AnsiConsole.MarkupLine(l);
+
+        AnsiConsole.MarkupLine(
+            "[yellow]L[/]=Luxury  [magenta]P[/]=Premium  [blue]E[/]=Standard Extra Legroom  [cyan]B[/]=Business  [green]O[/]=Standard  [red]X[/]=Occupied"
+        );
+
+    }
     // private static void BookingAFlight(int flightID)
     // {
     //     var flight = FlightLogic.GetFlightById(flightID);
