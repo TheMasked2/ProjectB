@@ -153,7 +153,7 @@ public static class SeatMapLogic
     public static void OccupySeat(int flightId, SeatModel seat)
     {
         seat.IsOccupied = true;
-        FlightSeatAccessService.SetSeatOccupied(flightId, seat.SeatID, true);
+        FlightSeatAccessService.SetSeatOccupancy(flightId, seat.SeatID, true);
     }
     // make reverse bookseat method
 }

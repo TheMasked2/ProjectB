@@ -332,7 +332,7 @@ public static class BookingUI
         );
     }
 
-        public static void ConfirmBooking(BookingModel booking, SeatModel selectedSeat)
+    public static void ConfirmBooking(BookingModel booking, SeatModel selectedSeat)
     {
         bool confirm = AnsiConsole.Prompt(
             new SelectionPrompt<bool>()
@@ -350,8 +350,7 @@ public static class BookingUI
                     .HighlightStyle(highlightStyle)
             );
             
-
-            BookingLogic.BookingAccessService.AddBooking(booking);
+            BookingLogic.BookTheDamnFlight(booking);
             SeatMapLogic.OccupySeat(booking.FlightID, selectedSeat);
             
             AnsiConsole.MarkupLine("[green]Booking confirmed![/]");
@@ -401,40 +400,29 @@ public static class BookingUI
         }
 
         var user = SessionManager.CurrentUser;
-        var bookings = BookingLogic.GetBookingsForUser(user.UserID, true);
+        List<BookingModel> bookings = BookingLogic.GetBookingsForUser(user.UserID, true);
         if (!bookings.Any())
         {
             AnsiConsole.MarkupLine("[yellow]You have no upcoming bookings to cancel.[/]");
             return;
         }
 
-
-        var table = new Table()
-            .Border(TableBorder.Rounded)
-            .BorderStyle(primaryStyle)
-            .Expand();
-        table.AddColumns("BookingID", "FlightID", "Seat", "Class", "Passenger", "Departure", "Arrival");
-        foreach (var b in bookings)
-        {
-            table.AddRow(
-                b.BookingID.ToString(),
-                b.FlightID.ToString(),
-                b.SeatID,
-                b.SeatClass,
-                $"{b.PassengerFirstName} {b.PassengerLastName}",
-                b.DepartureTime.ToString("g"),
-                b.ArrivalTime.ToString("g")
-            );
-        }
-        AnsiConsole.Write(table);
+        Spectre.Console.Rendering.IRenderable bookingTable = BookingLogic.CreateBookingTable(bookings);
+        AnsiConsole.Write(bookingTable);
 
         int bookingId = AnsiConsole.Prompt(
             new TextPrompt<int>("[#864000]Enter the Booking ID to cancel:[/]")
                 .PromptStyle(highlightStyle)
-                .Validate(id => bookings.Any(b => b.BookingID == id), "[red]Invalid Booking ID.[/]")
+                .Validate(id => bookings.Any(b => b.BookingID == id), "[red]Invalid Booking ID.[/]") // You have to pick a valid flight or you are stuck!
         );
 
         var selectedBooking = bookings.First(b => b.BookingID == bookingId);
+        if(selectedBooking.BookingStatus == "Cancelled")
+        {
+            AnsiConsole.MarkupLine("[red]This booking has already been cancelled.[/]");
+            WaitForKeyPress();
+            return;
+        }
 
         bool cancelled = BookingLogic.CancelBooking(bookingId);
         if (cancelled)
@@ -446,20 +434,9 @@ public static class BookingUI
             var seat = SeatMapLogic.GetSeatMap(selectedBooking.FlightID)
                 .FirstOrDefault(s => s.SeatID == selectedBooking.SeatID);
 
-            if (flight != null && seat != null)
-            {
-                BookingUI.DisplayBookingDetails(selectedBooking);
-            }
-            else
-            {
-                AnsiConsole.MarkupLine($"[yellow]BookingID:[/] {selectedBooking.BookingID}");
-                AnsiConsole.MarkupLine($"[yellow]Passenger:[/] {selectedBooking.PassengerFirstName} {selectedBooking.PassengerLastName}");
-                AnsiConsole.MarkupLine($"[yellow]FlightID:[/] {selectedBooking.FlightID}");
-                AnsiConsole.MarkupLine($"[yellow]Seat:[/] {selectedBooking.SeatID}");
-                AnsiConsole.MarkupLine($"[yellow]Class:[/] {selectedBooking.SeatClass}");
-                AnsiConsole.MarkupLine($"[yellow]Departure Time:[/] {selectedBooking.DepartureTime:g}");
-                AnsiConsole.MarkupLine($"[yellow]Arrival Time:[/] {selectedBooking.ArrivalTime:g}");
-            }
+            DisplayBookingDetails(selectedBooking);
+            
+
         }
         else
         {
@@ -468,7 +445,7 @@ public static class BookingUI
         BookingUI.WaitForKeyPress();
     }
 
-    public static void ModifyBookingPrompt()
+    public static void ModifyBookingPrompt() // Broken
     {
         if (!SessionManager.IsLoggedIn())
         {
@@ -484,24 +461,8 @@ public static class BookingUI
             return;
         }
 
-        var table = new Table()
-            .Border(TableBorder.Rounded)
-            .BorderStyle(primaryStyle)
-            .Expand();
-        table.AddColumns("BookingID", "FlightID", "Seat", "Class", "Departure", "Arrival", "Luggage");
-        foreach (var b in bookings)
-        {
-            table.AddRow(
-                b.BookingID.ToString(),
-                b.FlightID.ToString(),
-                b.SeatID,
-                b.SeatClass,
-                b.DepartureTime.ToString("g"),
-                b.ArrivalTime.ToString("g"),
-                b.LuggageAmount.ToString()
-            );
-        }
-        AnsiConsole.Write(table);
+        Spectre.Console.Rendering.IRenderable bookingTable = BookingLogic.CreateBookingTable(bookings);
+        AnsiConsole.Write(bookingTable);
 
         int bookingId = AnsiConsole.Prompt(
             new TextPrompt<int>("[#864000]Enter the Booking ID to modify:[/]")
@@ -516,22 +477,10 @@ public static class BookingUI
             .FirstOrDefault(s => s.SeatID == selectedBooking.SeatID);
 
         AnsiConsole.MarkupLine("[yellow]Current booking details:[/]");
-        if (flight != null && seat != null)
-        {
-            BookingUI.DisplayBookingDetails(selectedBooking);
-        }
-        else
-        {
-            AnsiConsole.MarkupLine($"[yellow]BookingID:[/] {selectedBooking.BookingID}");
-            AnsiConsole.MarkupLine($"[yellow]Passenger:[/] {selectedBooking.PassengerFirstName} {selectedBooking.PassengerLastName}");
-            AnsiConsole.MarkupLine($"[yellow]FlightID:[/] {selectedBooking.FlightID}");
-            AnsiConsole.MarkupLine($"[yellow]Seat:[/] {selectedBooking.SeatID}");
-            AnsiConsole.MarkupLine($"[yellow]Class:[/] {selectedBooking.SeatClass}");
-            AnsiConsole.MarkupLine($"[yellow]Departure:[/] {selectedBooking.DepartureTime:g}");
-            AnsiConsole.MarkupLine($"[yellow]Arrival:[/] {selectedBooking.ArrivalTime:g}");
-        }
+        DisplayBookingDetails(selectedBooking);   
 
         // Rest of the modification code remains the same
+        // modify booking
     }
 
     public static void ViewUserBookings(bool upcoming)
@@ -539,7 +488,7 @@ public static class BookingUI
         if (!SessionManager.IsLoggedIn())
         {
             AnsiConsole.MarkupLine("[red]You must be logged in to view bookings.[/]");
-            BookingUI.WaitForKeyPress();
+            WaitForKeyPress();
             return;
         }
         var user = SessionManager.CurrentUser;
@@ -550,27 +499,9 @@ public static class BookingUI
             BookingUI.WaitForKeyPress();
             return;
         }
-        var table = new Table()
-            .Border(TableBorder.Rounded)
-            .BorderStyle(primaryStyle)
-            .Expand();
-        table.AddColumns("BookingID", "FlightID", "Seat", "Class", "Airline", "From", "To", "Departure", "Arrival", "Price");
-        foreach (var b in bookings)
-        {
-            table.AddRow(
-                b.BookingID.ToString(),
-                b.FlightID.ToString(),
-                b.SeatID,
-                b.SeatClass,
-                b.Airline,
-                b.DepartureAirport,
-                b.ArrivalAirport,
-                b.DepartureTime.ToString("g"),
-                b.ArrivalTime.ToString("g"),
-                $"€{b.TotalPrice}"
-            );
-        }
-        AnsiConsole.Write(table);
-        BookingUI.WaitForKeyPress();
+        Spectre.Console.Rendering.IRenderable bookingTable = BookingLogic.CreateBookingTable(bookings);
+        AnsiConsole.Write(bookingTable);
+        WaitForKeyPress();
     }
+
 }

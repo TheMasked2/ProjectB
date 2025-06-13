@@ -76,6 +76,7 @@ public static class BookingLogic
 
         var booking = new BookingModel
         {
+            BookingStatus = "Pending",
             UserID = user.UserID,
             PassengerFirstName = user.FirstName,
             PassengerLastName = user.LastName,
@@ -116,7 +117,7 @@ public static class BookingLogic
 
     public static bool CancelBooking(int bookingId)
     {
-        var booking = BookingAccessService.GetBookingById(bookingId);
+        BookingModel booking = BookingAccessService.GetBookingById(bookingId);
         if (booking == null)
         {
             AnsiConsole.MarkupLine($"[red]Booking with ID {bookingId} not found.[/]");
@@ -124,11 +125,14 @@ public static class BookingLogic
         }
 
         // Free up the seat
-        var flight = FlightAccessService.GetById(booking.FlightID);
+        FlightModel flight = FlightAccessService.GetById(booking.FlightID);
         if (flight != null)
         {
-            FlightSeatAccessService.SetSeatOccupied(booking.FlightID, booking.SeatID, false);
+            FlightSeatAccessService.SetSeatOccupancy(booking.FlightID, booking.SeatID, false);
         }
+        // Update the booking in db
+        booking.BookingStatus = "Cancelled";
+        BookingAccessService.UpdateBooking(booking);
 
         AnsiConsole.MarkupLine($"[green]Booking with ID {bookingId} has been cancelled.[/]");
         return true;
@@ -143,8 +147,8 @@ public static class BookingLogic
             return false;
         }
 
-        FlightSeatAccessService.SetSeatOccupied(booking.FlightID, booking.SeatID, false);
-        FlightSeatAccessService.SetSeatOccupied(booking.FlightID, newSeatId, true);
+        FlightSeatAccessService.SetSeatOccupancy(booking.FlightID, booking.SeatID, false);
+        FlightSeatAccessService.SetSeatOccupancy(booking.FlightID, newSeatId, true);
 
         booking.SeatID = newSeatId;
         booking.LuggageAmount = newLuggageAmount;
@@ -162,12 +166,44 @@ public static class BookingLogic
         {
             throw new ArgumentException($"No seats available for flight ID {flightID}.");
         }
-        // BookingAFlight(flightID, seats);
     }
 
     public static void BookTheDamnFlight(BookingModel booking)
     {
+        booking.BookingStatus = "Confirmed";
         BookingAccessService.AddBooking(booking);
+    }
 
+    public static Spectre.Console.Rendering.IRenderable CreateBookingTable(List<BookingModel> bookings)
+    {
+        if (bookings == null || !bookings.Any())
+        {
+            var panel = new Panel("[yellow]No bookings found.[/]")
+                .Border(BoxBorder.Rounded)
+                .BorderStyle(errorStyle);
+            return panel;
+        }
+
+        Spectre.Console.Table table = new Table()
+            .Border(TableBorder.Rounded)
+            .BorderStyle(primaryStyle)
+            .Expand();
+        table.AddColumns("BookingID", "Status", "FlightID", "Seat", "Class", "Passenger", "Departure", "Arrival");
+
+        foreach (var booking in bookings)
+        {
+                table.AddRow(
+                booking.BookingID.ToString(),
+                booking.BookingStatus,
+                booking.FlightID.ToString(),
+                booking.SeatID,
+                booking.SeatClass,
+                $"{booking.PassengerFirstName} {booking.PassengerLastName}",
+                booking.DepartureTime.ToString("g"),
+                booking.ArrivalTime.ToString("g")
+            );
+        }
+
+        return table;
     }
 }

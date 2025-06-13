@@ -5,7 +5,7 @@ namespace ProjectB.DataAccess
         List<SeatModel> GetSeatsForFlight(int flightId);
         bool HasAnySeatsForFlight(int flightId);
         void BulkCreateAllFlightSeats(List<(int flightId, string airplaneId)> toBackfill);
-        void SetSeatOccupied(int flightId, string seatId, bool isOccupied);
+        void SetSeatOccupancy(int flightId, string seatId, bool isOccupied);
         void CreateFlightSeats(int flightId, string airplaneId);
     }
 }

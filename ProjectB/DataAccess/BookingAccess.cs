@@ -11,11 +11,11 @@ public class BookingAccess : IBookingAccess
     public void AddBooking(BookingModel booking)
     {
         string sql = $@"INSERT INTO {Table} 
-            (UserID, PassengerFirstName, PassengerLastName, PassengerEmail, PassengerPhone,
+            (UserID, BookingStatus, PassengerFirstName, PassengerLastName, PassengerEmail, PassengerPhone,
             FlightID, Airline, AirplaneModel, DepartureAirport, ArrivalAirport,
             DepartureTime, ArrivalTime, SeatID, SeatClass, LuggageAmount, HasInsurance,
             Discount, TotalPrice)
-            VALUES (@UserID, @PassengerFirstName, @PassengerLastName, @PassengerEmail, @PassengerPhone,
+            VALUES (@UserID, @BookingStatus, @PassengerFirstName, @PassengerLastName, @PassengerEmail, @PassengerPhone,
             @FlightID, @Airline, @AirplaneModel, @DepartureAirport, @ArrivalAirport,
             @DepartureTime, @ArrivalTime, @SeatID, @SeatClass, @LuggageAmount, @HasInsurance,
             @Discount, @TotalPrice)";
@@ -36,7 +36,8 @@ public class BookingAccess : IBookingAccess
     public void UpdateBooking(BookingModel booking)
     {
         string sql = $@"UPDATE {Table} 
-                        SET PassengerFirstName = @PassengerFirstName,
+                        SET BookingStatus = @BookingStatus,
+                            PassengerFirstName = @PassengerFirstName,
                             PassengerLastName = @PassengerLastName,
                             PassengerEmail = @PassengerEmail,
                             PassengerPhone = @PassengerPhone,

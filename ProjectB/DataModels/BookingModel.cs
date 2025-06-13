@@ -1,6 +1,7 @@
 public class BookingModel
 {
     public int BookingID { get; set; }
+    public string BookingStatus { get; set; }
     public int UserID { get; set; }
     public string PassengerFirstName { get; set; }
     public string PassengerLastName { get; set; }

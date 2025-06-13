@@ -42,7 +42,7 @@ public class FlightSeatAccess : IFlightSeatAccess
         }
     }
 
-    public void SetSeatOccupied(int flightId, string seatId, bool isOccupied)
+    public void SetSeatOccupancy(int flightId, string seatId, bool isOccupied)
     {
         string sql = $"UPDATE {FlightSeatsTable} SET IsOccupied = @IsOccupied WHERE FlightID = @FlightID AND SeatID = @SeatID";
         _connection.Execute(sql, new { IsOccupied = isOccupied, FlightID = flightId, SeatID = seatId });
