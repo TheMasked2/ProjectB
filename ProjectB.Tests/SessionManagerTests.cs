@@ -81,7 +81,7 @@ namespace ProjectB.Tests
         {
             // Arrange
             var user1 = new User { UserID = 1, FirstName = "Devin", LastName = "N" };
-            var user2 = new User { UserID = 2, FirstName = "Henk", LastName = "Steen" };
+            var user2 = new User { UserID = 2, FirstName = "N", LastName = "Devin" };
             SessionManager.SetCurrentUser(user1);
 
             // Act
