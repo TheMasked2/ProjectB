@@ -1,3 +1,4 @@
+using System.Net;
 using Spectre.Console;
 
 public static class BookingUI
@@ -9,7 +10,7 @@ public static class BookingUI
 
     public static void WaitForKeyPress()
     {
-        AnsiConsole.MarkupLine("\n[grey]Press any key to return to the main menu...[/]");
+        AnsiConsole.MarkupLine("\n[grey]Press any key to continue...[/]");
         Console.ReadKey(true);
     }
     public static void BookADamnFlight() // MAIN OBJECTIVE <--------------------
@@ -24,13 +25,34 @@ public static class BookingUI
         DisplaySeatMap(seatMap);
         // Get seat input from user
         SeatModel selectedSeat = SeatInput(seatMapModelList);
-        SeatMapLogic.BookSeat(selectedFlight.FlightID, selectedSeat);
-        
-
-
+        // Build booking details (we have flight and seat, now we need user info and extra options))
+        // Ask for extra luggage
+        int amountLuggage = PurchaseExtraLuggage();
+        // Ask for insurance
+        bool insuranceStatus = PurchasheInsurance();
+        // Apply discount if applicable (first time booking, senior citizen, coupon)
+        (bool isValidCoupon, bool isSpice) couponCode = AddCouponCode();
+        // If user is logged in, use their info, otherwise prompt for information from guest
+        if (SessionManager.CurrentUser.Guest)
+        {
+            UserUI.GuestEditUserInfo();
+        }
+        User user = SessionManager.CurrentUser;
+        // BookingBuilder
+        BookingModel booking = BookingLogic.BookingBuilder(
+            user,
+            selectedFlight,
+            selectedSeat,
+            couponCode,
+            amountLuggage,
+            insuranceStatus
+        );
+        // Display booking details
+        DisplayBookingDetails(booking);
+        // Ask to confirm booking
+        ConfirmBooking(booking, selectedSeat);
     }
-
-
+ 
     public static List<FlightModel> DisplayAllBookableFlights()
     {
         while (true)
@@ -146,23 +168,40 @@ public static class BookingUI
         return flight;
     }
 
-    public static void DisplayBookingDetails(SeatModel seat, FlightModel flight, string email = null, decimal? overridePrice = null, int AmountLuggage = 0)
+    private static void DisplayBookingDetails(BookingModel booking)
     {
-        if (email != null)
+        if (booking.PassengerEmail != null)
         {
-            AnsiConsole.MarkupLine($"[green]Booking confirmation will be sent to: {email}[/]");
+            AnsiConsole.MarkupLine($"[green]Booking confirmation will be sent to: {booking.PassengerEmail}[/]");
         }
-
-        AnsiConsole.MarkupLine($"[yellow]Seat[/]: [white]{seat.RowNumber}{seat.SeatPosition}[/]");
-        AnsiConsole.MarkupLine($"[yellow]Seat Type[/]: [white]{seat.SeatType ?? "-"}[/]");
-        AnsiConsole.MarkupLine($"[yellow]Price[/]: [white]€{overridePrice ?? (decimal)seat.Price:F2}[/]");
-        AnsiConsole.MarkupLine($"[yellow]Airplane ID[/]: [white]{seat.AirplaneID}[/]");
-        AnsiConsole.MarkupLine($"[yellow]Flight ID[/]: [white]{flight.FlightID}[/]");
-        AnsiConsole.MarkupLine($"[yellow]From[/]: [white]{flight.DepartureAirport}[/]");
-        AnsiConsole.MarkupLine($"[yellow]To[/]: [white]{flight.ArrivalAirport}[/]");
-        AnsiConsole.MarkupLine($"[yellow]Departure[/]: [white]{flight.DepartureTime:g}[/]");
-        AnsiConsole.MarkupLine($"[yellow]Arrival[/]: [white]{flight.ArrivalTime:g}[/]");
-        AnsiConsole.MarkupLine($"[yellow]Luggage[/]: [white]{AmountLuggage:g}[/]");
+        AnsiConsole.MarkupLine("[yellow]Booking Details:[/]");
+        AnsiConsole.MarkupLine($"[yellow]Seat[/]: [white]{(booking.SeatID.Contains("-") ? booking.SeatID.Split('-')[1] : booking.SeatID)}[/]");
+        AnsiConsole.MarkupLine($"[yellow]Airline[/]: [white]{booking.Airline}[/]");
+        AnsiConsole.MarkupLine($"[yellow]Airplane Model[/]: [white]{booking.AirplaneModel}[/]");
+        AnsiConsole.MarkupLine($"[yellow]Flight ID[/]: [white]{booking.FlightID}[/]");
+        AnsiConsole.MarkupLine($"[yellow]From[/]: [white]{booking.DepartureAirport}[/]");
+        AnsiConsole.MarkupLine($"[yellow]To[/]: [white]{booking.ArrivalAirport}[/]");
+        AnsiConsole.MarkupLine($"[yellow]Departure[/]: [white]{booking.DepartureTime:g}[/]");
+        AnsiConsole.MarkupLine($"[yellow]Arrival[/]: [white]{booking.ArrivalTime:g}[/]");
+        AnsiConsole.MarkupLine("");
+        AnsiConsole.MarkupLine("[yellow]Personal Details:[/]");
+        AnsiConsole.MarkupLine($"[yellow]Passenger[/]: [white]{booking.PassengerFirstName} {booking.PassengerLastName}[/]");
+        AnsiConsole.MarkupLine($"[yellow]Email[/]: [white]{booking.PassengerEmail ?? "N/A"}[/]");
+        AnsiConsole.MarkupLine($"[yellow]Phone[/]: [white]{booking.PassengerPhone ?? "N/A"}[/]");
+        AnsiConsole.MarkupLine("");
+        AnsiConsole.MarkupLine("[yellow]Extra Options:[/]");
+        AnsiConsole.MarkupLine($"[yellow]Luggage[/]: [white]{booking.LuggageAmount}[/]");
+        AnsiConsole.MarkupLine($"[yellow]Insurance[/]: [white]{(booking.HasInsurance ? "Yes" : "No")}[/]");
+        AnsiConsole.MarkupLine("");
+        AnsiConsole.MarkupLine("[yellow]Pricing Details:[/]");
+        AnsiConsole.MarkupLine(booking.TotalPrice < 0 
+            ? $"[yellow]Price[/]: [white]{Math.Abs(booking.TotalPrice)} Imperial units of Spice[/]" 
+            : $"[yellow]Price[/]: [white]€{booking.TotalPrice}[/]");
+        
+        if (booking.Discount < 1.0m)
+        {
+            AnsiConsole.MarkupLine($"[yellow]Discount[/]: [white]{(1.0m - booking.Discount) * 100:0}%[/]");
+        }
     }
 
     private static int PurchaseExtraLuggage()
@@ -170,7 +209,7 @@ public static class BookingUI
         var user = SessionManager.CurrentUser;
         bool extraLuggage = AnsiConsole.Prompt(
             new SelectionPrompt<bool>()
-                .Title("[#864000]Do you want to purchase extra luggage?[/]")
+                .Title("[#864000]Would you like to add additional luggage to your booking?[/]")
                 .AddChoices(new[] { true, false })
                 .UseConverter(choice => choice ? "Yes" : "No")
                 .HighlightStyle(highlightStyle)
@@ -178,14 +217,108 @@ public static class BookingUI
         if (extraLuggage)
         {
             int additionalLuggage = AnsiConsole.Prompt(
-            new TextPrompt<int>("[#864000]Enter the number of additional luggage pieces (1 or 2):[/]")
+            new TextPrompt<int>("[#864000]How many extra pieces of luggage would you like to add?(1 or 2):[/]")
                 .PromptStyle(highlightStyle)
-                .Validate(input => input >= 1 && input <= 2, "Please enter a number between 1 or 2.")
+                .Validate(input => input >= 1 && input <= 2, "Please enter either 1 or 2.")
             );
-            AnsiConsole.MarkupLine($"[green]Successfully purchased {additionalLuggage} extra luggage piece(s)![/]");
+            AnsiConsole.MarkupLine($"[green]Successfully added {additionalLuggage} extra luggage {(additionalLuggage == 1 ? "piece" : "pieces")} to your booking![/]");
+            AnsiConsole.MarkupLine("\n[grey]Press any key to continue...[/]");
+            Console.ReadKey(true);
             return additionalLuggage;
         }
+        AnsiConsole.MarkupLine("\n[grey]Press any key to continue...[/]");
+        Console.ReadKey(true);
         return 0;
+    }
+
+    private static bool PurchasheInsurance()
+    {
+        bool insuranceStatus = AnsiConsole.Prompt(
+            new SelectionPrompt<bool>()
+                .Title("[#864000]Do you want to purchase travel insurance?[/]")
+                .AddChoices(new[] { true, false })
+                .UseConverter(choice => choice ? "Yes" : "No")
+                .HighlightStyle(highlightStyle)
+        );
+        if (insuranceStatus)
+        {
+            AnsiConsole.MarkupLine("[green]Succesfully added travel insurance to your booking![/]");
+        }
+        AnsiConsole.MarkupLine("\n[grey]Press any key to continue...[/]");
+        Console.ReadKey(true);
+        return insuranceStatus;
+    }
+
+    private static (bool validCoupon, bool isSpice) AddCouponCode()
+    {
+        List<string> validCouponCodes = new List<string>
+        {
+            "LISANALGAIB",
+            "MUADDIB",
+            "ATREIDES",
+            "SHAIHULUD",
+            "SPICE"
+        };
+
+        bool couponCode = AnsiConsole.Prompt(
+            new SelectionPrompt<bool>()
+                .Title("[#864000]Do you have a coupon code?[/]")
+                .AddChoices(new[] { true, false })
+                .UseConverter(choice => choice ? "Yes" : "No")
+                .HighlightStyle(highlightStyle)
+        );
+        if (couponCode)
+        {
+            string? code = AnsiConsole.Prompt(
+                new TextPrompt<string>("[#864000]Enter your coupon code:[/]")
+                    .PromptStyle(highlightStyle)
+                    .AllowEmpty()
+            ).Trim().ToUpper();
+
+            // Check if the coupon code is valid or spice
+            bool validCoupon = false;
+            bool isSpice = false;
+            if (string.IsNullOrEmpty(code))
+            {
+                AnsiConsole.MarkupLine("[red]No coupon code entered. No discount applied.[/]");
+                AnsiConsole.MarkupLine("\n[grey]Press any key to continue...[/]");
+                Console.ReadKey(true);
+                return (validCoupon, isSpice);
+            }
+
+            if (validCouponCodes.Contains(code))
+            {
+                if (code == "SPICE")
+                {
+                    isSpice = true;
+                    validCoupon = true;
+                }
+                else
+                {
+                    isSpice = false;
+                    validCoupon = true;
+                }
+
+                AnsiConsole.MarkupLine("[green]Coupon code applied successfully![/]");
+                AnsiConsole.MarkupLine("\n[grey]Press any key to continue...[/]");
+                Console.ReadKey(true);
+                return (validCoupon, isSpice);
+            }
+            else
+            {
+                AnsiConsole.MarkupLine("[red]Invalid coupon code. No discount applied.[/]");
+                AnsiConsole.MarkupLine("\n[grey]Press any key to continue...[/]");
+                Console.ReadKey(true);
+                return (validCoupon, isSpice);
+            }
+        }
+        else
+        {
+            AnsiConsole.MarkupLine("[yellow]No coupon code entered. No discount applied.[/]");
+            AnsiConsole.MarkupLine("\n[grey]Press any key to continue...[/]");
+            Console.ReadKey(true);
+            return (false, false);
+        }
     }
 
     public static void DisplaySeatMap(List<string> seatMap)
@@ -199,8 +332,48 @@ public static class BookingUI
         );
     }
 
+        public static void ConfirmBooking(BookingModel booking, SeatModel selectedSeat)
+    {
+        bool confirm = AnsiConsole.Prompt(
+            new SelectionPrompt<bool>()
+                .Title("[#864000]Do you want to confirm the booking?[/]")
+                .AddChoices(new[] { true, false })
+                .UseConverter(choice => choice ? "Yes" : "No")
+                .HighlightStyle(highlightStyle)
+        );
+        if (confirm)
+        {
+            string paymentMethod = booking.TotalPrice < 0 ? "SPICE" : AnsiConsole.Prompt(
+                new SelectionPrompt<string>()
+                    .Title("[#864000]Select payment method:[/]")
+                    .AddChoices(new[] { "Credit Card", "Bank Transfer", "PayPal" })
+                    .HighlightStyle(highlightStyle)
+            );
+            
+
+            BookingLogic.BookingAccessService.AddBooking(booking);
+            SeatMapLogic.OccupySeat(booking.FlightID, selectedSeat);
+            
+            AnsiConsole.MarkupLine("[green]Booking confirmed![/]");
+            AnsiConsole.MarkupLine($"[green]Payment of {(booking.TotalPrice < 0 ? $"SPICE {Math.Abs(booking.TotalPrice)}" : $"€{booking.TotalPrice}")} processed successfully via {(booking.TotalPrice < 0 ? "SPICE payment" : paymentMethod)}.[/]");
+            AnsiConsole.MarkupLine("[yellow]Thank you for booking with Airtreides![/]");
+            
+            // If user has email, confirm that confirmation will be sent
+            if (!string.IsNullOrEmpty(booking.PassengerEmail))
+            {
+                AnsiConsole.MarkupLine($"[green]Booking confirmation has been sent to: {booking.PassengerEmail}[/]");
+            }
+        }
+        else
+        {
+            AnsiConsole.MarkupLine("[red]Booking cancelled.[/]");
+        }
+        AnsiConsole.MarkupLine("\n[grey]Press any key to continue...[/]");
+        Console.ReadKey(true);
+    }
+
     public static SeatModel SeatInput(List<SeatModel> seats)
-    {   
+    {
         string seatInput;
         SeatModel? selectedSeat;
         do
@@ -219,5 +392,185 @@ public static class BookingUI
         return selectedSeat;
     }
 
+    public static void CancelBookingPrompt() // DONT INCLUDE CANCELLATION FEE IF THE USER HAS INSURANCE
+    {
+        if (!SessionManager.IsLoggedIn())
+        {
+            AnsiConsole.MarkupLine("[red]You must be logged in to cancel a booking.[/]");
+            return;
+        }
 
+        var user = SessionManager.CurrentUser;
+        var bookings = BookingLogic.GetBookingsForUser(user.UserID, true);
+        if (!bookings.Any())
+        {
+            AnsiConsole.MarkupLine("[yellow]You have no upcoming bookings to cancel.[/]");
+            return;
+        }
+
+
+        var table = new Table()
+            .Border(TableBorder.Rounded)
+            .BorderStyle(primaryStyle)
+            .Expand();
+        table.AddColumns("BookingID", "FlightID", "Seat", "Class", "Passenger", "Departure", "Arrival");
+        foreach (var b in bookings)
+        {
+            table.AddRow(
+                b.BookingID.ToString(),
+                b.FlightID.ToString(),
+                b.SeatID,
+                b.SeatClass,
+                $"{b.PassengerFirstName} {b.PassengerLastName}",
+                b.DepartureTime.ToString("g"),
+                b.ArrivalTime.ToString("g")
+            );
+        }
+        AnsiConsole.Write(table);
+
+        int bookingId = AnsiConsole.Prompt(
+            new TextPrompt<int>("[#864000]Enter the Booking ID to cancel:[/]")
+                .PromptStyle(highlightStyle)
+                .Validate(id => bookings.Any(b => b.BookingID == id), "[red]Invalid Booking ID.[/]")
+        );
+
+        var selectedBooking = bookings.First(b => b.BookingID == bookingId);
+
+        bool cancelled = BookingLogic.CancelBooking(bookingId);
+        if (cancelled)
+        {
+            AnsiConsole.MarkupLine("[green]Booking successfully cancelled![/]");
+            AnsiConsole.MarkupLine("[yellow]A cancellation fee of $100 has been applied.[/]");
+
+            var flight = FlightLogic.GetFlightById(selectedBooking.FlightID);
+            var seat = SeatMapLogic.GetSeatMap(selectedBooking.FlightID)
+                .FirstOrDefault(s => s.SeatID == selectedBooking.SeatID);
+
+            if (flight != null && seat != null)
+            {
+                BookingUI.DisplayBookingDetails(selectedBooking);
+            }
+            else
+            {
+                AnsiConsole.MarkupLine($"[yellow]BookingID:[/] {selectedBooking.BookingID}");
+                AnsiConsole.MarkupLine($"[yellow]Passenger:[/] {selectedBooking.PassengerFirstName} {selectedBooking.PassengerLastName}");
+                AnsiConsole.MarkupLine($"[yellow]FlightID:[/] {selectedBooking.FlightID}");
+                AnsiConsole.MarkupLine($"[yellow]Seat:[/] {selectedBooking.SeatID}");
+                AnsiConsole.MarkupLine($"[yellow]Class:[/] {selectedBooking.SeatClass}");
+                AnsiConsole.MarkupLine($"[yellow]Departure Time:[/] {selectedBooking.DepartureTime:g}");
+                AnsiConsole.MarkupLine($"[yellow]Arrival Time:[/] {selectedBooking.ArrivalTime:g}");
+            }
+        }
+        else
+        {
+            AnsiConsole.MarkupLine("[red]Cancellation failed.[/]");
+        }
+        BookingUI.WaitForKeyPress();
+    }
+
+    public static void ModifyBookingPrompt()
+    {
+        if (!SessionManager.IsLoggedIn())
+        {
+            AnsiConsole.MarkupLine("[red]You must be logged in to modify a booking.[/]");
+            return;
+        }
+
+        var user = SessionManager.CurrentUser;
+        var bookings = BookingLogic.GetBookingsForUser(user.UserID, true);
+        if (!bookings.Any())
+        {
+            AnsiConsole.MarkupLine("[yellow]You have no upcoming bookings to modify.[/]");
+            return;
+        }
+
+        var table = new Table()
+            .Border(TableBorder.Rounded)
+            .BorderStyle(primaryStyle)
+            .Expand();
+        table.AddColumns("BookingID", "FlightID", "Seat", "Class", "Departure", "Arrival", "Luggage");
+        foreach (var b in bookings)
+        {
+            table.AddRow(
+                b.BookingID.ToString(),
+                b.FlightID.ToString(),
+                b.SeatID,
+                b.SeatClass,
+                b.DepartureTime.ToString("g"),
+                b.ArrivalTime.ToString("g"),
+                b.LuggageAmount.ToString()
+            );
+        }
+        AnsiConsole.Write(table);
+
+        int bookingId = AnsiConsole.Prompt(
+            new TextPrompt<int>("[#864000]Enter the Booking ID to modify:[/]")
+                .PromptStyle(highlightStyle)
+                .Validate(id => bookings.Any(b => b.BookingID == id), "[red]Invalid Booking ID.[/]")
+        );
+
+        var selectedBooking = bookings.First(b => b.BookingID == bookingId);
+
+        var flight = FlightLogic.GetFlightById(selectedBooking.FlightID);
+        var seat = SeatMapLogic.GetSeatMap(selectedBooking.FlightID)
+            .FirstOrDefault(s => s.SeatID == selectedBooking.SeatID);
+
+        AnsiConsole.MarkupLine("[yellow]Current booking details:[/]");
+        if (flight != null && seat != null)
+        {
+            BookingUI.DisplayBookingDetails(selectedBooking);
+        }
+        else
+        {
+            AnsiConsole.MarkupLine($"[yellow]BookingID:[/] {selectedBooking.BookingID}");
+            AnsiConsole.MarkupLine($"[yellow]Passenger:[/] {selectedBooking.PassengerFirstName} {selectedBooking.PassengerLastName}");
+            AnsiConsole.MarkupLine($"[yellow]FlightID:[/] {selectedBooking.FlightID}");
+            AnsiConsole.MarkupLine($"[yellow]Seat:[/] {selectedBooking.SeatID}");
+            AnsiConsole.MarkupLine($"[yellow]Class:[/] {selectedBooking.SeatClass}");
+            AnsiConsole.MarkupLine($"[yellow]Departure:[/] {selectedBooking.DepartureTime:g}");
+            AnsiConsole.MarkupLine($"[yellow]Arrival:[/] {selectedBooking.ArrivalTime:g}");
+        }
+
+        // Rest of the modification code remains the same
+    }
+
+    public static void ViewUserBookings(bool upcoming)
+    {
+        if (!SessionManager.IsLoggedIn())
+        {
+            AnsiConsole.MarkupLine("[red]You must be logged in to view bookings.[/]");
+            BookingUI.WaitForKeyPress();
+            return;
+        }
+        var user = SessionManager.CurrentUser;
+        var bookings = BookingLogic.GetBookingsForUser(user.UserID, upcoming);
+        if (!bookings.Any())
+        {
+            AnsiConsole.MarkupLine("[yellow]No bookings found.[/]");
+            BookingUI.WaitForKeyPress();
+            return;
+        }
+        var table = new Table()
+            .Border(TableBorder.Rounded)
+            .BorderStyle(primaryStyle)
+            .Expand();
+        table.AddColumns("BookingID", "FlightID", "Seat", "Class", "Airline", "From", "To", "Departure", "Arrival", "Price");
+        foreach (var b in bookings)
+        {
+            table.AddRow(
+                b.BookingID.ToString(),
+                b.FlightID.ToString(),
+                b.SeatID,
+                b.SeatClass,
+                b.Airline,
+                b.DepartureAirport,
+                b.ArrivalAirport,
+                b.DepartureTime.ToString("g"),
+                b.ArrivalTime.ToString("g"),
+                $"€{b.TotalPrice}"
+            );
+        }
+        AnsiConsole.Write(table);
+        BookingUI.WaitForKeyPress();
+    }
 }

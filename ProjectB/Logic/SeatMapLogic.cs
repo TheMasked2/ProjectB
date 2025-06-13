@@ -150,7 +150,7 @@ public static class SeatMapLogic
         return null;
     }
 
-    public static void BookSeat(int flightId, SeatModel seat)
+    public static void OccupySeat(int flightId, SeatModel seat)
     {
         seat.IsOccupied = true;
         FlightSeatAccessService.SetSeatOccupied(flightId, seat.SeatID, true);

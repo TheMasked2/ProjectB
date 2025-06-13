@@ -2,6 +2,7 @@ using Microsoft.VisualBasic;
 using ProjectB.DataAccess;
 using Spectre.Console;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 public static class BookingLogic
 {
     public static IBookingAccess BookingAccessService { get; set; } = new BookingAccess();
@@ -34,50 +35,67 @@ public static class BookingLogic
         }
     }
 
-
-
-    public static decimal CalculateBookingPrice(User user, FlightModel flight, SeatModel seat, int amountLuggage, bool isInsurance)
+    public static (decimal finalPrice, decimal discount) CalculateBookingPrice(User user, FlightModel flight, SeatModel seat, int amountLuggage, bool isInsurance, (bool, bool) coupon)
     {
         decimal finalPrice = (decimal)seat.Price;
+        decimal totalDiscount = 1.0m;
 
         // Add luggage cost
         if (amountLuggage > 0)
         {
-            finalPrice += 500 * amountLuggage;
+            finalPrice += 50 * amountLuggage;
         }
 
         // Apply discounts
         if (user.FirstTimeDiscount)
         {
-            finalPrice *= 0.9m; // 10% discount
-        }
-        else if (DateTime.Now >= user.BirthDate.AddYears(65))
-        {
-            finalPrice *= 0.8m; // 20% discount
+            totalDiscount -= 0.1m; // 10% discount
         }
 
-        return finalPrice;
+        if (DateTime.Now >= user.BirthDate.AddYears(65) && !user.Guest)
+        {
+            totalDiscount -= 0.2m; // 20% discount
+        }
+
+        if (coupon.Item1) // isValidCoupon
+        {
+            totalDiscount -= 0.05m; // 5% discount 
+        }
+
+        if (coupon.Item2) // isSpice
+        {
+            return (-1 * finalPrice * totalDiscount, totalDiscount); // is minus, pay with spice (easter egg)
+        }
+
+        return (finalPrice * totalDiscount, totalDiscount);
     }
 
-    public static void CreateBooking(User user, FlightModel flight, SeatModel seat, int amountLuggage = 0, bool insuranceStatus = false)
+    public static BookingModel BookingBuilder(User user, FlightModel flight, SeatModel seat, (bool, bool) coupon, int amountLuggage = 0, bool insuranceStatus = false)
     {
-        decimal totalPrice = CalculateBookingPrice(user, flight, seat, amountLuggage, insuranceStatus);
-        
+        (decimal finalPrice, decimal discount) calculatedPrice = CalculateBookingPrice(user, flight, seat, amountLuggage, insuranceStatus, coupon);
+
         var booking = new BookingModel
         {
             UserID = user.UserID,
-            PassengerName = $"{user.FirstName} {user.LastName}",
+            PassengerFirstName = user.FirstName,
+            PassengerLastName = user.LastName,
+            PassengerEmail = user.EmailAddress,
+            PassengerPhone = user.PhoneNumber,
             FlightID = flight.FlightID,
-            BookingDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
-            BoardingTime = flight.DepartureTime.ToString("yyyy-MM-dd HH:mm:ss"),
+            Airline = flight.Airline,
+            AirplaneModel = flight.AirplaneID,
+            DepartureAirport = flight.DepartureAirport,
+            ArrivalAirport = flight.ArrivalAirport,
+            DepartureTime = flight.DepartureTime,
+            ArrivalTime = flight.ArrivalTime,
             SeatID = seat.SeatID,
             SeatClass = seat.SeatType,
-            BookingStatus = "Confirmed",
-            PaymentStatus = "Paid",
-            AmountLuggage = amountLuggage,
-            InsuranceStatus = insuranceStatus,
+            LuggageAmount = amountLuggage,
+            HasInsurance = insuranceStatus,
+            Discount = calculatedPrice.discount,
+            TotalPrice = calculatedPrice.finalPrice
         };
-        BookingAccessService.AddBooking(booking);
+        return booking;
     }
 
     public static List<BookingModel> GetBookingsForUser(int userId, bool upcoming)
@@ -86,8 +104,7 @@ public static class BookingLogic
         var now = DateTime.Now;
         return all.Where(b =>
         {
-            DateTime flightDate = DateTime.Parse(b.BoardingTime);
-            return upcoming ? flightDate >= now : flightDate < now;
+            return upcoming ? b.DepartureTime >= now : b.DepartureTime < now;
         }).ToList();
     }
 
@@ -97,7 +114,6 @@ public static class BookingLogic
         return all.Any() ? all.Max(b => b.BookingID) + 1 : 1;
     }
 
-
     public static bool CancelBooking(int bookingId)
     {
         var booking = BookingAccessService.GetBookingById(bookingId);
@@ -106,9 +122,6 @@ public static class BookingLogic
             AnsiConsole.MarkupLine($"[red]Booking with ID {bookingId} not found.[/]");
             return false;
         }
-
-        booking.BookingStatus = "Cancelled";
-        BookingAccessService.UpdateBooking(booking);
 
         // Free up the seat
         var flight = FlightAccessService.GetById(booking.FlightID);
@@ -131,11 +144,10 @@ public static class BookingLogic
         }
 
         FlightSeatAccessService.SetSeatOccupied(booking.FlightID, booking.SeatID, false);
-
         FlightSeatAccessService.SetSeatOccupied(booking.FlightID, newSeatId, true);
 
         booking.SeatID = newSeatId;
-        booking.AmountLuggage = newLuggageAmount;
+        booking.LuggageAmount = newLuggageAmount;
         BookingAccessService.UpdateBooking(booking);
 
         AnsiConsole.MarkupLine($"[green]Booking with ID {bookingId} has been updated.[/]");
@@ -153,380 +165,9 @@ public static class BookingLogic
         // BookingAFlight(flightID, seats);
     }
 
-    // private static void BookingAFlight(int flightID, List<SeatModel> seats)
-    // {
-    //   
-    //     if (SessionManager.CurrentUser == null)
-    //     {
-    //         int AmountLuggage = PurchaseExtraLuggage();
-    //         bool insuranceStatus = AnsiConsole.Prompt(
-    //         new SelectionPrompt<bool>()
-    //         .Title("[#864000]Do you want to purchase travel insurance?[/]")
-    //         .AddChoices(new[] { true, false })
-    //         .UseConverter(choice => choice ? "Yes" : "No")
-    //         .HighlightStyle(highlightStyle)
-    //         );
-
-    //         decimal finalPrice = (decimal)selectedSeat.Price;
-    //         if (AmountLuggage > 0)
-    //         {
-    //             finalPrice += 500 * AmountLuggage; // FIX PRICE <================================================================================================
-    //         }
-    //         if (insuranceStatus)
-    //         {
-    //             finalPrice += 100000000000; //FIX PRICE <================================================================================================
-    //             AnsiConsole.MarkupLine("[green]Travel insurance purchased![/]");
-    //         }
-
-    //         AnsiConsole.MarkupLine("[yellow]You are currently logged in as a guest user. Bookings will not be saved to the database.[/]");
-    //         string email = AnsiConsole.Prompt(
-    //             new TextPrompt<string>("[green]Enter your email address for booking confirmation:[/]")
-    //                 .PromptStyle(highlightStyle));
-
-    //         BookingUI.DisplayBookingDetails(selectedSeat, flight, email, finalPrice);
-    //         SessionManager.Logout(); // Log out guest user after booking
-    //     }
-    //     else // Registered user
-    //     {
-    //         int AmountLuggage = PurchaseExtraLuggage();
-    //         bool insuranceStatus = AnsiConsole.Prompt(
-    //         new SelectionPrompt<bool>()
-    //         .Title("[#864000]Do you want to purchase travel insurance?[/]")
-    //         .AddChoices(new[] { true, false })
-    //         .UseConverter(choice => choice ? "Yes" : "No")
-    //         .HighlightStyle(highlightStyle)
-    //         );
-
-    //         CreateBooking(SessionManager.CurrentUser, flight, selectedSeat, AmountLuggage, insuranceStatus);
-
-    //         decimal finalPrice = (decimal)selectedSeat.Price;
-    //         if (AmountLuggage > 0)
-    //         {
-    //             finalPrice += 500 * AmountLuggage; //FIX PRICE <================================================================================================
-    //         }
-    //         if (insuranceStatus)
-    //         {
-    //             finalPrice += 100000000000; //FIX PRICE <================================================================================================
-    //             AnsiConsole.MarkupLine("[green]Travel insurance purchased![/]");
-    //         }
-
-    //         if (SessionManager.CurrentUser.FirstTimeDiscount)
-    //         {
-    //             finalPrice *= 0.75m;
-    //             AnsiConsole.MarkupLine("[green]Congratulations! You have received a 25% discount on your first booking![/]");
-    //             SessionManager.CurrentUser.FirstTimeDiscount = false;
-    //             UserLogic.UpdateUser(SessionManager.CurrentUser);
-    //         }
-    //         else if (DateTime.Now >= SessionManager.CurrentUser.BirthDate.AddYears(65))
-    //         {
-    //             finalPrice *= 0.8m;
-    //             AnsiConsole.MarkupLine("[green]Senior discount (20%) applied![/]");
-    //         }
-    //         BookingUI.DisplayBookingDetails(selectedSeat, flight, null, finalPrice);
-    //     }
-
-    //     BookingUI.WaitForKeyPress();
-    // }
-
-    public static void ViewUserBookings(bool upcoming)
+    public static void BookTheDamnFlight(BookingModel booking)
     {
-        if (!SessionManager.IsLoggedIn())
-        {
-            AnsiConsole.MarkupLine("[red]You must be logged in to view bookings.[/]");
-            BookingUI.WaitForKeyPress();
-            return;
-        }
-        var user = SessionManager.CurrentUser;
-        var bookings = BookingLogic.GetBookingsForUser(user.UserID, upcoming);
-        if (!bookings.Any())
-        {
-            AnsiConsole.MarkupLine("[yellow]No bookings found.[/]");
-            BookingUI.WaitForKeyPress();
-            return;
-        }
-        var table = new Table()
-            .Border(TableBorder.Rounded)
-            .BorderStyle(primaryStyle)
-            .Expand();
-        table.AddColumns("BookingID", "FlightID", "Seat", "Class", "BookingDate", "BoardingTime", "Status", "Payment");
-        foreach (var b in bookings)
-        {
-            table.AddRow(
-                b.BookingID.ToString(),
-                b.FlightID.ToString(),
-                b.SeatID,
-                b.SeatClass,
-                b.BookingDate,
-                b.BoardingTime,
-                b.BookingStatus,
-                b.PaymentStatus
-            );
-        }
-        AnsiConsole.Write(table);
-        BookingUI.WaitForKeyPress();
-    }
+        BookingAccessService.AddBooking(booking);
 
-    private static int PurchaseExtraLuggage()
-    {
-        var user = SessionManager.CurrentUser;
-        bool extraLuggage = AnsiConsole.Prompt(
-            new SelectionPrompt<bool>()
-                .Title("[#864000]Do you want to purchase extra luggage?[/]")
-                .AddChoices(new[] { true, false })
-                .UseConverter(choice => choice ? "Yes" : "No")
-                .HighlightStyle(highlightStyle)
-        );
-        if (extraLuggage)
-        {
-            int additionalLuggage = AnsiConsole.Prompt(
-            new TextPrompt<int>("[#864000]Enter the number of additional luggage pieces (1 or 2):[/]")
-                .PromptStyle(highlightStyle)
-                .Validate(input => input >= 1 && input <= 2, "Please enter a number between 1 or 2.")
-            );
-            AnsiConsole.MarkupLine($"[green]Successfully purchased {additionalLuggage} extra luggage piece(s)![/]");
-            return additionalLuggage;
-        }
-        return 0;
-    }
-
-    public static void CancelBookingPrompt() // DONT INCLUDE CANCELLATION FEE IF THE USER HAS INSURANCE
-    {
-        if (!SessionManager.IsLoggedIn())
-        {
-            AnsiConsole.MarkupLine("[red]You must be logged in to cancel a booking.[/]");
-            return;
-        }
-
-        var user = SessionManager.CurrentUser;
-        var bookings = BookingLogic.GetBookingsForUser(user.UserID, true);
-        if (!bookings.Any())
-        {
-            AnsiConsole.MarkupLine("[yellow]You have no upcoming bookings to cancel.[/]");
-            return;
-        }
-
-
-        var table = new Table()
-            .Border(TableBorder.Rounded)
-            .BorderStyle(primaryStyle)
-            .Expand();
-        table.AddColumns("BookingID", "FlightID", "Seat", "Class", "BookingDate", "BoardingTime", "Status", "Payment");
-        foreach (var b in bookings)
-        {
-            table.AddRow(
-                b.BookingID.ToString(),
-                b.FlightID.ToString(),
-                b.SeatID,
-                b.SeatClass,
-                b.BookingDate,
-                b.BoardingTime,
-                b.BookingStatus,
-                b.PaymentStatus
-            );
-        }
-        AnsiConsole.Write(table);
-
-
-        int bookingId = AnsiConsole.Prompt(
-            new TextPrompt<int>("[#864000]Enter the Booking ID to cancel:[/]")
-                .PromptStyle(highlightStyle)
-                .Validate(id => bookings.Any(b => b.BookingID == id), "[red]Invalid Booking ID.[/]")
-        );
-
-        var selectedBooking = bookings.First(b => b.BookingID == bookingId);
-
-
-        if (selectedBooking.BookingStatus?.ToLower() == "cancelled")
-        {
-            AnsiConsole.MarkupLine("[yellow]This booking is already cancelled.[/]");
-            BookingUI.WaitForKeyPress();
-            return;
-        }
-
-        bool cancelled = BookingLogic.CancelBooking(bookingId);
-        if (cancelled)
-        {
-            AnsiConsole.MarkupLine("[green]Booking successfully cancelled![/]");
-            AnsiConsole.MarkupLine("[yellow]A cancellation fee of $100 has been applied.[/]");
-
-            var flight = FlightLogic.GetFlightById(selectedBooking.FlightID);
-            var seat = SeatMapLogic.GetSeatMap(selectedBooking.FlightID)
-                .FirstOrDefault(s => s.SeatID == selectedBooking.SeatID);
-
-            if (flight != null && seat != null)
-            {
-                BookingUI.DisplayBookingDetails(seat, flight, AmountLuggage:selectedBooking.AmountLuggage);
-            }
-            else
-            {
-                AnsiConsole.MarkupLine($"[yellow]BookingID:[/] {selectedBooking.BookingID}");
-                AnsiConsole.MarkupLine($"[yellow]FlightID:[/] {selectedBooking.FlightID}");
-                AnsiConsole.MarkupLine($"[yellow]Seat:[/] {selectedBooking.SeatID}");
-                AnsiConsole.MarkupLine($"[yellow]Class:[/] {selectedBooking.SeatClass}");
-                AnsiConsole.MarkupLine($"[yellow]BookingDate:[/] {selectedBooking.BookingDate}");
-                AnsiConsole.MarkupLine($"[yellow]BoardingTime:[/] {selectedBooking.BoardingTime}");
-            }
-        }
-        else
-        {
-            AnsiConsole.MarkupLine("[red]Cancellation failed.[/]");
-        }
-        BookingUI.WaitForKeyPress();
-    }
-    public static void ModifyBookingPrompt()
-    {
-        if (!SessionManager.IsLoggedIn())
-        {
-            AnsiConsole.MarkupLine("[red]You must be logged in to modify a booking.[/]");
-            return;
-        }
-
-        var user = SessionManager.CurrentUser;
-        var bookings = BookingLogic.GetBookingsForUser(user.UserID, true);
-        if (!bookings.Any())
-        {
-            AnsiConsole.MarkupLine("[yellow]You have no upcoming bookings to modify.[/]");
-            return;
-        }
-
-        var table = new Table()
-            .Border(TableBorder.Rounded)
-            .BorderStyle(primaryStyle)
-            .Expand();
-        table.AddColumns("BookingID", "FlightID", "Seat", "Class", "BookingDate", "BoardingTime", "Status", "Payment");
-        foreach (var b in bookings)
-        {
-            table.AddRow(
-                b.BookingID.ToString(),
-                b.FlightID.ToString(),
-                b.SeatID,
-                b.SeatClass,
-                b.BookingDate,
-                b.BoardingTime,
-                b.BookingStatus,
-                b.PaymentStatus
-            );
-        }
-        AnsiConsole.Write(table);
-
-
-        int bookingId = AnsiConsole.Prompt(
-            new TextPrompt<int>("[#864000]Enter the Booking ID to modify:[/]")
-                .PromptStyle(highlightStyle)
-                .Validate(id => bookings.Any(b => b.BookingID == id), "[red]Invalid Booking ID.[/]")
-        );
-
-        var selectedBooking = bookings.First(b => b.BookingID == bookingId);
-
-
-        if (selectedBooking.BookingStatus?.ToLower() == "cancelled")
-        {
-            AnsiConsole.MarkupLine("[yellow]This booking is already cancelled and cannot be modified.[/]");
-            BookingUI.WaitForKeyPress();
-            return;
-        }
-
-
-        var flight = FlightLogic.GetFlightById(selectedBooking.FlightID);
-        var seat = SeatMapLogic.GetSeatMap(selectedBooking.FlightID)
-            .FirstOrDefault(s => s.SeatID == selectedBooking.SeatID);
-
-        AnsiConsole.MarkupLine("[yellow]Current booking details:[/]");
-        if (flight != null && seat != null)
-        {
-            BookingUI.DisplayBookingDetails(seat, flight, AmountLuggage:selectedBooking.AmountLuggage);
-        }
-        else
-        {
-            AnsiConsole.MarkupLine($"[yellow]BookingID:[/] {selectedBooking.BookingID}");
-            AnsiConsole.MarkupLine($"[yellow]FlightID:[/] {selectedBooking.FlightID}");
-            AnsiConsole.MarkupLine($"[yellow]Seat:[/] {selectedBooking.SeatID}");
-            AnsiConsole.MarkupLine($"[yellow]Class:[/] {selectedBooking.SeatClass}");
-            AnsiConsole.MarkupLine($"[yellow]BookingDate:[/] {selectedBooking.BookingDate}");
-            AnsiConsole.MarkupLine($"[yellow]BoardingTime:[/] {selectedBooking.BoardingTime}");
-        }
-
-        var seats = SeatMapLogic.GetSeatMap(selectedBooking.FlightID);
-        if (seats == null || seats.Count == 0)
-        {
-            AnsiConsole.MarkupLine("[red]No seats found for this flight.[/]");
-            BookingUI.WaitForKeyPress();
-            return;
-        }
-
-        string newSeatId = null;
-        while (true)
-        {
-            AnsiConsole.MarkupLine("[yellow]Enter the new seat (e.g., 12A or A12):[/]");
-            var seatInput = AnsiConsole.Prompt(
-                new TextPrompt<string>("[#864000]Seat:[/]").PromptStyle(highlightStyle)
-            ).Trim().ToUpper();
-
-            string rowPart = "";
-            string letterPart = "";
-
-            // Try row+letter (e.g., 12A)
-            var rowFirst = new string(seatInput.TakeWhile(char.IsDigit).ToArray());
-            var letterAfter = new string(seatInput.SkipWhile(char.IsDigit).ToArray()).ToUpper();
-
-            // Try letter+row (e.g., A12)
-            var letterFirst = new string(seatInput.TakeWhile(char.IsLetter).ToArray()).ToUpper();
-            var rowAfter = new string(seatInput.SkipWhile(char.IsLetter).ToArray());
-
-            if (!string.IsNullOrEmpty(rowFirst) && !string.IsNullOrEmpty(letterAfter))
-            {
-                rowPart = rowFirst;
-                letterPart = letterAfter;
-            }
-            else if (!string.IsNullOrEmpty(letterFirst) && !string.IsNullOrEmpty(rowAfter))
-            {
-                rowPart = rowAfter;
-                letterPart = letterFirst;
-            }
-            else
-            {
-                AnsiConsole.MarkupLine("[red]Invalid seat format. Please enter a row number and seat letter (e.g., 12A or A12).[/]");
-                continue;
-            }
-
-            if (int.TryParse(rowPart, out int row))
-            {
-                var seatObj = seats.FirstOrDefault(s =>
-                    s.RowNumber == row &&
-                    s.SeatPosition.Equals(letterPart, StringComparison.OrdinalIgnoreCase)
-                );
-
-                if (seatObj == null)
-                {
-                    AnsiConsole.MarkupLine("[red]Seat does not exist.[/]");
-                    continue;
-                }
-                if (seatObj.IsOccupied && seatObj.SeatID != selectedBooking.SeatID)
-                {
-                    AnsiConsole.MarkupLine("[red]Seat is already occupied.[/]");
-                    continue;
-                }
-                newSeatId = seatObj.SeatID;
-                break;
-            }
-            else
-            {
-                AnsiConsole.MarkupLine("[red]Invalid row number in seat format.[/]");
-            }
-        }
-
-        int newLuggage = AnsiConsole.Prompt(
-            new TextPrompt<int>("[#864000]Enter new luggage amount (0-2):[/]")
-                .PromptStyle(highlightStyle)
-                .Validate(l => l >= 0 && l <= 2, "[red]Luggage must be 0, 1, or 2.[/]")
-        );
-
-        if (newLuggage > 0)
-        {
-            AnsiConsole.MarkupLine($"[yellow]A surcharge of ${newLuggage * 50} has been added for extra luggage.[/]");
-        }
-
-        BookingLogic.ModifyBooking(bookingId, newSeatId, newLuggage);
-        BookingUI.WaitForKeyPress();
     }
 }

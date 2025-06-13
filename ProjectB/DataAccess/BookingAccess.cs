@@ -11,8 +11,14 @@ public class BookingAccess : IBookingAccess
     public void AddBooking(BookingModel booking)
     {
         string sql = $@"INSERT INTO {Table} 
-            (PassengerName, FlightID, BookingDate, BoardingTime, SeatID, SeatClass, BookingStatus, PaymentStatus, UserID, AmountLuggage, InsuranceStatus)
-            VALUES (@PassengerName, @FlightID, @BookingDate, @BoardingTime, @SeatID, @SeatClass, @BookingStatus, @PaymentStatus, @UserID, @AmountLuggage, @InsuranceStatus)";
+            (UserID, PassengerFirstName, PassengerLastName, PassengerEmail, PassengerPhone,
+            FlightID, Airline, AirplaneModel, DepartureAirport, ArrivalAirport,
+            DepartureTime, ArrivalTime, SeatID, SeatClass, LuggageAmount, HasInsurance,
+            Discount, TotalPrice)
+            VALUES (@UserID, @PassengerFirstName, @PassengerLastName, @PassengerEmail, @PassengerPhone,
+            @FlightID, @Airline, @AirplaneModel, @DepartureAirport, @ArrivalAirport,
+            @DepartureTime, @ArrivalTime, @SeatID, @SeatClass, @LuggageAmount, @HasInsurance,
+            @Discount, @TotalPrice)";
         _connection.Execute(sql, booking);
     }
 
@@ -30,13 +36,16 @@ public class BookingAccess : IBookingAccess
     public void UpdateBooking(BookingModel booking)
     {
         string sql = $@"UPDATE {Table} 
-                        SET BookingStatus = @BookingStatus,
-                            PaymentStatus = @PaymentStatus,
+                        SET PassengerFirstName = @PassengerFirstName,
+                            PassengerLastName = @PassengerLastName,
+                            PassengerEmail = @PassengerEmail,
+                            PassengerPhone = @PassengerPhone,
                             SeatID = @SeatID,
                             SeatClass = @SeatClass,
-                            BookingDate = @BookingDate,
-                            BoardingTime = @BoardingTime,
-                            AmountLuggage = @AmountLuggage
+                            LuggageAmount = @LuggageAmount,
+                            HasInsurance = @HasInsurance,
+                            Discount = @Discount,
+                            TotalPrice = @TotalPrice
                         WHERE BookingID = @BookingID";
         _connection.Execute(sql, booking);
     }

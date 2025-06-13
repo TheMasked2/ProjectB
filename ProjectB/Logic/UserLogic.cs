@@ -51,8 +51,10 @@ public static class UserLogic
         var user = new User(
             userID: UserAccess.GetHighestUserId() + 1,
             firstName, lastName, country, city, emailAddress, password, 
-            phoneNumber.ToString(), birthDate, DateTime.Now, isAdmin: false
+            phoneNumber.ToString(), birthDate, DateTime.Now, isAdmin: false, firstTimeDiscount: true
         );
+    
+
 
         UserAccess.AddUser(user);
         return true;

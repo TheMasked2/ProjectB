@@ -200,7 +200,8 @@ public static class UserUI
             PhoneNumber = currentUser.PhoneNumber,
             BirthDate = currentUser.BirthDate,        // Can't be changed
             AccCreatedAt = currentUser.AccCreatedAt,  // Can't be changed
-            IsAdmin = currentUser.IsAdmin             // Can't be changed
+            IsAdmin = currentUser.IsAdmin,            // Can't be changed
+            FirstTimeDiscount = currentUser.FirstTimeDiscount // Can't be changed
         };
 
         // Edit personal information fields
@@ -415,22 +416,22 @@ public static class UserUI
 
             if (action == "View upcoming bookings")
             {
-                BookingLogic.ViewUserBookings(true);
+                BookingUI.ViewUserBookings(true);
                 AnsiConsole.Clear();
             }
             else if (action == "Cancel a booking")
             {
-                BookingLogic.CancelBookingPrompt();
+                BookingUI.CancelBookingPrompt();
                 AnsiConsole.Clear();
             }
             else if (action == "Modify a booking")
             {
-                BookingLogic.ModifyBookingPrompt();
+                BookingUI.ModifyBookingPrompt();
                 AnsiConsole.Clear();
             }
             else if (action == "View past bookings")
             {
-                BookingLogic.ViewUserBookings(false);
+                BookingUI.ViewUserBookings(false);
                 AnsiConsole.Clear();
             }
             else // Back to main menu
@@ -443,50 +444,81 @@ public static class UserUI
 
 
     public static void ShowGuestMenu()
+    {
+        SessionManager.CurrentUser = new User
         {
-            SessionManager.CurrentUser = new User
-                        {
-                            UserID = 0,
-                            FirstName = "Guest",
-                            LastName = "User",
-                            IsAdmin = false,
-                            Guest = true
-                        };
-            
-            while (true)
-            {
-                AnsiConsole.Clear();
-                AnsiConsole.Write(new FigletText("Guest Menu").Centered().Color(Color.Orange1));
+            UserID = 0,
+            FirstName = "Guest",
+            LastName = "User",
+            IsAdmin = false,
+            Guest = true
+        };
 
-                var choices = new List<string>
+        while (true)
+        {
+            AnsiConsole.Clear();
+            AnsiConsole.Write(new FigletText("Guest Menu").Centered().Color(Color.Orange1));
+
+            var choices = new List<string>
                 {
                     "Book a flight",
                     "Search for flights",
                     "Back to main menu"
                 };
 
-                var input = AnsiConsole.Prompt(
-                    new SelectionPrompt<string>()
-                        .Title("[yellow]Select an option:[/]")
-                        .PageSize(5)
-                        .AddChoices(choices));
+            var input = AnsiConsole.Prompt(
+                new SelectionPrompt<string>()
+                    .Title("[yellow]Select an option:[/]")
+                    .PageSize(5)
+                    .AddChoices(choices));
 
-                switch (input)
-                {
-                    case "Book a flight":
-                        BookingUI.DisplayAllBookableFlights();
-                        break;
-                    case "Search for flights":
-                        FlightUI.SearchFlights();
-                        break;
-                    case "Back to main menu":
-                        UserLogout();
-                        break;
-                }
-                
-                if (input == "Back to main menu")
+            switch (input)
+            {
+                case "Book a flight":
+                    BookingUI.DisplayAllBookableFlights();
                     break;
-                AnsiConsole.MarkupLine("[yellow]Returning to main menu...[/]");
+                case "Search for flights":
+                    FlightUI.SearchFlights();
+                    break;
+                case "Back to main menu":
+                    UserLogout();
+                    break;
             }
+
+            if (input == "Back to main menu")
+                break;
+            AnsiConsole.MarkupLine("[yellow]Returning to main menu...[/]");
         }
+    }
+
+    public static void GuestEditUserInfo()
+    {
+        string firstName = AnsiConsole.Prompt(
+               new TextPrompt<string>("[#864000]Please enter your first name:[/]")
+                   .PromptStyle(highlightStyle));
+
+        string lastName = AnsiConsole.Prompt(
+            new TextPrompt<string>("[#864000]Please enter your last name:[/]")
+                .PromptStyle(highlightStyle));
+
+        string email = AnsiConsole.Prompt(
+            new TextPrompt<string>("[#864000]Please enter your email address:[/]")
+                .PromptStyle(highlightStyle));
+
+        string phoneNumberString = AnsiConsole.Prompt(
+            new TextPrompt<string>("[#864000]Please enter your phone number:[/]")
+                .PromptStyle(highlightStyle));
+
+        string birthDateString = AnsiConsole.Prompt(
+            new TextPrompt<string>("[#864000]Please enter your birth date (yyyy-mm-dd):[/]")
+                .PromptStyle(highlightStyle));
+
+        User guestUser = SessionManager.CurrentUser;
+        guestUser.FirstName = firstName;
+        guestUser.LastName = lastName;
+        guestUser.EmailAddress = email;
+        guestUser.PhoneNumber = phoneNumberString;
+        guestUser.BirthDate = DateTime.Parse(birthDateString);
+        guestUser.FirstTimeDiscount = false; // Guest users do not get discounts
+    }
 }
