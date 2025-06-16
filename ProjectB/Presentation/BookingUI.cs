@@ -143,7 +143,7 @@ public static class BookingUI
             }
 
             // Do NOT filter out flights based on price/seat class availability
-            AnsiConsole.Write(FlightLogic.DisplayFilteredFlights(flights, seatClass));
+            AnsiConsole.Write(FlightLogic.CreateDisplayableFlightsTable(flights, seatClass));
 
             if (!flights.Any())
             {
@@ -508,5 +508,4 @@ public static class BookingUI
         AnsiConsole.Write(bookingTable);
         WaitForKeyPress();
     }
-
 }

@@ -40,7 +40,7 @@ public static class FlightLogic
         return bookableFlights;
     }
 
-    public static Spectre.Console.Rendering.IRenderable DisplayFilteredFlights(List<FlightModel> flights, string seatClass)
+    public static Spectre.Console.Rendering.IRenderable CreateDisplayableFlightsTable(List<FlightModel> flights, string seatClass)
     {
         if (flights == null || !flights.Any())
         {
