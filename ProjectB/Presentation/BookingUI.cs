@@ -136,7 +136,7 @@ public static class BookingUI
                     break;
             }
 
-            List<FlightModel> flights = FlightLogic.GetBookableFlights(origin, destination, departureDate, seatClass);
+            List<FlightModel> flights = FlightLogic.GetFilteredFlights(origin, destination, departureDate, seatClass);
 
             // Do NOT filter out flights based on price/seat class availability
             AnsiConsole.Write(FlightLogic.CreateDisplayableFlightsTable(flights, seatClass));

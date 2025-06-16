@@ -25,15 +25,14 @@ public static class FlightLogic
         string? destination,
         DateTime departureDate) => FlightAccessService.GetFilteredFlights(origin, destination, departureDate);
 
-    public static List<FlightModel> GetBookableFlights(
+    public static List<FlightModel> GetFilteredFlights(
         string? origin,
         string? destination,
         DateTime departureDate,
         string seatClass)
     {
-        List<FlightModel> flights = GetFilteredFlights(origin, destination, departureDate);
+        List<FlightModel> flights = FlightAccessService.GetFilteredFlights(origin, destination, departureDate);
 
-        // Updated to check for available seats of the specific class
         List<FlightModel> bookableFlights =
             flights.Where(flight => 
                 FlightSeatAccessService.GetAvailableSeatCountByClass(flight.FlightID, flight.AirplaneID, seatClass) > 0 && 
