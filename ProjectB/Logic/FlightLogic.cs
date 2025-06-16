@@ -33,9 +33,12 @@ public static class FlightLogic
     {
         List<FlightModel> flights = GetFilteredFlights(origin, destination, departureDate);
 
+        // Updated to check for available seats of the specific class
         List<FlightModel> bookableFlights =
-            flights.Where(flight => flight.AvailableSeats > 0 && // TODO: Add seat class availibility filter
-            GetSeatClassPrice(flight.AirplaneID, seatClass) > 0).ToList();
+            flights.Where(flight => 
+                FlightSeatAccessService.GetAvailableSeatCountByClass(flight.FlightID, flight.AirplaneID, seatClass) > 0 && 
+                GetSeatClassPrice(flight.AirplaneID, seatClass) > 0
+            ).ToList();
 
         return bookableFlights;
     }
