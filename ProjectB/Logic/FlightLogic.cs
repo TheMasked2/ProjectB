@@ -13,7 +13,7 @@ public static class FlightLogic
     private static readonly Style errorStyle = new(new Color(162, 52, 0));
     private static readonly Style successStyle = new(new Color(194, 87, 0));
 
-     /// <summary>
+    /// <summary>
     /// Filters the data from the data access layer based on the provided criteria.
     /// </summary>
     /// <param name="origin">Origin airport filter.</param>
@@ -88,6 +88,25 @@ public static class FlightLogic
         }
         return flight;
     }
+
+    public static FlightModel GetReviewFlightById(int flightId)
+    {
+        FlightAccess flightAccess = new FlightAccess();
+        try
+        {
+            FlightModel flight = flightAccess.GetReviewFlightByID(flightId);
+            if (flight == null)
+            {
+                return null;
+            }
+            return flight;
+        }
+        catch
+        {
+            return null; 
+        }
+    }
+
 
     public static bool AddFlight(FlightModel flight)
     {

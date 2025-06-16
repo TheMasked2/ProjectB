@@ -44,6 +44,7 @@ public static class Menu
                     "View user info",
                     "Edit user info",
                     "Search for flights",
+                    "Reviews",
                     "Logout"
                 });
             }
@@ -104,6 +105,10 @@ public static class Menu
 
                 case "Search for flights":
                     FlightUI.SearchFlights();
+                    break;
+
+                case "Reviews":
+                    ReviewUI.ShowReviewMenu();
                     break;
                 
             }
