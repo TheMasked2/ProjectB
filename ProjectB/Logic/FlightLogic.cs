@@ -47,7 +47,7 @@ public static class FlightLogic
     {
         if (flights == null || !flights.Any())
         {
-            var panel = new Panel("[yellow]No flights found matching the criteria.[/]")
+            var panel = new Panel("[yellow]No flights found matching the criteria. Please try again.[/]")
                 .Border(BoxBorder.Rounded)
                 .BorderStyle(errorStyle);
             return panel;

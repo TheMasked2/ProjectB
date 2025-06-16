@@ -19,6 +19,10 @@ public static class BookingUI
     {
         // Display all bookable flights based on user input
         List<FlightModel> bookableFlights = DisplayAllBookableFlights();
+        if (bookableFlights == null || !bookableFlights.Any())
+        {
+            return;
+        }
         FlightModel selectedFlight = SelectBookableFlight(bookableFlights);
         // Display and handle seatmap and seat selection
         SeatModel selectedSeat = HandleSeatSelection(selectedFlight.FlightID);
@@ -72,18 +76,18 @@ public static class BookingUI
                     .Centered()
                     .Color(Color.Orange1));
 
-            AnsiConsole.MarkupLine("\n[#864000]Enter filter criteria (fields that start with * are mandatory!):[/]");
+            AnsiConsole.MarkupLine("\n[#864000]Enter filter criteria:[/]");
 
             string origin = AnsiConsole.Prompt(
-                new TextPrompt<string>("[#864000]*Origin airport (e.g., LAX):[/]")
+                new TextPrompt<string>("[#864000]Origin airport (e.g., LAX):[/]")
                     .PromptStyle(highlightStyle));
 
             string destination = AnsiConsole.Prompt(
-                new TextPrompt<string>("[#864000]*Destination airport (e.g., JFK):[/]")
+                new TextPrompt<string>("[#864000]Destination airport (e.g., JFK):[/]")
                     .PromptStyle(highlightStyle));
 
             string departureDateInput = AnsiConsole.Prompt(
-                new TextPrompt<string>("[#864000]*Departure date (yyyy-MM-dd):[/]")
+                new TextPrompt<string>("[#864000]Departure date (yyyy-MM-dd). Press Enter to enter current date:[/]")
                 .DefaultValue(DateTime.Now.ToString("yyyy-MM-dd"))
                     .PromptStyle(highlightStyle));
             DateTime departureDate;
@@ -133,14 +137,6 @@ public static class BookingUI
             }
 
             List<FlightModel> flights = FlightLogic.GetBookableFlights(origin, destination, departureDate, seatClass);
-
-            if (flights == null || flights.Count == 0)
-            {
-                var panel = new Panel("[yellow]No flights found matching the criteria. Please try again.[/]\n[grey]Press [bold]Escape[/] to return to the main menu, or any other key to try again.[/]")
-                    .Border(BoxBorder.Rounded)
-                    .BorderStyle(errorStyle);
-                AnsiConsole.Write(panel);
-            }
 
             // Do NOT filter out flights based on price/seat class availability
             AnsiConsole.Write(FlightLogic.CreateDisplayableFlightsTable(flights, seatClass));
