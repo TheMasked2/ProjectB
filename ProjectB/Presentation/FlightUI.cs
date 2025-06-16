@@ -22,18 +22,15 @@ public static class FlightUI
                 .Centered()
                 .Color(Color.Orange1));
 
-        bool hasFilters = false;
         AnsiConsole.MarkupLine("\n[#864000]Enter filter criteria:[/]");
 
         string origin = AnsiConsole.Prompt(
             new TextPrompt<string>("[#864000]Origin airport (e.g., LAX):[/]")
                 .PromptStyle(highlightStyle));
-        hasFilters |= !string.IsNullOrWhiteSpace(origin);
 
         string destination = AnsiConsole.Prompt(
             new TextPrompt<string>("[#864000]Destination airport (e.g., JFK):[/]")
                 .PromptStyle(highlightStyle));
-        hasFilters |= !string.IsNullOrWhiteSpace(destination);
 
         string startDateInput = AnsiConsole.Prompt(
             new TextPrompt<string>("[#864000]Start date (yyyy-MM-dd):[/]")
@@ -47,55 +44,10 @@ public static class FlightUI
             WaitForKeyPress();
             return; // or handle the error as needed
         }
-        hasFilters = true;
 
-        var seatClassOptions = new List<string>
-            {
-                "Luxury",
-                "Business",
-                "Premium",
-                "Standard Extra Legroom",
-                "Standard"
-            };
+        List<FlightModel> flights = FlightLogic.GetFilteredFlights(origin, destination, startDate);
 
-        var input = AnsiConsole.Prompt(
-            new SelectionPrompt<string>()
-                .Title("[#864000]Select seat class (default is 'Standard'):[/]")
-                .PageSize(6)
-                .AddChoices(seatClassOptions));
-
-        string seatClass;
-        switch (input)
-        {
-            case "Standard":
-                seatClass = "Standard";
-                break;
-            case "Business":
-                seatClass = "Business";
-                break;
-            case "Premium":
-                seatClass = "Premium";
-                break;
-            case "Luxury":
-                seatClass = "Luxury";
-                break;
-            case "Standard Extra Legroom":
-                seatClass = "Standard Extra Legroom";
-                break;
-            default:
-                seatClass = "Standard"; // Any
-                break;
-        }
-
-        List<FlightModel> flights = FlightLogic.GetFilteredFlights(origin, destination, startDate, seatClass);
-
-        if (!hasFilters)
-        {
-            AnsiConsole.MarkupLine("\n[yellow]No filters applied - showing all flights[/]");
-        }
-
-        AnsiConsole.Write(FlightLogic.CreateDisplayableFlightsTable(flights, seatClass));
-        WaitForKeyPress();
+        AnsiConsole.Write(FlightLogic.CreateDisplayableFlightsTable(flights));
     }
 
     public static void AddFlight()

@@ -42,7 +42,7 @@ public static class FlightLogic
         return bookableFlights;
     }
 
-    public static Spectre.Console.Rendering.IRenderable CreateDisplayableFlightsTable(List<FlightModel> flights, string seatClass)
+    public static Spectre.Console.Rendering.IRenderable CreateDisplayableFlightsTable(List<FlightModel> flights, string seatClass = null)
     {
         if (flights == null || !flights.Any())
         {
@@ -60,8 +60,13 @@ public static class FlightLogic
         table.AddColumns(
             "[#864000]ID[/]", "[#864000]Aircraft ID[/]", "[#864000]Airline[/]",
             "[#864000]From[/]", "[#864000]To[/]", "[#864000]Departure[/]",
-            "[#864000]Arrival[/]", "[#864000]Price[/]", "[#864000]Status[/]"
+            "[#864000]Arrival[/]", "[#864000]Status[/]"
         );
+
+        if (seatClass != null)
+        {
+            table.AddColumn("[#864000]Price[/]");
+        }
 
         foreach (var flight in flights)
         {
@@ -73,9 +78,13 @@ public static class FlightLogic
                 flight.ArrivalAirport,
                 flight.DepartureTime.ToString("g"),
                 flight.ArrivalTime.ToString("g"),
-                $"€{FlightLogic.GetSeatClassPrice(flight.AirplaneID, seatClass):F2}",
                 flight.FlightStatus
             );
+
+            if (seatClass != null)
+            {
+                table.AddRow($"€{FlightLogic.GetSeatClassPrice(flight.AirplaneID, seatClass):F2}");
+            }
         }
 
         return table;
@@ -208,6 +217,10 @@ public static class FlightLogic
 
     private static float GetSeatClassPrice(string airplaneID, string seatClass)
     {
+        if(seatClass == null)
+        {
+            return SeatAccessService.GetSeatClassPrice(airplaneID);
+        }
         return SeatAccessService.GetSeatClassPrice(airplaneID, seatClass);
     }
 
