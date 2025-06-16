@@ -106,6 +106,10 @@ public static class Menu
                 case "Search for flights":
                     FlightUI.SearchFlights();
                     break;
+
+                case "Reviews":
+                    ReviewUI.ShowReviewMenu();
+                    break;
                 
             }
         }

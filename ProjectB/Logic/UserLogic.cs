@@ -10,14 +10,14 @@ public static class UserLogic
     public static List<string> errors = new List<string>();
 
     public static bool Register(
-        string firstName, 
-        string lastName, 
-        string country, 
-        string city, 
-        string emailAddress, 
+        string firstName,
+        string lastName,
+        string country,
+        string city,
+        string emailAddress,
         string password,
         string confirmPassword,
-        string phoneNumberString, 
+        string phoneNumberString,
         string birthDateString
     )
     {
@@ -33,7 +33,7 @@ public static class UserLogic
             errors.Add("Birth date is not in the correct format (yyyy-mm-dd).");
         }
 
-        if (string.IsNullOrEmpty(firstName) || string.IsNullOrEmpty(lastName) || string.IsNullOrEmpty(country) || 
+        if (string.IsNullOrEmpty(firstName) || string.IsNullOrEmpty(lastName) || string.IsNullOrEmpty(country) ||
             string.IsNullOrEmpty(city) || string.IsNullOrEmpty(emailAddress) || string.IsNullOrEmpty(password))
         {
             errors.Add("All fields are required.");
@@ -56,10 +56,10 @@ public static class UserLogic
 
         var user = new User(
             userID: UserAccess.GetHighestUserId() + 1,
-            firstName, lastName, country, city, emailAddress, password, 
+            firstName, lastName, country, city, emailAddress, password,
             phoneNumber.ToString(), birthDate, DateTime.Now, isAdmin: false, firstTimeDiscount: true
         );
-    
+
 
 
         UserAccess.AddUser(user);
@@ -185,14 +185,14 @@ public static class UserLogic
     {
         return UserAccess.GetAllUsers();
     }
-    
+
     public static bool UpdateUser(User updatedUser)
     {
         errors.Clear();
-        
+
         // If admin is updating, get original user and prepare to track changes
         bool isAdminUpdate = SessionManager.IsLoggedIn() && SessionManager.CurrentUser.IsAdmin;
-        
+
         User originalUser = null;
         Dictionary<string, string> changedFields = null;
         if (isAdminUpdate)
@@ -226,53 +226,53 @@ public static class UserLogic
                     changedFields.Add("IsAdmin", $"{originalAdminStatus} -> {newAdminStatus}");
             }
         }
-        
+
         // Validate inputs
         if (string.IsNullOrWhiteSpace(updatedUser.FirstName))
         {
             errors.Add("[#A23400]First name cannot be empty[/]");
         }
-    
+
         if (string.IsNullOrWhiteSpace(updatedUser.LastName))
         {
             errors.Add("[#A23400]Last name cannot be empty[/]");
         }
-    
+
         if (string.IsNullOrWhiteSpace(updatedUser.Country))
         {
             errors.Add("[#A23400]Country cannot be empty[/]");
         }
-    
+
         if (string.IsNullOrWhiteSpace(updatedUser.City))
         {
             errors.Add("[#A23400]City cannot be empty[/]");
         }
-    
+
         if (string.IsNullOrWhiteSpace(updatedUser.EmailAddress))
         {
             errors.Add("[#A23400]Email address cannot be empty[/]");
         }
-    
+
         if (string.IsNullOrWhiteSpace(updatedUser.Password))
         {
             errors.Add("[#A23400]Password cannot be empty[/]");
         }
-    
+
         if (string.IsNullOrWhiteSpace(updatedUser.PhoneNumber))
         {
             errors.Add("[#A23400]Phone number cannot be empty[/]");
         }
-    
+
         // If there are validation errors, return false
         if (errors.Count > 0)
         {
             return false;
         }
-    
+
         try
         {
             UserAccess.UpdateUser(updatedUser);
-            
+
             // Log if admin update and if any fields actually changed
             if (isAdminUpdate && originalUser != null && changedFields != null && changedFields.Count > 0)
             {
@@ -283,7 +283,7 @@ public static class UserLogic
             {
                 SessionManager.SetCurrentUser(updatedUser);
             }
-            
+
             return true;
         }
         catch (Exception ex)
@@ -292,29 +292,29 @@ public static class UserLogic
             return false;
         }
     }
-    
+
     public static List<User> GetUsersByEmail(string emailFilter)
     {
         emailFilter = emailFilter.ToLower();
-        return UserAccess.GetAllUsers().Where(u => 
+        return UserAccess.GetAllUsers().Where(u =>
             u.EmailAddress.ToLower().Contains(emailFilter)).ToList();
     }
-    
+
     public static List<User> GetUsersByName(string nameFilter)
     {
         nameFilter = nameFilter.ToLower();
-        return UserAccess.GetAllUsers().Where(u => 
-            u.FirstName.ToLower().Contains(nameFilter) || 
+        return UserAccess.GetAllUsers().Where(u =>
+            u.FirstName.ToLower().Contains(nameFilter) ||
             u.LastName.ToLower().Contains(nameFilter) ||
             (u.FirstName.ToLower() + " " + u.LastName.ToLower()).Contains(nameFilter)
         ).ToList();
     }
-    
+
     public static List<User> GetUsersByAdminStatus(bool isAdmin)
     {
         return UserAccess.GetAllUsers().Where(u => u.IsAdmin == isAdmin).ToList();
     }
-    
+
     public static User GetUserByEmail(string email)
     {
         return UserAccess.GetUserInfoByEmail(email);
@@ -344,5 +344,10 @@ public static class UserLogic
     {
         int highestId = UserAccess.GetHighestUserId();
         return highestId + 1;
+    }
+    
+    public static User GetUserByID(int userId)
+    {
+        return UserAccess.GetUserInfoByID(userId);
     }
 }
