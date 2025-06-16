@@ -101,10 +101,12 @@ public static class BookingLogic
 
     public static List<BookingModel> GetBookingsForUser(int userId, bool upcoming)
     {
-        var all = BookingAccessService.GetBookingsByUser(userId);
-        var now = DateTime.Now;
+        List<BookingModel> all = BookingAccessService.GetBookingsByUser(userId);
+        DateTime now = DateTime.Now;
         return all.Where(b =>
         {
+            if (b.BookingStatus == "Cancelled")
+                return !upcoming;
             return upcoming ? b.DepartureTime >= now : b.DepartureTime < now;
         }).ToList();
     }
@@ -140,10 +142,9 @@ public static class BookingLogic
 
     public static bool ModifyBooking(int bookingId, string newSeatId, int newLuggageAmount)
     {
-        var booking = BookingAccessService.GetBookingById(bookingId);
+        BookingModel booking = BookingAccessService.GetBookingById(bookingId);
         if (booking == null)
         {
-            AnsiConsole.MarkupLine($"[red]Booking with ID {bookingId} not found.[/]");
             return false;
         }
 
@@ -154,18 +155,7 @@ public static class BookingLogic
         booking.LuggageAmount = newLuggageAmount;
         BookingAccessService.UpdateBooking(booking);
 
-        AnsiConsole.MarkupLine($"[green]Booking with ID {bookingId} has been updated.[/]");
         return true;
-    }
-
-    public static void CheckFlightAvailability(int flightID)
-    {
-        // Use flightID for seat map and booking
-        List<SeatModel> seats = SeatMapLogic.GetSeatMap(flightID);
-        if (seats == null || seats.Count == 0)
-        {
-            throw new ArgumentException($"No seats available for flight ID {flightID}.");
-        }
     }
 
     public static void BookTheDamnFlight(BookingModel booking)
