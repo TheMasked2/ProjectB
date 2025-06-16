@@ -96,12 +96,13 @@ public static class FlightLogic
             ValidateFlight(flight);
 
             // Set default values for required fields
-            AirplaneModel airplane = AirplaneAccessService.GetAirplaneData(flight.AirplaneID);
+            AirplaneModel airplane = AirplaneLogic.GetAirplaneByID(flight.AirplaneID);
 
             if (airplane == null)
             {
                 throw new ArgumentException("Airplane not found.");
             }
+            
             flight.AirplaneID = airplane.AirplaneID;
             flight.AvailableSeats = airplane.TotalSeats;
 
