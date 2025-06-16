@@ -14,8 +14,6 @@ public static class FlightUI
         Console.ReadKey(true);
     }
 
-
-    
     public static void DisplayFilteredUpcomingFlights()
     {
         AnsiConsole.Clear();
@@ -98,46 +96,6 @@ public static class FlightUI
 
         AnsiConsole.Write(FlightLogic.CreateDisplayableFlightsTable(flights, seatClass));
         WaitForKeyPress();
-    }
-
-    private static void DisplayFilteredFlights(List<FlightModel> flights)
-    {
-        if (flights == null || !flights.Any())
-        {
-            var panel = new Panel("[yellow]No flights found matching the criteria.[/]")
-                .Border(BoxBorder.Rounded)
-                .BorderStyle(errorStyle);
-            AnsiConsole.Write(panel);
-            return;
-        }
-
-        var table = new Table()
-            .Border(TableBorder.Rounded)
-            .BorderStyle(primaryStyle)
-            .Expand();
-
-        table.AddColumns(
-            "[#864000]ID[/]", "[#864000]Aircraft ID[/]", "[#864000]Airline[/]",
-            "[#864000]From[/]", "[#864000]To[/]", "[#864000]Departure[/]",
-            "[#864000]Arrival[/]", "[#864000]Price[/]", "[#864000]Status[/]"
-        );
-
-        foreach (var flight in flights)
-        {
-            table.AddRow(
-                flight.FlightID.ToString(),
-                flight.AirplaneID,
-                flight.Airline,
-                flight.DepartureAirport,
-                flight.ArrivalAirport,
-                flight.DepartureTime.ToString("g"),
-                flight.ArrivalTime.ToString("g"),
-                $"€{flight.Price:F2}",
-                flight.FlightStatus
-            );
-        }
-
-        AnsiConsole.Write(table);
     }
 
     public static void AddFlight()

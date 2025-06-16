@@ -482,7 +482,7 @@ public static class UserUI
             switch (input)
             {
                 case "Book a flight":
-                    BookingUI.DisplayAllBookableFlights();
+                    BookingUI.BookADamnFlight();
                     break;
                 case "Search for flights":
                     FlightUI.SearchFlights();
