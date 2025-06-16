@@ -24,13 +24,29 @@ public static class FlightUI
 
         AnsiConsole.MarkupLine("\n[#864000]Enter filter criteria:[/]");
 
-        string origin = AnsiConsole.Prompt(
-            new TextPrompt<string>("[#864000]Origin airport (e.g., LAX):[/]")
-                .PromptStyle(highlightStyle));
+        List<AirportModel> airports = AirportLogic.GetAllAirports();
+        Table airportTable = AirportLogic.CreateAirportsTable(airports);
+        AnsiConsole.Write(airportTable);
 
+        List<string> validIataCodes = airports.Select(airport => airport.IataCode).ToList();
+        
+        AnsiConsole.MarkupLine("\n[#864000]Enter filter criteria:[/]");
+
+        string origin = AnsiConsole.Prompt(
+            new TextPrompt<string>("[#864000]Enter origin airport code (IATA):[/]")
+                .PromptStyle(highlightStyle)
+                .Validate(code => 
+                    validIataCodes.Contains(code.ToUpper()), 
+                    "[red]Invalid airport code. Please use a valid IATA code from the table above.[/]")
+        ).ToUpper();
+        
         string destination = AnsiConsole.Prompt(
-            new TextPrompt<string>("[#864000]Destination airport (e.g., JFK):[/]")
-                .PromptStyle(highlightStyle));
+            new TextPrompt<string>("[#864000]Enter destination airport code (IATA):[/]")
+                .PromptStyle(highlightStyle)
+                .Validate(code => 
+                    validIataCodes.Contains(code.ToUpper()) && code.ToUpper() != origin, 
+                    "[red]Invalid airport code or same as origin. Please use a different valid IATA code from the table above.[/]")
+        ).ToUpper();
 
         string startDateInput = AnsiConsole.Prompt(
             new TextPrompt<string>("[#864000]Start date (yyyy-MM-dd):[/]")
@@ -42,13 +58,113 @@ public static class FlightUI
         {
             AnsiConsole.MarkupLine("[red]Invalid start date format. Please use yyyy-MM-dd.[/]");
             WaitForKeyPress();
-            return; // or handle the error as needed
+            return;
         }
 
         List<FlightModel> flights = FlightLogic.GetFilteredFlights(origin, destination, startDate);
 
         AnsiConsole.Write(FlightLogic.CreateDisplayableFlightsTable(flights));
     }
+
+    public static List<FlightModel> DisplayAllBookableFlights()
+    {
+        while (true)
+        {
+            AnsiConsole.Clear();
+            AnsiConsole.Write(
+                new FigletText("Flight Search")
+                    .Centered()
+                    .Color(Color.Orange1));
+
+
+            List<AirportModel> airports = AirportLogic.GetAllAirports();
+            Table airportTable = AirportLogic.CreateAirportsTable(airports);
+            AnsiConsole.Write(airportTable);
+
+            List<string> validIataCodes = airports.Select(airport => airport.IataCode).ToList();
+            
+            AnsiConsole.MarkupLine("\n[#864000]Enter filter criteria:[/]");
+
+            string origin = AnsiConsole.Prompt(
+                new TextPrompt<string>("[#864000]Enter origin airport code (IATA):[/]")
+                    .PromptStyle(highlightStyle)
+                    .Validate(code => 
+                        validIataCodes.Contains(code.ToUpper()), 
+                        "[red]Invalid airport code. Please use a valid IATA code from the table above.[/]")
+            ).ToUpper();
+            
+            string destination = AnsiConsole.Prompt(
+                new TextPrompt<string>("[#864000]Enter destination airport code (IATA):[/]")
+                    .PromptStyle(highlightStyle)
+                    .Validate(code => 
+                        validIataCodes.Contains(code.ToUpper()) && code.ToUpper() != origin, 
+                        "[red]Invalid airport code or same as origin. Please use a different valid IATA code from the table above.[/]")
+            ).ToUpper();
+
+            string departureDateInput = AnsiConsole.Prompt(
+                new TextPrompt<string>("[#864000]Departure date (yyyy-MM-dd). Press Enter to enter current date:[/]")
+                .DefaultValue(DateTime.Now.ToString("yyyy-MM-dd"))
+                    .PromptStyle(highlightStyle));
+            DateTime departureDate;
+            if (!DateTime.TryParse(departureDateInput, out departureDate))
+            {
+                AnsiConsole.MarkupLine("[red]Invalid date format. Please use yyyy-MM-dd.[/]");
+                WaitForKeyPress();
+                continue;
+            }
+
+            var seatClassOptions = new List<string>
+            {
+                "Luxury",
+                "Business",
+                "Premium",
+                "Standard Extra Legroom",
+                "Standard"
+            };
+
+            var input = AnsiConsole.Prompt(
+                new SelectionPrompt<string>()
+                    .Title("[#864000]Select seat class (default is 'Standard'):[/]")
+                    .PageSize(6)
+                    .AddChoices(seatClassOptions));
+
+            string seatClass;
+            switch (input)
+            {
+                case "Standard":
+                    seatClass = "Standard";
+                    break;
+                case "Business":
+                    seatClass = "Business";
+                    break;
+                case "Premium":
+                    seatClass = "Premium";
+                    break;
+                case "Luxury":
+                    seatClass = "Luxury";
+                    break;
+                case "Standard Extra Legroom":
+                    seatClass = "Standard Extra Legroom";
+                    break;
+                default:
+                    seatClass = "Standard"; // Any
+                    break;
+            }
+
+            List<FlightModel> flights = FlightLogic.GetFilteredFlights(origin, destination, departureDate, seatClass);
+
+            AnsiConsole.Write(FlightLogic.CreateDisplayableFlightsTable(flights, seatClass));
+
+            if (!flights.Any())
+            {
+                WaitForKeyPress();
+                break;
+            }
+            return flights;
+        }
+        return null;
+    }
+
 
     public static void AddFlight()
     {

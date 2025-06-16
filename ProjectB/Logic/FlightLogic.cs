@@ -242,7 +242,7 @@ public static class FlightLogic
             // Remove from current flights
             FlightAccessService.Delete(flight.FlightID);
         }
-        // Remove past flights older than a month
+        // Remove past flights and their seats which are older than a month
         PurgeOldPastFlights(monthAgo);
 
         // Update flights that are departing soon (3 hours or less)

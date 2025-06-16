@@ -410,46 +410,57 @@ public static class UserUI
             AnsiConsole.Write(
                 new FigletText("Bookings")
                     .Centered()
-                    .Color(new Color(255, 122, 0))); // Orange color consistent with other pages
+                    .Color(Color.Orange1));
 
-            var action = AnsiConsole.Prompt(
+            var choices = new List<string>
+            {
+                "Book a flight",
+                "Cancel a booking",
+                "Modify a booking", 
+                "View upcoming bookings", 
+                "View past bookings", 
+                "Back to main menu"
+            };
+
+            var input = AnsiConsole.Prompt(
                 new SelectionPrompt<string>()
-                    .Title("[#864000]Bookings menu:[/]")
-                    .AddChoices("Cancel a booking", "Modify a booking", "View upcoming bookings", "View past bookings", "Back to main menu")
-            );
+                    .Title("[#864000]Booking Management[/]")
+                    .PageSize(10)
+                    .AddChoices(choices)
+                    .HighlightStyle(highlightStyle));
 
-            if (action == "Cancel a booking")
+            switch (input)
             {
-                BookingUI.CancelBookingPrompt();
-                AnsiConsole.WriteLine("Press any key to continue...");
-                Console.ReadKey(true);
-                AnsiConsole.Clear();
+                case "Book a flight":
+                    BookingUI.BookADamnFlight();
+                    break;
+                case "Cancel a booking":
+                    BookingUI.CancelBookingPrompt();
+                    AnsiConsole.MarkupLine("\n[grey]Press any key to continue...[/]");
+                    Console.ReadKey(true);
+                    AnsiConsole.Clear();
+                    break;
+                case "Modify a booking":
+                    BookingUI.ModifyBookingPrompt();
+                    AnsiConsole.MarkupLine("\n[grey]Press any key to continue...[/]");
+                    Console.ReadKey(true);
+                    AnsiConsole.Clear();
+                    break;
+                case "View upcoming bookings":
+                    BookingUI.ViewUserBookings(upcoming:true);
+                    break;
+                case "View past bookings":
+                    BookingUI.ViewUserBookings(upcoming:false);
+                    break;
+                case "Back to main menu":
+                    AnsiConsole.Clear();
+                    return;
             }
-            else if (action == "Modify a booking")
-            {
-                BookingUI.ModifyBookingPrompt();
-                AnsiConsole.WriteLine("Press any key to continue...");
-                Console.ReadKey(true);
-                AnsiConsole.Clear();
-            }
-            else if (action == "View upcoming bookings")
-            {
-                BookingUI.ViewUserBookings(true);
-                AnsiConsole.Clear();
-            }
-            else if (action == "View past bookings")
-            {
-                BookingUI.ViewUserBookings(false);
-                AnsiConsole.Clear();
-            }
-            else // Back to main menu
-            {
-                AnsiConsole.Clear();
+
+            if (input == "Back to main menu")
                 break;
-            }
         }
     }
-
     public static void ShowGuestMenu()
     {
         SessionManager.CurrentUser = new User

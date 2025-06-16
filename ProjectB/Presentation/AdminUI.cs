@@ -84,7 +84,9 @@ public static class AdminUI
                     FlightUI.RemoveFlight();
                     break;
                 case "View upcoming flights":
-                    FlightUI.DisplayFilteredUpcomingFlights(); 
+                    FlightUI.DisplayFilteredUpcomingFlights();
+                    AnsiConsole.MarkupLine("\n[grey]Press any key to continue...[/]");
+                    Console.ReadKey(true);
                     break;
                 case "View past flights":
                     PastFlightUI.DisplayFilteredPastFlights(); 

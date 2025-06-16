@@ -18,7 +18,7 @@ public static class BookingUI
     public static void BookADamnFlight() // MAIN OBJECTIVE <--------------------
     {
         // Display all bookable flights based on user input
-        List<FlightModel> bookableFlights = DisplayAllBookableFlights();
+        List<FlightModel> bookableFlights = FlightUI.DisplayAllBookableFlights();
         if (bookableFlights == null || !bookableFlights.Any())
         {
             return;
@@ -66,91 +66,6 @@ public static class BookingUI
         return selectedSeat;
     }
  
-    public static List<FlightModel> DisplayAllBookableFlights()
-    {
-        while (true)
-        {
-            AnsiConsole.Clear();
-            AnsiConsole.Write(
-                new FigletText("Flight Search")
-                    .Centered()
-                    .Color(Color.Orange1));
-
-            AnsiConsole.MarkupLine("\n[#864000]Enter filter criteria:[/]");
-
-            string origin = AnsiConsole.Prompt(
-                new TextPrompt<string>("[#864000]Origin airport (e.g., LAX):[/]")
-                    .PromptStyle(highlightStyle));
-
-            string destination = AnsiConsole.Prompt(
-                new TextPrompt<string>("[#864000]Destination airport (e.g., JFK):[/]")
-                    .PromptStyle(highlightStyle));
-
-            string departureDateInput = AnsiConsole.Prompt(
-                new TextPrompt<string>("[#864000]Departure date (yyyy-MM-dd). Press Enter to enter current date:[/]")
-                .DefaultValue(DateTime.Now.ToString("yyyy-MM-dd"))
-                    .PromptStyle(highlightStyle));
-            DateTime departureDate;
-            if (!DateTime.TryParse(departureDateInput, out departureDate))
-            {
-                AnsiConsole.MarkupLine("[red]Invalid date format. Please use yyyy-MM-dd.[/]");
-                WaitForKeyPress();
-                continue;
-            }
-
-            var seatClassOptions = new List<string>
-            {
-                "Luxury",
-                "Business",
-                "Premium",
-                "Standard Extra Legroom",
-                "Standard"
-            };
-
-            var input = AnsiConsole.Prompt(
-                new SelectionPrompt<string>()
-                    .Title("[#864000]Select seat class (default is 'Standard'):[/]")
-                    .PageSize(6)
-                    .AddChoices(seatClassOptions));
-
-            string seatClass;
-            switch (input)
-            {
-                case "Standard":
-                    seatClass = "Standard";
-                    break;
-                case "Business":
-                    seatClass = "Business";
-                    break;
-                case "Premium":
-                    seatClass = "Premium";
-                    break;
-                case "Luxury":
-                    seatClass = "Luxury";
-                    break;
-                case "Standard Extra Legroom":
-                    seatClass = "Standard Extra Legroom";
-                    break;
-                default:
-                    seatClass = "Standard"; // Any
-                    break;
-            }
-
-            List<FlightModel> flights = FlightLogic.GetFilteredFlights(origin, destination, departureDate, seatClass);
-
-            // Do NOT filter out flights based on price/seat class availability
-            AnsiConsole.Write(FlightLogic.CreateDisplayableFlightsTable(flights, seatClass));
-
-            if (!flights.Any())
-            {
-                WaitForKeyPress();
-                break;
-            }
-            return flights;
-        }
-        return null;
-    }
-
     private static FlightModel SelectBookableFlight(List<FlightModel> flights)
     {
         FlightModel flight = null;
