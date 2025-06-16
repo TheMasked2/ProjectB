@@ -277,7 +277,7 @@ public static class BookingUI
 
         if (!couponCode)
         {
-            AnsiConsole.MarkupLine("[yellow]No coupon code.[/]");
+            AnsiConsole.MarkupLine("[red]No coupon code.[/]");
             AnsiConsole.MarkupLine("\n[grey]Press any key to continue...[/]");
             Console.ReadKey(true);
             return (false, false);
