@@ -240,7 +240,7 @@ public static class BookingUI
     {
         bool insuranceStatus = AnsiConsole.Prompt(
             new SelectionPrompt<bool>()
-                .Title("[#864000]Do you want to purchase travel insurance?\nThis is not required for booking, but you will not be eligable for a refund![/]")
+                .Title("[#864000]Do you want to purchase travel insurance?\nThis is not required for booking, but you will not be eligible for a refund![/]")
                 .AddChoices(new[] { true, false })
                 .UseConverter(choice => choice ? "Yes" : "No")
                 .HighlightStyle(highlightStyle)
@@ -340,14 +340,32 @@ public static class BookingUI
                     .AddChoices(new[] { "Credit Card", "Bank Transfer", "PayPal" })
                     .HighlightStyle(highlightStyle)
             );
-            
+    
+            // Require user to type CONFIRM or CANCEL
+            string confirmationInput;
+            do
+            {
+                confirmationInput = AnsiConsole.Prompt(
+                    new TextPrompt<string>("[yellow]Type [bold]CONFIRM[/] to finalize or [bold]CANCEL[/] to abort your booking:[/]")
+                        .PromptStyle(highlightStyle)
+                ).Trim().ToUpper();
+    
+                if (confirmationInput == "CANCEL")
+                {
+                    AnsiConsole.MarkupLine("[red]Booking cancelled.[/]");
+                    AnsiConsole.MarkupLine("\n[grey]Press any key to continue...[/]");
+                    Console.ReadKey(true);
+                    return;
+                }
+            } while (confirmationInput != "CONFIRM");
+    
             BookingLogic.BookTheDamnFlight(booking);
             SeatMapLogic.OccupySeat(booking.FlightID, selectedSeat);
-            
+    
             AnsiConsole.MarkupLine("[green]Booking confirmed![/]");
             AnsiConsole.MarkupLine($"[green]Payment of {(booking.TotalPrice < 0 ? $"SPICE {Math.Abs(booking.TotalPrice)}" : $"€{booking.TotalPrice}")} processed successfully via {(booking.TotalPrice < 0 ? "SPICE payment" : paymentMethod)}.[/]");
             AnsiConsole.MarkupLine("[yellow]Thank you for booking with Airtreides![/]");
-            
+    
             // If user has email, confirm that confirmation will be sent
             if (!string.IsNullOrEmpty(booking.PassengerEmail))
             {
