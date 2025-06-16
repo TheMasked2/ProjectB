@@ -44,6 +44,7 @@ public static class Menu
                     "View user info",
                     "Edit user info",
                     "Search for flights",
+                    "Reviews",
                     "Logout"
                 });
             }
