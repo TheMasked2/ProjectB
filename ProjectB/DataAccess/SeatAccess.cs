@@ -13,4 +13,5 @@ public class SeatAccess : ISeatAccess
         string sql = $@"SELECT Price FROM {Table} WHERE AirplaneID = @AirplaneID AND SeatType = @SeatClass";
         return _connection.QueryFirstOrDefault<float>(sql, new { AirplaneID = airplaneID, SeatClass = seatClass });
     }
+
 }

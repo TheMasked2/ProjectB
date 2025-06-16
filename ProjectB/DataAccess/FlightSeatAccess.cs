@@ -53,4 +53,11 @@ public class FlightSeatAccess : IFlightSeatAccess
         string sql = $@"INSERT INTO {FlightSeatsTable} (FlightID, SeatID, IsOccupied) VALUES (@FlightID, @SeatID, 0)";
         _connection.Execute(sql, new { FlightID = flightId, SeatID = airplaneId });
     }
+
+    public void DeletePastFlightSeatsByFlightIDs(List<int> flightIDs)
+    {
+        string sql = $@"DELETE FROM {FlightSeatsTable} WHERE FlightID IN @FlightIDs";
+        var parameters = new { FlightIDs = flightIDs };
+        _connection.Execute(sql, parameters);
+    }
 }
