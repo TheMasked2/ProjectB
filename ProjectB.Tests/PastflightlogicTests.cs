@@ -34,5 +34,22 @@ namespace ProjectB.Tests
             Assert.AreEqual(expectedFlights[0].FlightID, result[0].FlightID);
             Assert.AreEqual(expectedFlights[1].FlightID, result[1].FlightID);
         }
+        [TestMethod]
+        public void GetFilteredPastFlights_ReturnsEmptyList_WhenNoFlightsMatch()
+        {
+            // Arrange
+            var mockPastFlightAccess = new Mock<IPastFlightAccess>();
+            mockPastFlightAccess.Setup(x => x.GetFilteredPastFlights("ABC", "XYZ", DateTime.Parse("2024-01-01")))
+                .Returns(new List<FlightModel>());
+
+            PastFlightLogic.PastFlightAccessService = mockPastFlightAccess.Object;
+
+            // Act
+            var result = PastFlightLogic.GetFilteredPastFlights("ABC", "XYZ", DateTime.Parse("2024-01-01"));
+
+            // Assert
+            Assert.IsNotNull(result);
+            Assert.AreEqual(0, result.Count);
+        }
     }
 }
