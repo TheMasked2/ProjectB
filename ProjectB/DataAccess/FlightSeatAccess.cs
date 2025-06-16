@@ -53,4 +53,30 @@ public class FlightSeatAccess : IFlightSeatAccess
         string sql = $@"INSERT INTO {FlightSeatsTable} (FlightID, SeatID, IsOccupied) VALUES (@FlightID, @SeatID, 0)";
         _connection.Execute(sql, new { FlightID = flightId, SeatID = airplaneId });
     }
+
+    public void DeletePastFlightSeatsByFlightIDs(List<int> flightIDs)
+    {
+        string sql = $@"DELETE FROM {FlightSeatsTable} WHERE FlightID IN @FlightIDs";
+        var parameters = new { FlightIDs = flightIDs };
+        _connection.Execute(sql, parameters);
+    }
+
+    public int GetAvailableSeatCountByClass(int flightID, string airplaneID, string seatClass)
+    {
+        // This SQL query counts the number of unoccupied seats for a specific flight and seat class.
+        // It joins the FlightSeatsTable (fs) with the SeatsTable (s)
+        // on SeatID and AirplaneID to filter by the correct airplane configuration.
+        // It then filters by the given FlightID, SeatType (class), and where IsOccupied is 0 (false).
+        string sql = $@"
+            SELECT COUNT(fs.SeatID)
+            FROM {FlightSeatsTable} fs
+            INNER JOIN {SeatsTable} s ON fs.SeatID = s.SeatID AND s.AirplaneID = @AirplaneID 
+            WHERE fs.FlightID = @FlightID
+              AND s.SeatType = @SeatClass
+              AND fs.IsOccupied = 0";
+        var parameters = new { FlightID = flightID, AirplaneID = airplaneID, SeatClass = seatClass };
+
+        return _connection.ExecuteScalar<int>(sql, parameters);
+
+    }
 }

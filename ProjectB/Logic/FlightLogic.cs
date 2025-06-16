@@ -13,7 +13,7 @@ public static class FlightLogic
     private static readonly Style errorStyle = new(new Color(162, 52, 0));
     private static readonly Style successStyle = new(new Color(194, 87, 0));
 
-     /// <summary>
+    /// <summary>
     /// Filters the data from the data access layer based on the provided criteria.
     /// </summary>
     /// <param name="origin">Origin airport filter.</param>
@@ -33,9 +33,12 @@ public static class FlightLogic
     {
         List<FlightModel> flights = GetFilteredFlights(origin, destination, departureDate);
 
+        // Updated to check for available seats of the specific class
         List<FlightModel> bookableFlights =
-            flights.Where(flight => flight.AvailableSeats > 0 && // TODO: Add seat class availibility filter
-            GetSeatClassPrice(flight.AirplaneID, seatClass) > 0).ToList();
+            flights.Where(flight => 
+                FlightSeatAccessService.GetAvailableSeatCountByClass(flight.FlightID, flight.AirplaneID, seatClass) > 0 && 
+                GetSeatClassPrice(flight.AirplaneID, seatClass) > 0
+            ).ToList();
 
         return bookableFlights;
     }
@@ -96,12 +99,13 @@ public static class FlightLogic
             ValidateFlight(flight);
 
             // Set default values for required fields
-            AirplaneModel airplane = AirplaneAccessService.GetAirplaneData(flight.AirplaneID);
+            AirplaneModel airplane = AirplaneLogic.GetAirplaneByID(flight.AirplaneID);
 
             if (airplane == null)
             {
                 throw new ArgumentException("Airplane not found.");
             }
+
             flight.AirplaneID = airplane.AirplaneID;
             flight.AvailableSeats = airplane.TotalSeats;
 
@@ -227,7 +231,7 @@ public static class FlightLogic
             FlightAccessService.Delete(flight.FlightID);
         }
         // Remove past flights older than a month
-        PastFlightAccessService.DeletePastFlights(monthAgo);
+        PurgeOldPastFlights(monthAgo);
 
         // Update flights that are departing soon (3 hours or less)
         DateTime departingSoonDate = currentDate.AddHours(3);
@@ -237,6 +241,19 @@ public static class FlightLogic
             // Update flight status to "Boarding"
             flight.FlightStatus = "Boarding";
             FlightAccessService.Update(flight);
+        }
+        return;
+    }
+
+    private static void PurgeOldPastFlights(DateTime monthAgo)
+    {
+        List<int> oldFlightIDs = PastFlightAccessService.GetOldPastFlightIDs(monthAgo);
+        // Only call if there are any flights to delete
+        if (oldFlightIDs != null && oldFlightIDs.Count != 0)
+        {
+            // Delete seats and flights
+            FlightSeatAccessService.DeletePastFlightSeatsByFlightIDs(oldFlightIDs);
+            PastFlightAccessService.DeleteOldPastFlights(oldFlightIDs);
         }
         return;
     }

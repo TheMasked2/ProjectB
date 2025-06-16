@@ -15,7 +15,8 @@ public static class UserLogic
         string country, 
         string city, 
         string emailAddress, 
-        string password, 
+        string password,
+        string confirmPassword,
         string phoneNumberString, 
         string birthDateString
     )
@@ -41,6 +42,11 @@ public static class UserLogic
         if (!CheckEmail(emailAddress))
         {
             errors.Add("Email validation failed.");
+        }
+
+        if (password != confirmPassword)
+        {
+            errors.Add("Passwords do not match.");
         }
 
         if (errors.Count > 0)

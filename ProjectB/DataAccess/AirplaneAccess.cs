@@ -12,21 +12,11 @@ public class AirplaneAccess : IAirplaneAccess
     /// Inserts a new airplane into the database.
     /// </summary>
     /// <param name="airplane">The airplane to insert.</param>
-    public AirplaneModel GetAirplaneData(string airplaneID)
-    {
-        string sql = $@"SELECT 
-                            AirplaneID,
-                            AirplaneName,
-                            TotalSeats
-                        FROM {Table} WHERE AirplaneID = @AirplaneID";
-        var result = _connection.QueryFirstOrDefault<AirplaneModel>(sql, new { @AirplaneID = airplaneID });
-        return result;
 
-    }
-    public AirplaneModel GetAirplaneById(string airplaneId)
+    public AirplaneModel GetAirplaneByID(string airplaneID)
     {
         string sql = $@"SELECT * FROM {Table} WHERE AirplaneID = @AirplaneId";
-        var result = _connection.QueryFirstOrDefault<AirplaneModel>(sql, new { AirplaneId = airplaneId });
+        AirplaneModel? result = _connection.QueryFirstOrDefault<AirplaneModel>(sql, new { AirplaneId = airplaneID });
         return result;
     }
 }
