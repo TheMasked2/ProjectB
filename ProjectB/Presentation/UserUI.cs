@@ -411,22 +411,26 @@ public static class UserUI
             var action = AnsiConsole.Prompt(
                 new SelectionPrompt<string>()
                     .Title("[#864000]Bookings menu:[/]")
-                    .AddChoices("View upcoming bookings", "Cancel a booking", "Modify a booking", "View past bookings", "Back to main menu")
+                    .AddChoices("Cancel a booking", "Modify a booking", "View upcoming bookings", "View past bookings", "Back to main menu")
             );
 
-            if (action == "View upcoming bookings")
-            {
-                BookingUI.ViewUserBookings(true);
-                AnsiConsole.Clear();
-            }
-            else if (action == "Cancel a booking")
+            if (action == "Cancel a booking")
             {
                 BookingUI.CancelBookingPrompt();
+                AnsiConsole.WriteLine("Press any key to continue...");
+                Console.ReadKey(true);
                 AnsiConsole.Clear();
             }
             else if (action == "Modify a booking")
             {
                 BookingUI.ModifyBookingPrompt();
+                AnsiConsole.WriteLine("Press any key to continue...");
+                Console.ReadKey(true);
+                AnsiConsole.Clear();
+            }
+            else if (action == "View upcoming bookings")
+            {
+                BookingUI.ViewUserBookings(true);
                 AnsiConsole.Clear();
             }
             else if (action == "View past bookings")
@@ -441,7 +445,6 @@ public static class UserUI
             }
         }
     }
-
 
     public static void ShowGuestMenu()
     {
