@@ -40,6 +40,10 @@ public static class UserUI
                 new TextPrompt<string>("[#864000]Please enter your password:[/]")
                     .Secret()
                     .PromptStyle(highlightStyle));
+            string confirmPassword = AnsiConsole.Prompt(
+                new TextPrompt<string>("[#864000]Please enter your password again:[/]")
+                    .Secret()
+                    .PromptStyle(highlightStyle));
 
             string phoneNumberString = AnsiConsole.Prompt(
                 new TextPrompt<string>("[#864000]Please enter your phone number:[/]")
@@ -49,7 +53,7 @@ public static class UserUI
                 new TextPrompt<string>("[#864000]Please enter your birth date (yyyy-mm-dd):[/]")
                     .PromptStyle(highlightStyle));
 
-            registrationSuccess = UserLogic.Register(firstName, lastName, country, city, email, password, phoneNumberString, birthDateString);
+            registrationSuccess = UserLogic.Register(firstName, lastName, country, city, email, password, confirmPassword, phoneNumberString, birthDateString);
 
             if (!registrationSuccess)
             {
