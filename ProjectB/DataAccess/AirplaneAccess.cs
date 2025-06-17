@@ -19,4 +19,11 @@ public class AirplaneAccess : IAirplaneAccess
         AirplaneModel? result = _connection.QueryFirstOrDefault<AirplaneModel>(sql, new { AirplaneId = airplaneID });
         return result;
     }
+
+    public List<AirplaneModel> GetAirplanes()
+    {
+        string sql = $@"SELECT AirplaneID, AirplaneName FROM {Table}";
+        IEnumerable<AirplaneModel> result = _connection.Query<AirplaneModel>(sql);
+        return result.ToList();
+    }
 }

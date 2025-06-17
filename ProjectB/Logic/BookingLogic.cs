@@ -28,10 +28,23 @@ public static class BookingLogic
         }
     }
 
-    public static (decimal finalPrice, decimal discount) CalculateBookingPrice(User user, FlightModel flight, SeatModel seat, int amountLuggage, bool isInsurance, (bool, bool) coupon)
+    public static (decimal finalPrice, decimal discount, decimal insurancePrice) CalculateBookingPrice(
+        User user,
+        FlightModel flight,
+        SeatModel seat,
+        int amountLuggage,
+        bool isInsurance,
+        (bool, bool) coupon)
     {
         decimal finalPrice = (decimal)seat.Price;
         decimal totalDiscount = 1.0m;
+        decimal insurancePrice = 0.0m;
+
+        if (isInsurance)
+        {
+            insurancePrice = (decimal)seat.Price * 0.2m; // 20% of seat price for insurance
+            finalPrice += insurancePrice;
+        }
 
         // Add luggage cost
         if (amountLuggage > 0)
@@ -57,15 +70,16 @@ public static class BookingLogic
 
         if (coupon.Item2) // isSpice
         {
-            return (-1 * finalPrice * totalDiscount, totalDiscount); // is minus, pay with spice (easter egg)
+            return (-1 * finalPrice * totalDiscount, totalDiscount, insurancePrice); // is minus, pay with spice (easter egg)
         }
+    
 
-        return (finalPrice * totalDiscount, totalDiscount);
+        return (finalPrice * totalDiscount, totalDiscount, insurancePrice);
     }
 
     public static BookingModel BookingBuilder(User user, FlightModel flight, SeatModel seat, (bool, bool) coupon, int amountLuggage = 0, bool insuranceStatus = false)
     {
-        (decimal finalPrice, decimal discount) calculatedPrice = CalculateBookingPrice(user, flight, seat, amountLuggage, insuranceStatus, coupon);
+        (decimal finalPrice, decimal discount, decimal insurancePrice) calculatedPrice = CalculateBookingPrice(user, flight, seat, amountLuggage, insuranceStatus, coupon);
 
         var booking = new BookingModel
         {
@@ -104,46 +118,38 @@ public static class BookingLogic
         }).ToList();
     }
 
-    public static int GetNextBookingId()
+    public static (bool success, bool freeCancel) CancelBooking(int bookingId)
     {
-        var all = BookingAccessService.GetBookingsByUser(0);
-        return all.Any() ? all.Max(b => b.BookingID) + 1 : 1;
-    }
-
-    public static bool CancelBooking(int bookingId)
-    {
+        // Retrieve the booking
         BookingModel booking = BookingAccessService.GetBookingById(bookingId);
         if (booking == null)
         {
-            AnsiConsole.MarkupLine($"[red]Booking with ID {bookingId} not found.[/]");
-            return false;
+            return (false, false);
         }
 
         // Free up the seat
-        FlightModel flight = FlightAccessService.GetById(booking.FlightID);
-        if (flight != null)
-        {
-            FlightSeatAccessService.SetSeatOccupancy(booking.FlightID, booking.SeatID, false);
-        }
+        FlightSeatAccessService.SetSeatOccupancy(booking.FlightID, booking.SeatID, false);
+        
+        bool freeCancel = booking.HasInsurance;
+        
+        // Update the booking based on insurance status
         if (booking.HasInsurance)
         {
-            // Full refund, no fee
-            booking.TotalPrice = 0;
-            AnsiConsole.MarkupLine("[green]Booking cancelled. Full refund issued due to insurance.[/]");
+            booking.TotalPrice = 0; // Full refund with insurance
         }
         else
         {
-            // Apply cancellation fee (e.g., $100)
-            booking.TotalPrice = Math.Max(0, booking.TotalPrice - 100);
-            AnsiConsole.MarkupLine("[yellow]A cancellation fee of $100 has been applied.[/]");
+            booking.TotalPrice = Math.Max(0, booking.TotalPrice - 100); // Apply $100 cancellation fee
         }
-            // Update the booking in db
-            booking.BookingStatus = "Cancelled";
-            BookingAccessService.UpdateBooking(booking);
-
-            AnsiConsole.MarkupLine($"[green]Booking with ID {bookingId} has been cancelled.[/]");
-            return true;
-        }
+        
+        // Set booking status to cancelled
+        booking.BookingStatus = "Cancelled";
+        
+        // Save the changes
+        BookingAccessService.UpdateBooking(booking);
+        
+        return (true, freeCancel);
+    }
 
     public static bool ModifyBooking(int bookingId, string newSeatId, int newLuggageAmount)
     {
