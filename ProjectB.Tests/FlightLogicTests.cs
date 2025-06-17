@@ -15,7 +15,7 @@ namespace ProjectB.Tests
         [DataRow("A123", 150, "Test Airline", "JFK", "LAX", 200, true, DisplayName = "Valid flight, should succeed")]
         [DataRow("InvalidID", 0, "Test Airline", "JFK", "LAX", 200, false, DisplayName = "Invalid airplane, should fail")]
         [DataRow("A123", 150, "Test Airline", "JFK", "LAX", -100, false, DisplayName = "Invalid price, should fail")]
-        public void AddFlight_WhenCalled_VerifiesWriteAndSeatCreation(
+        public void AddFlight_WhenCalled_VerifiesWriteAndSeatCreation( // TODO fix this to work with new add flight stuff
             string airplaneId,
             int totalSeats,
             string airline,

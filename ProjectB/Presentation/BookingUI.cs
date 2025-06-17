@@ -390,7 +390,7 @@ public static class BookingUI
         
     }
 
-    public static void ModifyBookingPrompt() // Broken
+    public static void ModifyBookingPrompt()
     {
         if (!SessionManager.IsLoggedIn())
         {
