@@ -428,7 +428,6 @@ public static class BookingUI
         if (cancelled)
         {
             AnsiConsole.MarkupLine("[green]Booking successfully cancelled![/]");
-            AnsiConsole.MarkupLine("[yellow]A cancellation fee of $100 has been applied.[/]");
 
             var flight = FlightLogic.GetFlightById(selectedBooking.FlightID);
             var seat = SeatMapLogic.GetSeatMap(selectedBooking.FlightID)
