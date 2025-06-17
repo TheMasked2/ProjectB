@@ -84,8 +84,24 @@ public static class AdminUI
                     FlightUI.RemoveFlight();
                     break;
                 case "View upcoming flights":
-                    FlightUI.DisplayFilteredUpcomingFlights();
-                    AnsiConsole.MarkupLine("\n[grey]Press any key to continue...[/]");
+                    List<FlightModel> flights = FlightUI.DisplayFilteredUpcomingFlights();
+
+                    var flightId = AnsiConsole.Prompt(
+                        new TextPrompt<int>("[#864000]Enter Flight ID to remove:[/]")
+                            .PromptStyle(highlightStyle)
+                            .Validate(id =>
+                            {
+                                if (flights.Any(f => f.FlightID == id))
+                                    return true;
+                                return false;
+                            }, "[red]Invalid Flight ID. Please enter an ID from the table above.[/]")
+                    );
+
+                    List<SeatModel> seatMapModelList = SeatMapLogic.GetSeatMap(flightId);
+                    List<string> seatMap = SeatMapLogic.BuildSeatMapLayout(seatMapModelList);
+                    BookingUI.DisplaySeatMap(seatMap);
+
+                    AnsiConsole.MarkupLine("[#864000]Press any key to continue...[/]");
                     Console.ReadKey(true);
                     break;
                 case "View past flights":
