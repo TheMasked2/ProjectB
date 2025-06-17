@@ -31,7 +31,7 @@ public static class SeatMapLogic
         else if (colCount == 8)
             seatLetters = new List<string> { "A", "B", "C", "D", "E", "F", "G", "H" };
         else if (colCount == 10)
-            seatLetters = new List<string> { "A", "B", "C", "D", "E", "G" ,"H", "J", "K" };
+            seatLetters = new List<string> { "A", "B", "C", "D", "E", "F", "G" ,"H", "J", "K" };
         else 
             seatLetters = seatLettersRaw; // fallback to whatever is in the DB
 
@@ -92,7 +92,7 @@ public static class SeatMapLogic
                             line += "[green] O [/]";
                             break;
                         default:
-                            // Default to Economy if seat type is missing or unknown
+                            // Default to Unknown
                             line += "[grey] ? [/]";
                             break;
                     }
