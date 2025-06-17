@@ -25,26 +25,28 @@ public static class FlightLogic
         string? destination,
         DateTime departureDate) => FlightAccessService.GetFilteredFlights(origin, destination, departureDate);
 
-    public static List<FlightModel> GetBookableFlights(
+    public static List<FlightModel> GetFilteredFlights(
         string? origin,
         string? destination,
         DateTime departureDate,
         string seatClass)
     {
-        List<FlightModel> flights = GetFilteredFlights(origin, destination, departureDate);
+        List<FlightModel> flights = FlightAccessService.GetFilteredFlights(origin, destination, departureDate);
 
         List<FlightModel> bookableFlights =
-            flights.Where(flight => flight.AvailableSeats > 0 && // TODO: Add seat class availibility filter
-            GetSeatClassPrice(flight.AirplaneID, seatClass) > 0).ToList();
+            flights.Where(flight => 
+                FlightSeatAccessService.GetAvailableSeatCountByClass(flight.FlightID, flight.AirplaneID, seatClass) > 0 && 
+                GetSeatClassPrice(flight.AirplaneID, seatClass) > 0
+            ).ToList();
 
         return bookableFlights;
     }
 
-    public static Spectre.Console.Rendering.IRenderable DisplayFilteredFlights(List<FlightModel> flights, string seatClass)
+    public static Spectre.Console.Rendering.IRenderable CreateDisplayableFlightsTable(List<FlightModel> flights, string seatClass = null)
     {
         if (flights == null || !flights.Any())
         {
-            var panel = new Panel("[yellow]No flights found matching the criteria.[/]")
+            var panel = new Panel("[yellow]No flights found matching the criteria. Please try again.[/]")
                 .Border(BoxBorder.Rounded)
                 .BorderStyle(errorStyle);
             return panel;
@@ -58,8 +60,13 @@ public static class FlightLogic
         table.AddColumns(
             "[#864000]ID[/]", "[#864000]Aircraft ID[/]", "[#864000]Airline[/]",
             "[#864000]From[/]", "[#864000]To[/]", "[#864000]Departure[/]",
-            "[#864000]Arrival[/]", "[#864000]Price[/]", "[#864000]Status[/]"
+            "[#864000]Arrival[/]", "[#864000]Status[/]"
         );
+
+        if (seatClass != null)
+        {
+            table.AddColumn("[#864000]Price[/]");
+        }
 
         foreach (var flight in flights)
         {
@@ -71,9 +78,13 @@ public static class FlightLogic
                 flight.ArrivalAirport,
                 flight.DepartureTime.ToString("g"),
                 flight.ArrivalTime.ToString("g"),
-                $"€{FlightLogic.GetSeatClassPrice(flight.AirplaneID, seatClass):F2}",
                 flight.FlightStatus
             );
+
+            if (seatClass != null)
+            {
+                table.AddRow($"€{FlightLogic.GetSeatClassPrice(flight.AirplaneID, seatClass):F2}");
+            }
         }
 
         return table;
@@ -115,12 +126,13 @@ public static class FlightLogic
             ValidateFlight(flight);
 
             // Set default values for required fields
-            AirplaneModel airplane = AirplaneAccessService.GetAirplaneData(flight.AirplaneID);
+            AirplaneModel airplane = AirplaneLogic.GetAirplaneByID(flight.AirplaneID);
 
             if (airplane == null)
             {
                 throw new ArgumentException("Airplane not found.");
             }
+
             flight.AirplaneID = airplane.AirplaneID;
             flight.AvailableSeats = airplane.TotalSeats;
 
@@ -224,6 +236,10 @@ public static class FlightLogic
 
     private static float GetSeatClassPrice(string airplaneID, string seatClass)
     {
+        if(seatClass == null)
+        {
+            return SeatAccessService.GetSeatClassPrice(airplaneID);
+        }
         return SeatAccessService.GetSeatClassPrice(airplaneID, seatClass);
     }
 
@@ -245,8 +261,8 @@ public static class FlightLogic
             // Remove from current flights
             FlightAccessService.Delete(flight.FlightID);
         }
-        // Remove past flights older than a month
-        PastFlightAccessService.DeletePastFlights(monthAgo);
+        // Remove past flights and their seats which are older than a month
+        PurgeOldPastFlights(monthAgo);
 
         // Update flights that are departing soon (3 hours or less)
         DateTime departingSoonDate = currentDate.AddHours(3);
@@ -256,6 +272,19 @@ public static class FlightLogic
             // Update flight status to "Boarding"
             flight.FlightStatus = "Boarding";
             FlightAccessService.Update(flight);
+        }
+        return;
+    }
+
+    private static void PurgeOldPastFlights(DateTime monthAgo)
+    {
+        List<int> oldFlightIDs = PastFlightAccessService.GetOldPastFlightIDs(monthAgo);
+        // Only call if there are any flights to delete
+        if (oldFlightIDs != null && oldFlightIDs.Count != 0)
+        {
+            // Delete seats and flights
+            FlightSeatAccessService.DeletePastFlightSeatsByFlightIDs(oldFlightIDs);
+            PastFlightAccessService.DeleteOldPastFlights(oldFlightIDs);
         }
         return;
     }

@@ -35,7 +35,7 @@ namespace ProjectB.Tests
 
             mockFlightAccess.Setup(f => f.GetAllFlightData()).Returns(new List<FlightModel>());
             var airplane = totalSeats > 0 ? new AirplaneModel { AirplaneID = airplaneId, TotalSeats = totalSeats } : null;
-            mockAirplaneAccess.Setup(a => a.GetAirplaneData(airplaneId)).Returns(airplane);
+            mockAirplaneAccess.Setup(a => a.GetAirplaneByID(airplaneId)).Returns(airplane);
 
             var flight = new FlightModel
             {

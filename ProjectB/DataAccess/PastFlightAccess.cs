@@ -9,13 +9,19 @@ namespace ProjectB.DataAccess
         private readonly SqliteConnection _connection = new SqliteConnection($"Data Source=DataSources/database.db");
         private const string Table = "PASTFLIGHTS";
 
-        public void DeletePastFlights(DateTime monthAgo)
+        public void DeleteOldPastFlights(List<int> flightIDs)
         {
-            string sql = $@"DELETE FROM {Table}
-                            WHERE DepartureTime < @MonthAgoDate";
-            var parameters = new { MonthAgoDate = monthAgo };
-
+            string sql = $@"DELETE FROM {Table} WHERE FlightID IN @FlightIDs";
+            var parameters = new { FlightIDs = flightIDs };
             _connection.Execute(sql, parameters);
+        }
+
+        public List<int> GetOldPastFlightIDs(DateTime monthAgo)
+        {
+            string sql = $"SELECT FlightID FROM {Table} WHERE DepartureTime < @MonthAgoTime";
+            var parameters = new { MonthAgoTime = monthAgo };
+            List<int> flightIDs = _connection.Query<int>(sql, parameters).ToList();
+            return flightIDs;
         }
 
         public void WritePastFlight(FlightModel flight)

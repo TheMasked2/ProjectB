@@ -64,7 +64,7 @@ public class PastFlightUI
             AnsiConsole.MarkupLine("\n[yellow]No filters applied - showing all flights[/]");
         }
 
-        AnsiConsole.Write(FlightLogic.DisplayFilteredFlights(flights, seatClass));
+        AnsiConsole.Write(FlightLogic.CreateDisplayableFlightsTable(flights, seatClass));
         FlightUI.WaitForKeyPress();
     }
 }
