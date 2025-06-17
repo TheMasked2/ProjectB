@@ -367,11 +367,13 @@ public static class BookingUI
         }
 
         (bool cancelled, bool freeCancel) = BookingLogic.CancelBooking(bookingId);
+
+        DisplayBookingDetails(selectedBooking);
         
         if (cancelled)
         {
             AnsiConsole.MarkupLine("[green]Booking successfully cancelled![/]");
-            
+
             if (freeCancel)
             {
                 AnsiConsole.MarkupLine("[green]Since you had insurance, you will receive a full refund.[/]");
@@ -381,14 +383,12 @@ public static class BookingUI
                 AnsiConsole.MarkupLine("[yellow]A cancellation fee of €100 has been applied to your refund.[/]");
             }
 
-            DisplayBookingDetails(selectedBooking);
         }
         else
         {
             AnsiConsole.MarkupLine("[red]Cancellation failed.[/]");
         }
         
-        WaitForKeyPress();
     }
 
     public static void ModifyBookingPrompt() // Broken

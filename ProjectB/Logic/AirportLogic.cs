@@ -29,7 +29,7 @@ public static class AirportLogic
             .Expand();
             
         table.AddColumns(
-            "[#864000]Code[/]", 
+            "[#864000]IATA Code[/]", 
             "[#864000]Airport[/]", 
             "[#864000]City[/]", 
             "[#864000]Country[/]"
