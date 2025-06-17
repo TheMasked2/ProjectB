@@ -132,13 +132,25 @@ public static class BookingLogic
         {
             FlightSeatAccessService.SetSeatOccupancy(booking.FlightID, booking.SeatID, false);
         }
-        // Update the booking in db
-        booking.BookingStatus = "Cancelled";
-        BookingAccessService.UpdateBooking(booking);
+        if (booking.HasInsurance)
+        {
+            // Full refund, no fee
+            booking.TotalPrice = 0;
+            AnsiConsole.MarkupLine("[green]Booking cancelled. Full refund issued due to insurance.[/]");
+        }
+        else
+        {
+            // Apply cancellation fee (e.g., $100)
+            booking.TotalPrice = Math.Max(0, booking.TotalPrice - 100);
+            AnsiConsole.MarkupLine("[yellow]A cancellation fee of $100 has been applied.[/]");
+        }
+            // Update the booking in db
+            booking.BookingStatus = "Cancelled";
+            BookingAccessService.UpdateBooking(booking);
 
-        AnsiConsole.MarkupLine($"[green]Booking with ID {bookingId} has been cancelled.[/]");
-        return true;
-    }
+            AnsiConsole.MarkupLine($"[green]Booking with ID {bookingId} has been cancelled.[/]");
+            return true;
+        }
 
     public static bool ModifyBooking(int bookingId, string newSeatId, int newLuggageAmount)
     {

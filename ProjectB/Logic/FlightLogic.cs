@@ -100,6 +100,25 @@ public static class FlightLogic
         return flight;
     }
 
+    public static FlightModel GetReviewFlightById(int flightId)
+    {
+        FlightAccess flightAccess = new FlightAccess();
+        try
+        {
+            FlightModel flight = flightAccess.GetReviewFlightByID(flightId);
+            if (flight == null)
+            {
+                return null;
+            }
+            return flight;
+        }
+        catch
+        {
+            return null; 
+        }
+    }
+
+
     public static bool AddFlight(FlightModel flight)
     {
         try

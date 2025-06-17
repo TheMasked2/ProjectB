@@ -4,7 +4,6 @@ public static class Programs
 	{
 		System.Console.WriteLine("Updating database...");
 		FlightLogic.UpdateFlightDB();
-		System.Console.WriteLine("Opening menu...");
 		Menu.ShowMainMenu();
 	}
 }
