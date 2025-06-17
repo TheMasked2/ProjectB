@@ -22,8 +22,6 @@ public static class FlightUI
                 .Centered()
                 .Color(Color.Orange1));
 
-        AnsiConsole.MarkupLine("\n[#864000]Enter filter criteria:[/]");
-
         List<AirportModel> airports = AirportLogic.GetAllAirports();
         Table airportTable = AirportLogic.CreateAirportsTable(airports);
         AnsiConsole.Write(airportTable);
