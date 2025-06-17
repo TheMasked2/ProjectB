@@ -8,39 +8,42 @@ public static class ReviewUI
     private static readonly Style successStyle = new(new Color(194, 87, 0));
     public static void ShowReviewMenu()
     {
-        AnsiConsole.Clear();
-        AnsiConsole.Write(
-            new FigletText("Reviews")
-                .Centered()
-                .Color(Color.Orange1));
-
-        var choices = new List<string>
+        while (true)
         {
-            "Add a review",
-            "View reviews",
-            "View reviews by flight",
-            "Back to main menu"
-        };
+            AnsiConsole.Clear();
+            AnsiConsole.Write(
+                new FigletText("Reviews")
+                    .Centered()
+                    .Color(Color.Orange1));
 
-        var input = AnsiConsole.Prompt(
-            new SelectionPrompt<string>()
-                .Title("[yellow]Select an option:[/]")
-                .PageSize(10)
-                .AddChoices(choices));
+            var choices = new List<string>
+            {
+                "Add a review",
+                "View reviews",
+                "View reviews by flight",
+                "Back to main menu"
+            };
 
-        switch (input)
-        {
-            case "Add a review":
-                MakeAReview();
-                break;
-            case "View reviews":
-                ViewReviews();
-                break;
-            case "View reviews by flight":
-                FilterViewReviews();
-                break;
-            case "Back to main menu":
-                break;
+            var input = AnsiConsole.Prompt(
+                new SelectionPrompt<string>()
+                    .Title("[yellow]Select an option:[/]")
+                    .PageSize(10)
+                    .AddChoices(choices));
+
+            switch (input)
+            {
+                case "Add a review":
+                    MakeAReview();
+                    break;
+                case "View reviews":
+                    ViewReviews();
+                    break;
+                case "View reviews by flight":
+                    FilterViewReviews();
+                    break;
+                case "Back to main menu":
+                    return;
+            }
         }
     }
 
