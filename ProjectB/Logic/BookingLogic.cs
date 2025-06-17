@@ -13,25 +13,18 @@ public static class BookingLogic
     private static readonly Style errorStyle = new(new Color(162, 52, 0));
     private static readonly Style successStyle = new(new Color(194, 87, 0));
 
-    public static void BackfillFlightSeats()
+    public static void BackfillFlightSeats(int FlightID)
     {
-        var flights = FlightAccessService.GetAllFlightData();
-        var toBackfill = new List<(int, string)>();
-        foreach (var flight in flights)
+        FlightModel flight = FlightAccessService.GetById(FlightID);
+        AirplaneModel airplane = AirplaneLogic.GetAirplaneByID(flight.AirplaneID);
+
+        // If flight and airplane exist, and there are no seats for the flight, create them
+        if (flight != null && airplane != null && !FlightSeatAccessService.HasAnySeatsForFlight(FlightID))
         {
-            if (!FlightSeatAccessService.HasAnySeatsForFlight(flight.FlightID))
+            for (int i = 1; i < airplane.TotalSeats; i++)
             {
-                Console.WriteLine($"Backfilling seats for FlightID={flight.FlightID}, AirplaneID={flight.AirplaneID}");
-                toBackfill.Add((flight.FlightID, flight.AirplaneID));
+                FlightSeatAccessService.CreateFlightSeats(FlightID, flight.AirplaneID);
             }
-            else
-            {
-                Console.WriteLine($"FlightID={flight.FlightID} already has seats.");
-            }
-        }
-        if (toBackfill.Count > 0)
-        {
-            FlightSeatAccessService.BulkCreateAllFlightSeats(toBackfill);
         }
     }
 

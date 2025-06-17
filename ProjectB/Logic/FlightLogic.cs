@@ -143,6 +143,9 @@ public static class FlightLogic
 
             FlightAccessService.Write(flight);
 
+            // Create seats for the flight
+            BookingLogic.BackfillFlightSeats(flight.FlightID);
+
             // Initialize seat occupancy for this flight
             FlightSeatAccessService.CreateFlightSeats(flight.FlightID, flight.AirplaneID);
 
