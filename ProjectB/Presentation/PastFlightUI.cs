@@ -16,20 +16,31 @@ public class PastFlightUI
                 .Color(Color.Orange1));
 
         bool hasFilters = false;
-        AnsiConsole.MarkupLine("\n[#864000]Enter filter criteria. The date will default to today.:[/]");
+        AnsiConsole.MarkupLine("\n[#864000]Enter filter criteria:[/]");
+
+        List<AirportModel> airports = AirportLogic.GetAllAirports();
+        Table airportTable = AirportLogic.CreateAirportsTable(airports);
+        AnsiConsole.Write(airportTable);
+
+        List<string> validIataCodes = airports.Select(airport => airport.IataCode).ToList();
+
+        AnsiConsole.MarkupLine("\n[#864000]Enter filter criteria:[/]");
 
         string origin = AnsiConsole.Prompt(
-            new TextPrompt<string>("[#864000]Origin airport (e.g., LAX). Press Enter to skip:[/]")
-                .AllowEmpty()
-                .PromptStyle(highlightStyle));
-
-        hasFilters |= !string.IsNullOrWhiteSpace(origin);
+            new TextPrompt<string>("[#864000]Enter origin airport code (IATA):[/]")
+                .PromptStyle(highlightStyle)
+                .Validate(code =>
+                    validIataCodes.Contains(code.ToUpper()),
+                    "[red]Invalid airport code. Please use a valid IATA code from the table above.[/]")
+        ).ToUpper().Trim();
 
         string destination = AnsiConsole.Prompt(
-            new TextPrompt<string>("[#864000]Destination airport (e.g., JFK). Press Enter to skip:[/]")
-                .AllowEmpty()
-                .PromptStyle(highlightStyle));
-        hasFilters |= !string.IsNullOrWhiteSpace(destination);
+            new TextPrompt<string>("[#864000]Enter destination airport code (IATA):[/]")
+                .PromptStyle(highlightStyle)
+                .Validate(code =>
+                    validIataCodes.Contains(code.ToUpper()) && code.ToUpper() != origin,
+                    "[red]Invalid airport code or same as origin. Please use a different valid IATA code from the table above.[/]")
+        ).ToUpper().Trim();
 
         string startDateInput = AnsiConsole.Prompt(
             new TextPrompt<string>("[#864000]Start date (yyyy-MM-dd). Press Enter to fill in today's date:[/]")
@@ -50,21 +61,10 @@ public class PastFlightUI
             FlightUI.WaitForKeyPress();
             return; // or handle the error as needed
         }
-        hasFilters = true;
-
-        AnsiConsole.MarkupLine("[red]\nSeat class will be standard to view past flights.\nPress Enter to continue.[/]");
-        Console.ReadLine(); // Wait for user to acknowledge the seat class
-
-        string seatClass = "Standard"; // Default value
 
         var flights = PastFlightLogic.GetFilteredPastFlights(origin, destination, startDate);
 
-        if (!hasFilters)
-        {
-            AnsiConsole.MarkupLine("\n[yellow]No filters applied - showing all flights[/]");
-        }
-
-        AnsiConsole.Write(FlightLogic.CreateDisplayableFlightsTable(flights, seatClass));
+        AnsiConsole.Write(FlightLogic.CreateDisplayableFlightsTable(flights));
         FlightUI.WaitForKeyPress();
     }
 }
