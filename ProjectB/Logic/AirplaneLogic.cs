@@ -13,4 +13,10 @@ public static class AirplaneLogic
         AirplaneModel airplane = AirplaneAccessService.GetAirplaneByID(airplaneID);
         return airplane;
     }
+
+    public static List<AirplaneModel> GetAllAirplanes()
+    {
+        List<AirplaneModel> airplanes = AirplaneAccessService.GetAirplanes();
+        return airplanes;
+    }
 }

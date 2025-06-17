@@ -27,22 +27,22 @@ public static class FlightUI
         AnsiConsole.Write(airportTable);
 
         List<string> validIataCodes = airports.Select(airport => airport.IataCode).ToList();
-        
+
         AnsiConsole.MarkupLine("\n[#864000]Enter filter criteria:[/]");
 
         string origin = AnsiConsole.Prompt(
             new TextPrompt<string>("[#864000]Enter origin airport code (IATA):[/]")
                 .PromptStyle(highlightStyle)
-                .Validate(code => 
-                    validIataCodes.Contains(code.ToUpper()), 
+                .Validate(code =>
+                    validIataCodes.Contains(code.ToUpper()),
                     "[red]Invalid airport code. Please use a valid IATA code from the table above.[/]")
         ).ToUpper();
-        
+
         string destination = AnsiConsole.Prompt(
             new TextPrompt<string>("[#864000]Enter destination airport code (IATA):[/]")
                 .PromptStyle(highlightStyle)
-                .Validate(code => 
-                    validIataCodes.Contains(code.ToUpper()) && code.ToUpper() != origin, 
+                .Validate(code =>
+                    validIataCodes.Contains(code.ToUpper()) && code.ToUpper() != origin,
                     "[red]Invalid airport code or same as origin. Please use a different valid IATA code from the table above.[/]")
         ).ToUpper();
 
@@ -80,22 +80,22 @@ public static class FlightUI
             AnsiConsole.Write(airportTable);
 
             List<string> validIataCodes = airports.Select(airport => airport.IataCode).ToList();
-            
+
             AnsiConsole.MarkupLine("\n[#864000]Enter filter criteria:[/]");
 
             string origin = AnsiConsole.Prompt(
                 new TextPrompt<string>("[#864000]Enter origin airport code (IATA):[/]")
                     .PromptStyle(highlightStyle)
-                    .Validate(code => 
-                        validIataCodes.Contains(code.ToUpper()), 
+                    .Validate(code =>
+                        validIataCodes.Contains(code.ToUpper()),
                         "[red]Invalid airport code. Please use a valid IATA code from the table above.[/]")
             ).ToUpper();
-            
+
             string destination = AnsiConsole.Prompt(
                 new TextPrompt<string>("[#864000]Enter destination airport code (IATA):[/]")
                     .PromptStyle(highlightStyle)
-                    .Validate(code => 
-                        validIataCodes.Contains(code.ToUpper()) && code.ToUpper() != origin, 
+                    .Validate(code =>
+                        validIataCodes.Contains(code.ToUpper()) && code.ToUpper() != origin,
                         "[red]Invalid airport code or same as origin. Please use a different valid IATA code from the table above.[/]")
             ).ToUpper();
 
@@ -183,17 +183,30 @@ public static class FlightUI
                             .DefaultValue("AIRTREIDES")
                             .PromptStyle(highlightStyle));
 
-                    flight.AirplaneID = AnsiConsole.Prompt(
-                        new TextPrompt<string>("[#864000]Enter Aircraft ID:[/]")
-                            .PromptStyle(highlightStyle));
+                    flight.AirplaneID = SelectAirplaneIDFromList();
+                    AnsiConsole.MarkupLine($"[green]Selected Airplane ID: {flight.AirplaneID}[/]");
 
-                    flight.DepartureAirport = AnsiConsole.Prompt(
-                        new TextPrompt<string>("[#864000]Enter Departure Airport:[/]")
-                            .PromptStyle(highlightStyle));
+                    List<AirportModel> airports = AirportLogic.GetAllAirports();
+                    Table airportTable = AirportLogic.CreateAirportsTable(airports);
+                    AnsiConsole.Write(airportTable);
 
-                    flight.ArrivalAirport = AnsiConsole.Prompt(
-                        new TextPrompt<string>("[#864000]Enter Arrival Airport:[/]")
-                            .PromptStyle(highlightStyle));
+                    List<string> validIataCodes = airports.Select(airport => airport.IataCode).ToList();
+
+                    string origin = AnsiConsole.Prompt(
+                        new TextPrompt<string>("[#864000]Enter origin airport code (IATA):[/]")
+                            .PromptStyle(highlightStyle)
+                            .Validate(code =>
+                                validIataCodes.Contains(code.ToUpper()),
+                                "[red]Invalid airport code. Please use a valid IATA code from the table above.[/]")
+                    ).ToUpper();
+
+                    string destination = AnsiConsole.Prompt(
+                        new TextPrompt<string>("[#864000]Enter destination airport code (IATA):[/]")
+                            .PromptStyle(highlightStyle)
+                            .Validate(code =>
+                                validIataCodes.Contains(code.ToUpper()) && code.ToUpper() != origin,
+                                "[red]Invalid airport code or same as origin. Please use a different valid IATA code from the table above.[/]")
+                    ).ToUpper();
 
                     flight.DepartureTime = AnsiConsole.Prompt(
                         new TextPrompt<DateTime>("[#864000]Enter Departure Time (yyyy-MM-dd HH:mm):[/]")
@@ -255,15 +268,27 @@ public static class FlightUI
                 .DefaultValue(flight.Airline)
                 .PromptStyle(highlightStyle));
 
-        flight.DepartureAirport = AnsiConsole.Prompt(
-            new TextPrompt<string>("[#864000]Enter new Departure Airport[/]")
-            .DefaultValue(flight.DepartureAirport)
-            .PromptStyle(highlightStyle));
+        List<AirportModel> airports = AirportLogic.GetAllAirports();
+            Table airportTable = AirportLogic.CreateAirportsTable(airports);
+            AnsiConsole.Write(airportTable);
 
-        flight.ArrivalAirport = AnsiConsole.Prompt(
-            new TextPrompt<string>("[#864000]Enter new Arrival Airport[/]")
-            .DefaultValue(flight.ArrivalAirport)
-            .PromptStyle(highlightStyle));
+            List<string> validIataCodes = airports.Select(airport => airport.IataCode).ToList();
+
+            string origin = AnsiConsole.Prompt(
+                new TextPrompt<string>("[#864000]Enter origin airport code (IATA):[/]")
+                    .PromptStyle(highlightStyle)
+                    .Validate(code =>
+                        validIataCodes.Contains(code.ToUpper()),
+                        "[red]Invalid airport code. Please use a valid IATA code from the table above.[/]")
+            ).ToUpper();
+
+            string destination = AnsiConsole.Prompt(
+                new TextPrompt<string>("[#864000]Enter destination airport code (IATA):[/]")
+                    .PromptStyle(highlightStyle)
+                    .Validate(code =>
+                        validIataCodes.Contains(code.ToUpper()) && code.ToUpper() != origin,
+                        "[red]Invalid airport code or same as origin. Please use a different valid IATA code from the table above.[/]")
+            ).ToUpper();
 
         flight.DepartureTime = AnsiConsole.Prompt(
             new TextPrompt<DateTime>("[#864000]Enter new Departure Time (yyyy-MM-dd HH:mm)[/]")
@@ -374,4 +399,28 @@ public static class FlightUI
         Console.ReadKey(true);
     }
 
+    public static string SelectAirplaneIDFromList()
+    {
+        List<AirplaneModel> airplanes = AirplaneLogic.GetAllAirplanes();
+
+        if (!airplanes.Any())
+        {
+            AnsiConsole.MarkupLine("[red]No airplanes found in the system.[/]");
+            return null;
+        }
+
+        var airplaneChoices = airplanes
+            .Select(airplane => $"{airplane.AirplaneID} - {airplane.AirplaneName}")
+            .ToList();
+
+        string selectedAirplane = AnsiConsole.Prompt(
+            new SelectionPrompt<string>()
+                .Title("[#864000]Select an airplane:[/]")
+                .PageSize(10)
+                .HighlightStyle(highlightStyle)
+                .AddChoices(airplaneChoices));
+
+        // Extract the AirplaneID from the selection (gets the part before the hyphen)
+        return selectedAirplane.Split('-')[0].Trim();
+    }
 }
