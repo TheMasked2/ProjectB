@@ -315,7 +315,7 @@ public static class BookingUI
         return selectedSeat;
     }
 
-    public static void CancelBookingPrompt() // DONT INCLUDE CANCELLATION FEE IF THE USER HAS INSURANCE
+    public static void CancelBookingPrompt()
     {
         if (!SessionManager.IsLoggedIn())
         {
@@ -346,15 +346,40 @@ public static class BookingUI
             AnsiConsole.MarkupLine("[red]This booking has already been cancelled.[/]");
             return;
         }
+        
+        // Inform the user about cancellation terms based on insurance status
+        if (!selectedBooking.HasInsurance)
+        {
+            var confirm = AnsiConsole.Prompt(
+                new SelectionPrompt<bool>()
+                    .Title("[#864000]This booking does not have insurance. A cancellation fee of €100 will apply. Do you want to continue?[/]")
+                    .AddChoices(new[] { true, false })
+                    .UseConverter(choice => choice ? "Yes" : "No")
+                    .HighlightStyle(highlightStyle)
+            );
+            
+            if (!confirm)
+            {
+                AnsiConsole.MarkupLine("[yellow]Cancellation aborted.[/]");
+                WaitForKeyPress();
+                return;
+            }
+        }
 
-        bool cancelled = BookingLogic.CancelBooking(bookingId);
+        (bool cancelled, bool freeCancel) = BookingLogic.CancelBooking(bookingId);
+        
         if (cancelled)
         {
             AnsiConsole.MarkupLine("[green]Booking successfully cancelled![/]");
-
-            var flight = FlightLogic.GetFlightById(selectedBooking.FlightID);
-            var seat = SeatMapLogic.GetSeatMap(selectedBooking.FlightID)
-                .FirstOrDefault(s => s.SeatID == selectedBooking.SeatID);
+            
+            if (freeCancel)
+            {
+                AnsiConsole.MarkupLine("[green]Since you had insurance, you will receive a full refund.[/]");
+            }
+            else
+            {
+                AnsiConsole.MarkupLine("[yellow]A cancellation fee of €100 has been applied to your refund.[/]");
+            }
 
             DisplayBookingDetails(selectedBooking);
         }
@@ -362,7 +387,8 @@ public static class BookingUI
         {
             AnsiConsole.MarkupLine("[red]Cancellation failed.[/]");
         }
-        BookingUI.WaitForKeyPress();
+        
+        WaitForKeyPress();
     }
 
     public static void ModifyBookingPrompt() // Broken

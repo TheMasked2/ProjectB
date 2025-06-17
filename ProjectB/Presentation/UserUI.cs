@@ -414,7 +414,6 @@ public static class UserUI
 
             var choices = new List<string>
             {
-                "Book a flight",
                 "Cancel a booking",
                 "Modify a booking", 
                 "View upcoming bookings", 
@@ -431,9 +430,6 @@ public static class UserUI
 
             switch (input)
             {
-                case "Book a flight":
-                    BookingUI.BookADamnFlight();
-                    break;
                 case "Cancel a booking":
                     BookingUI.CancelBookingPrompt();
                     AnsiConsole.MarkupLine("\n[grey]Press any key to continue...[/]");
