@@ -422,18 +422,18 @@ public static class BookingUI
 
         bool successfulModification = BookingLogic.ModifyBooking(
             bookingId,
-            selectedSeat.SeatID,
+            selectedSeat,
             selectedBooking.LuggageAmount
         );
 
         if (successfulModification)
         {
             AnsiConsole.MarkupLine($"[green]Booking with Booking ID: {selectedBooking.BookingID} successfully modified![/]");
-            AnsiConsole.MarkupLine("[yellow]A modification fee of $50 has been applied.[/]");
-
-            // Display updated booking details
-            selectedBooking.SeatID = selectedSeat.SeatID; // Update the seat ID in the booking
-            DisplayBookingDetails(selectedBooking, true);
+            AnsiConsole.MarkupLine("[green]Your previous payment will be refunded.[/]");
+            BookingModel updatedmodel = BookingLogic.GetBookingById(bookingId);
+            DisplayBookingDetails(updatedmodel, true);
+            AnsiConsole.MarkupLine("[green]A modification fee of $50 has been applied.[/]");
+            AnsiConsole.MarkupLine($"[green]Your new total: {updatedmodel.TotalPrice + 50}[/]");
         }
         else
         {

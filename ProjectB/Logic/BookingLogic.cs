@@ -151,7 +151,7 @@ public static class BookingLogic
         return (true, freeCancel);
     }
 
-    public static bool ModifyBooking(int bookingId, string newSeatId, int newLuggageAmount)
+    public static bool ModifyBooking(int bookingId, SeatModel newSeatId, int newLuggageAmount)
     {
         BookingModel booking = BookingAccessService.GetBookingById(bookingId);
         if (booking == null)
@@ -160,15 +160,27 @@ public static class BookingLogic
         }
 
         FlightSeatAccessService.SetSeatOccupancy(booking.FlightID, booking.SeatID, false);
-        FlightSeatAccessService.SetSeatOccupancy(booking.FlightID, newSeatId, true);
+        FlightSeatAccessService.SetSeatOccupancy(booking.FlightID, newSeatId.SeatType, true);
 
-        booking.SeatID = newSeatId;
+        (decimal totalprice, decimal discount, decimal insuranceprice) = CalculateBookingPrice(SessionManager.CurrentUser, 
+            FlightAccessService.GetById(booking.FlightID), 
+            newSeatId, 
+            newLuggageAmount, 
+            booking.HasInsurance, 
+            (false, false));
+        booking.TotalPrice = totalprice;
+        booking.SeatID = newSeatId.SeatID;
         booking.LuggageAmount = newLuggageAmount;
+        booking.SeatClass = newSeatId.SeatType;
         BookingAccessService.UpdateBooking(booking);
 
         return true;
     }
 
+    public static BookingModel GetBookingById(int bookingId)
+    {
+        return BookingAccessService.GetBookingById(bookingId);
+    }
     public static void BookTheDamnFlight(BookingModel booking)
     {
         booking.BookingStatus = "Confirmed";
