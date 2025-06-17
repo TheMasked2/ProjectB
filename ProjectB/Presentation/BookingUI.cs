@@ -346,7 +346,7 @@ public static class BookingUI
             AnsiConsole.MarkupLine("[red]This booking has already been cancelled.[/]");
             return;
         }
-        
+
         // Inform the user about cancellation terms based on insurance status
         if (!selectedBooking.HasInsurance)
         {
@@ -357,11 +357,10 @@ public static class BookingUI
                     .UseConverter(choice => choice ? "Yes" : "No")
                     .HighlightStyle(highlightStyle)
             );
-            
+
             if (!confirm)
             {
                 AnsiConsole.MarkupLine("[yellow]Cancellation aborted.[/]");
-                WaitForKeyPress();
                 return;
             }
         }

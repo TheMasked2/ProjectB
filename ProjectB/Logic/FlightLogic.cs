@@ -70,7 +70,9 @@ public static class FlightLogic
 
         foreach (var flight in flights)
         {
-            table.AddRow(
+            if (seatClass != null)
+            {
+                table.AddRow(
                 flight.FlightID.ToString(),
                 flight.AirplaneID,
                 flight.Airline,
@@ -78,18 +80,25 @@ public static class FlightLogic
                 flight.ArrivalAirport,
                 flight.DepartureTime.ToString("g"),
                 flight.ArrivalTime.ToString("g"),
-                flight.FlightStatus
-            );
-
-            if (seatClass != null)
-            {
-                table.AddRow($"€{FlightLogic.GetSeatClassPrice(flight.AirplaneID, seatClass):F2}");
+                flight.FlightStatus,
+                GetSeatClassPrice(flight.AirplaneID, seatClass).ToString("C"));
             }
+            else
+            {
+                table.AddRow(
+                flight.FlightID.ToString(),
+                flight.AirplaneID,
+                flight.Airline,
+                flight.DepartureAirport,
+                flight.ArrivalAirport,
+                flight.DepartureTime.ToString("g"),
+                flight.ArrivalTime.ToString("g"),
+                flight.FlightStatus);
+            };
         }
 
         return table;
     }
-
     public static FlightModel GetFlightById(int flightId)
     {
         FlightModel flight = FlightAccessService.GetById(flightId);
