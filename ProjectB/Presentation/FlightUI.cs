@@ -189,84 +189,68 @@ public static class FlightUI
         AnsiConsole.Clear();
         AnsiConsole.Write(new Rule("[#FF7A00]Add New Flight[/]").RuleStyle(primaryStyle));
 
-        try
+        FlightModel flight = new FlightModel();
+
+        while (true)
         {
-            var flight = new FlightModel();
-
-            // Basic input collection with validation
-            while (true)
+            try
             {
-                try
-                {
-                    flight.Airline = AnsiConsole.Prompt(
-                        new TextPrompt<string>("[#864000]Enter Airline:[/]")
-                            .DefaultValue("AIRTREIDES")
-                            .PromptStyle(highlightStyle));
+                flight.Airline = AnsiConsole.Prompt(
+                    new TextPrompt<string>("[#864000]Enter Airline:[/]")
+                        .DefaultValue("AIRTREIDES")
+                        .PromptStyle(highlightStyle));
 
-                    flight.AirplaneID = SelectAirplaneIDFromList();
-                    AnsiConsole.MarkupLine($"[green]Selected Airplane ID: {flight.AirplaneID}[/]");
+                flight.AirplaneID = SelectAirplaneIDFromList();
+                AnsiConsole.MarkupLine($"[green]Selected Airplane ID: {flight.AirplaneID}[/]");
 
-                    List<AirportModel> airports = AirportLogic.GetAllAirports();
-                    Table airportTable = AirportLogic.CreateAirportsTable(airports);
-                    AnsiConsole.Write(airportTable);
+                List<AirportModel> airports = AirportLogic.GetAllAirports();
+                Table airportTable = AirportLogic.CreateAirportsTable(airports);
+                AnsiConsole.Write(airportTable);
 
-                    List<string> validIataCodes = airports.Select(airport => airport.IataCode).ToList();
+                List<string> validIataCodes = airports.Select(airport => airport.IataCode).ToList();
 
-                    string origin = AnsiConsole.Prompt(
-                        new TextPrompt<string>("[#864000]Enter origin airport code (IATA):[/]")
-                            .PromptStyle(highlightStyle)
-                            .Validate(code =>
-                                validIataCodes.Contains(code.ToUpper()),
-                                "[red]Invalid airport code. Please use a valid IATA code from the table above.[/]")
-                    ).ToUpper().Trim();
+                string origin = AnsiConsole.Prompt(
+                    new TextPrompt<string>("[#864000]Enter origin airport code (IATA):[/]")
+                        .PromptStyle(highlightStyle)
+                        .Validate(code =>
+                            validIataCodes.Contains(code.ToUpper()),
+                            "[red]Invalid airport code. Please use a valid IATA code from the table above.[/]")
+                ).ToUpper().Trim();
 
-                    string destination = AnsiConsole.Prompt(
-                        new TextPrompt<string>("[#864000]Enter destination airport code (IATA):[/]")
-                            .PromptStyle(highlightStyle)
-                            .Validate(code =>
-                                validIataCodes.Contains(code.ToUpper().Trim()) && code.ToUpper().Trim() != origin,
-                                "[red]Invalid airport code or same as origin. Please use a different valid IATA code from the table above.[/]")
-                    ).ToUpper().Trim();
+                string destination = AnsiConsole.Prompt(
+                    new TextPrompt<string>("[#864000]Enter destination airport code (IATA):[/]")
+                        .PromptStyle(highlightStyle)
+                        .Validate(code =>
+                            validIataCodes.Contains(code.ToUpper().Trim()) && code.ToUpper().Trim() != origin,
+                            "[red]Invalid airport code or same as origin. Please use a different valid IATA code from the table above.[/]")
+                ).ToUpper().Trim();
 
-                    flight.DepartureTime = AnsiConsole.Prompt(
-                        new TextPrompt<DateTime>("[#864000]Enter Departure Time (yyyy-MM-dd HH:mm):[/]")
-                            .PromptStyle(highlightStyle));
+                flight.DepartureTime = AnsiConsole.Prompt(
+                    new TextPrompt<DateTime>("[#864000]Enter Departure Time (yyyy-MM-dd HH:mm):[/]")
+                        .PromptStyle(highlightStyle));
 
-                    flight.ArrivalTime = AnsiConsole.Prompt(
-                        new TextPrompt<DateTime>("[#864000]Enter Arrival Time (yyyy-MM-dd HH:mm):[/]")
-                            .PromptStyle(highlightStyle));
+                flight.ArrivalTime = AnsiConsole.Prompt(
+                    new TextPrompt<DateTime>("[#864000]Enter Arrival Time (yyyy-MM-dd HH:mm):[/]")
+                        .PromptStyle(highlightStyle));
 
-                    if (FlightLogic.AddFlight(flight))
-                    {
-                        AnsiConsole.MarkupLine("[green]Flight added successfully![/]");
-                        WaitForKeyPress();
-                        break;
-                    }
-                    else
-                    {
-                        AnsiConsole.MarkupLine("[red]Failed to add flight. Please try again.[/]");
-                        WaitForKeyPress();
-                    }
-                }
-                catch (ArgumentException ex)
-                {
-                    AnsiConsole.MarkupLine($"[red]Error: {ex.Message}[/]");
-                    WaitForKeyPress();
-                }
+                FlightLogic.AddFlight(flight);
+                AnsiConsole.MarkupLine("[green]Flight added successfully![/]");
+                WaitForKeyPress();
+                break;
+            }
+            catch (Exception ex)
+            {
+                AnsiConsole.MarkupLine($"[red]Error: {ex.Message}[/]");
+                WaitForKeyPress();
             }
         }
-        catch (Exception ex)
-        {
-            AnsiConsole.MarkupLine($"[red]An unexpected error occurred: {ex.Message}[/]");
-            WaitForKeyPress();
-        }
     }
-
+    // BUG: If there is no flight with given airports, will be stuck in select flightid prompt
     public static void EditFlight()
     {
         List<FlightModel> flights = DisplayFilteredUpcomingFlights();
 
-        var flightId = AnsiConsole.Prompt(
+        int flightId = AnsiConsole.Prompt(
             new TextPrompt<int>("[#864000]Enter Flight ID to edit flight:[/]")
                 .PromptStyle(highlightStyle)
                 .Validate(id =>
@@ -277,7 +261,7 @@ public static class FlightUI
                 }, "[red]Invalid Flight ID. Please enter an ID from the table above.[/]")
         );
 
-        var flight = FlightLogic.GetFlightById(flightId);
+        FlightModel flight = FlightLogic.GetFlightById(flightId);
         if (flight == null)
         {
             AnsiConsole.MarkupLine("[red]Flight not found.[/]");
@@ -288,13 +272,14 @@ public static class FlightUI
         AnsiConsole.Clear();
         AnsiConsole.Write(new Rule("[#FF7A00]Edit Flight[/]").RuleStyle(primaryStyle));
 
-        // Same prompts as AddFlight but with DefaultValue set to current values
-        flight.Airline = AnsiConsole.Prompt(
-            new TextPrompt<string>("[#864000]Enter new Airline[/]")
-                .DefaultValue(flight.Airline)
-                .PromptStyle(highlightStyle));
+        try
+        {
+            flight.Airline = AnsiConsole.Prompt(
+                new TextPrompt<string>("[#864000]Enter new Airline[/]")
+                    .DefaultValue(flight.Airline)
+                    .PromptStyle(highlightStyle));
 
-        List<AirportModel> airports = AirportLogic.GetAllAirports();
+            List<AirportModel> airports = AirportLogic.GetAllAirports();
             Table airportTable = AirportLogic.CreateAirportsTable(airports);
             AnsiConsole.Write(airportTable);
 
@@ -316,23 +301,22 @@ public static class FlightUI
                         "[red]Invalid airport code or same as origin. Please use a different valid IATA code from the table above.[/]")
             ).ToUpper().Trim();
 
-        flight.DepartureTime = AnsiConsole.Prompt(
-            new TextPrompt<DateTime>("[#864000]Enter new Departure Time (yyyy-MM-dd HH:mm)[/]")
-            .DefaultValue(flight.DepartureTime)
-            .PromptStyle(highlightStyle));
+            flight.DepartureTime = AnsiConsole.Prompt(
+                new TextPrompt<DateTime>("[#864000]Enter new Departure Time (yyyy-MM-dd HH:mm)[/]")
+                .DefaultValue(flight.DepartureTime)
+                .PromptStyle(highlightStyle));
 
-        flight.ArrivalTime = AnsiConsole.Prompt(
-            new TextPrompt<DateTime>("[#864000]Enter new Arrival Time (yyyy-MM-dd HH:mm)[/]")
-            .DefaultValue(flight.ArrivalTime)
-            .PromptStyle(highlightStyle));
+            flight.ArrivalTime = AnsiConsole.Prompt(
+                new TextPrompt<DateTime>("[#864000]Enter new Arrival Time (yyyy-MM-dd HH:mm)[/]")
+                .DefaultValue(flight.ArrivalTime)
+                .PromptStyle(highlightStyle));
 
-        if (FlightLogic.UpdateFlight(flight))
-        {
+            FlightLogic.UpdateFlight(flight);
             AnsiConsole.MarkupLine("[green]Flight updated successfully![/]");
         }
-        else
+        catch (Exception ex)
         {
-            AnsiConsole.MarkupLine("[red]Failed to update flight.[/]");
+            AnsiConsole.MarkupLine($"[red]Failed to update flight: {ex.Message}[/]");
         }
         WaitForKeyPress();
     }
@@ -362,15 +346,16 @@ public static class FlightUI
 
             if (AnsiConsole.Confirm("[yellow]Are you sure you want to delete this flight?[/]"))
             {
-                if (TryDeleteFlight(flightId))
+                try
                 {
+                    FlightLogic.DeleteFlight(flightId);
                     AnsiConsole.MarkupLine("[green]Flight successfully deleted.[/]");
                     WaitForKeyPress();
                     return;
                 }
-                else
+                catch (Exception ex)
                 {
-                    AnsiConsole.MarkupLine("[red]Failed to delete flight.[/]");
+                    AnsiConsole.MarkupLine($"[red]Failed to delete flight: {ex.Message}[/]");
                     WaitForKeyPress();
                     return;
                 }
@@ -378,23 +363,10 @@ public static class FlightUI
             else
             {
                 AnsiConsole.MarkupLine("[yellow]Flight deletion cancelled.[/]");
-                AnsiConsole.MarkupLine("[grey]Press Enter to return to main menu.[/]");
+                AnsiConsole.MarkupLine("[grey]Press any key to return to main menu.[/]");
                 Console.ReadKey(true);
                 return;
             }
-        }
-    }
-
-    private static bool TryDeleteFlight(int flightId)
-    {
-        try
-        {
-            return FlightLogic.DeleteFlight(flightId);
-        }
-        catch (Exception)
-        {
-            AnsiConsole.MarkupLine("[red]Error occurred while deleting the flight.[/]");
-            return false;
         }
     }
 

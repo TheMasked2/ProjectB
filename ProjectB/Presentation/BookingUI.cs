@@ -15,7 +15,7 @@ public static class BookingUI
         AnsiConsole.MarkupLine("\n[grey]Press any key to continue...[/]");
         Console.ReadKey(true);
     }
-    public static void BookADamnFlight() // MAIN OBJECTIVE <--------------------
+    public static void BookADamnFlight()
     {
         // Display all bookable flights based on user input
         List<FlightModel> bookableFlights = FlightUI.DisplayAllBookableFlights();

@@ -9,6 +9,7 @@ namespace ProjectB.DataAccess
         void Delete(int flightId);
         List<FlightModel> GetPastFlights(DateTime currentDate);
         List<FlightModel> GetUpcomingFlights(DateTime departingSoonDate);
+        
         List<FlightModel> GetFilteredFlights(
             string? origin,
             string? destination,

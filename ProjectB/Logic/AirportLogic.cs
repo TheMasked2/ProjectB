@@ -11,11 +11,6 @@ public static class AirportLogic
         return AirportAccessService.GetAllAirports();
     }
 
-    public static AirportModel GetAirportByCode(string iataCode)
-    {
-        return AirportAccessService.GetAirportByCode(iataCode);
-    }
-
     public static Table CreateAirportsTable(List<AirportModel> airports = null)
     {
         if (airports == null)

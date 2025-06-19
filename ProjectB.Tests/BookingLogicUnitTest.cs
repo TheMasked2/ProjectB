@@ -176,7 +176,7 @@ namespace ProjectB.Tests
         }
 
         [DataTestMethod]
-        [DataRow(1, true, new[] { 1, 3 })]      // User 1, Upcoming bookings (IDs 1, 3)
+        [DataRow(1, true, new[] { 1, 3 })]     // User 1, Upcoming bookings (IDs 1, 3)
         [DataRow(1, false, new[] { 2, 5, 8 })] // User 1, Past bookings (IDs 2, 5, 8)
         [DataRow(2, true, new[] { 4 })]        // User 2, Upcoming bookings (ID 4)
         [DataRow(2, false, new[] { 6 })]       // User 2, Past bookings (ID 6)
@@ -462,10 +462,10 @@ namespace ProjectB.Tests
             BookingModel expectedBooking = new BookingModel
             {
                 BookingID = bookingIdToRetrieve,
-                UserID = 1, // Sample data
-                FlightID = 100, // Sample data
-                SeatID = "1A", // Sample data
-                BookingStatus = "Confirmed" // Sample data
+                UserID = 1,
+                FlightID = 100,
+                SeatID = "1A",
+                BookingStatus = "Confirmed"
             };
 
             // Setup the mock to return expected booking

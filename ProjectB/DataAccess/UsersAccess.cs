@@ -65,7 +65,6 @@ public static class UserAccess
         else
         {
             var user = _connection.QuerySingleOrDefault<User>(sql, new { @UserID = userId });
-            // Console.WriteLine($"Database returned: Email={user?.EmailAddress}, Phone={user?.PhoneNumber}");
             return user;
         }
     }

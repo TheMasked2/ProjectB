@@ -61,6 +61,13 @@ public class FlightSeatAccess : IFlightSeatAccess
         _connection.Execute(sql, parameters);
     }
 
+    public void DeleteFlightSeatsByFlightID(int flightId)
+    {
+        string sql = $@"DELETE FROM {FlightSeatsTable} WHERE FlightID = @FlightID";
+        var parameters = new { FlightID = flightId };
+        _connection.Execute(sql, parameters);
+    }
+
     public int GetAvailableSeatCountByClass(int flightID, string airplaneID, string seatClass)
     {
         // This SQL query counts the number of unoccupied seats for a specific flight and seat class.

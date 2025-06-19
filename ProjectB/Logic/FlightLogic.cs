@@ -99,6 +99,7 @@ public static class FlightLogic
 
         return table;
     }
+    
     public static FlightModel GetFlightById(int flightId)
     {
         FlightModel flight = FlightAccessService.GetById(flightId);
@@ -111,95 +112,57 @@ public static class FlightLogic
 
     public static FlightModel GetReviewFlightById(int flightId)
     {
-        FlightAccess flightAccess = new FlightAccess();
-        try
+
+        FlightModel flight = flightAccess.GetReviewFlightByID(flightId);
+        if (flight == null)
         {
-            FlightModel flight = flightAccess.GetReviewFlightByID(flightId);
-            if (flight == null)
-            {
-                return null;
-            }
-            return flight;
+            return null;
         }
-        catch
-        {
-            return null; 
-        }
+        return flight;
     }
-
-
-    public static bool AddFlight(FlightModel flight)
+    public static void AddFlight(FlightModel flight)
     {
-        try
-        {
-            ValidateFlight(flight);
-
-            // Set default values for required fields
-            AirplaneModel airplane = AirplaneLogic.GetAirplaneByID(flight.AirplaneID);
-
-            if (airplane == null)
-            {
-                throw new ArgumentException("Airplane not found.");
-            }
-
-            flight.AirplaneID = airplane.AirplaneID;
-            flight.AvailableSeats = airplane.TotalSeats;
-
-            flight.FlightStatus = "Scheduled";
-
-            // Get next available ID
-            AutoIncrementFlightID(flight);
-
-            FlightAccessService.Write(flight);
-
-            // Create seats for the flight
-            BookingLogic.BackfillFlightSeats(flight.FlightID);
-
-            // Initialize seat occupancy for this flight
-            FlightSeatAccessService.CreateFlightSeats(flight.FlightID, flight.AirplaneID);
-
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error adding flight: {ex.Message}");
-            return false;
-        }
-    }
-
-    public static bool UpdateFlight(FlightModel flight)
-    {
-        if (flight.FlightID <= 0)
-        {
-            throw new ArgumentException("FlightModel ID must be valid for updates.");
-        }
-
         ValidateFlight(flight);
-        try
+
+        AirplaneModel airplane = AirplaneLogic.GetAirplaneByID(flight.AirplaneID);
+
+        if (airplane == null)
         {
-            FlightAccessService.Update(flight);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error updating flight: {ex.Message}");
-            return false;
+            throw new ArgumentException("Airplane not found.");
         }
 
-        return true;
+        flight.AirplaneID = airplane.AirplaneID;
+        flight.AvailableSeats = airplane.TotalSeats;
+
+        flight.FlightStatus = "Scheduled";
+
+        AutoIncrementFlightID(flight);
+
+        FlightAccessService.Write(flight);
+
+        BookingLogic.BackfillFlightSeats(flight.FlightID);
+
+        FlightSeatAccessService.CreateFlightSeats(flight.FlightID, flight.AirplaneID);
     }
 
-    public static bool DeleteFlight(int flightId)
+    public static void UpdateFlight(FlightModel flight)
+    {
+        ValidateFlight(flight);
+        FlightAccessService.Update(flight);
+    }
+
+    public static void DeleteFlight(int flightId)
     {
         if (flightId <= 0)
         {
-            return false;
+            throw new ArgumentException("Flight ID must be valid.");
         }
 
+        FlightSeatAccessService.DeleteFlightSeatsByFlightID(flightId);
         FlightAccessService.Delete(flightId);
-        return true;
+        
     }
 
-    // Helper for AddFlight
     private static void AutoIncrementFlightID(FlightModel flight)
     {
         var existingFlights = FlightAccessService.GetAllFlightData();
@@ -215,10 +178,9 @@ public static class FlightLogic
         flight.FlightID = nextId;
     }
 
-    // Helper for Add/Update
     private static void ValidateFlight(FlightModel flight)
     {
-        var today = DateTime.Today;
+        DateTime today = DateTime.Today;
 
         if (string.IsNullOrWhiteSpace(flight.Airline))
         {
@@ -235,15 +197,16 @@ public static class FlightLogic
             throw new ArgumentException("Departure time must be earlier than arrival time.");
         }
 
-        if (flight.Price < 0)
+        if (string.IsNullOrWhiteSpace(flight.DepartureAirport) || string.IsNullOrWhiteSpace(flight.ArrivalAirport))
         {
-            throw new ArgumentException("Price cannot be negative.");
+            throw new ArgumentException("Departure and arrival airports cannot be empty.");
         }
 
-        if (flight.AvailableSeats < 0)
+         if (flight.FlightID <= 0)
         {
-            throw new ArgumentException("Available seats cannot be negative.");
+            throw new ArgumentException("FlightModel ID must be valid for updates.");
         }
+
     }
 
     private static float GetSeatClassPrice(string airplaneID, string seatClass)
@@ -263,7 +226,7 @@ public static class FlightLogic
 
         // Update flights that have already departed
         List<FlightModel> pastFlights = FlightAccessService.GetPastFlights(currentDate);
-        foreach (var flight in pastFlights)
+        foreach (FlightModel flight in pastFlights)
         {
             // Update flight
             flight.FlightStatus = "Departed";
@@ -279,7 +242,7 @@ public static class FlightLogic
         // Update flights that are departing soon (3 hours or less)
         DateTime departingSoonDate = currentDate.AddHours(3);
         List<FlightModel> upcomingFlights = FlightAccessService.GetUpcomingFlights(departingSoonDate);
-        foreach (var flight in upcomingFlights)
+        foreach (FlightModel flight in upcomingFlights)
         {
             // Update flight status to "Boarding"
             flight.FlightStatus = "Boarding";
