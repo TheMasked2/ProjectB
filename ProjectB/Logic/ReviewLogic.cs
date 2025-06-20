@@ -4,7 +4,7 @@ using Microsoft.VisualBasic;
 
 public static class ReviewLogic
 {
-    public static IReviewAccess ReviewAccessService { get; set; } = new ReviewAcces();
+    public static IReviewAccess ReviewAccessService { get; set; } = new ReviewAccess();
     private static readonly Style primaryStyle = new(new Color(134, 64, 0));
     private static readonly Style highlightStyle = new(new Color(255, 122, 0));
     private static readonly Style errorStyle = new(new Color(162, 52, 0));
@@ -28,8 +28,7 @@ public static class ReviewLogic
         }
         try
         {
-            ReviewAcces reviewAccess = new ReviewAcces();
-            reviewAccess.AddReview(review);
+            ReviewAccessService.AddReview(review);
             return true;
         }
         catch (Exception ex)
@@ -44,13 +43,12 @@ public static class ReviewLogic
         errorMessage = null;
         try
         {
-            ReviewAcces reviewAccess = new ReviewAcces();
-            if (reviewAccess.GetAllReviews().Count == 0)
+            if (ReviewAccessService.GetAllReviews().Count == 0)
             {
                 errorMessage = "Its quiet here, maybe a bit too quiet, no reviews yet.";
                 return new List<ReviewModel>();
             }
-            return reviewAccess.GetAllReviews();
+            return ReviewAccessService.GetAllReviews();
         }
         catch (Exception ex)
         {
@@ -64,13 +62,12 @@ public static class ReviewLogic
         errorMessage = null;
         try
         {
-            ReviewAcces reviewAccess = new ReviewAcces();
             if (FlightLogic.GetFlightById(flightid) == null)
             {
                 errorMessage = $"No reviews found with FlightID: {flightid}";
                 return new List<ReviewModel>();
             }
-            return reviewAccess.GetReviewsByFlight(flightid);
+            return ReviewAccessService.GetReviewsByFlight(flightid);
         }
         catch (Exception ex)
         {
