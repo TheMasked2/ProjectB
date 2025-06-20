@@ -10,6 +10,5 @@ namespace ProjectB.DataAccess
         void DeletePastFlightSeatsByFlightIDs(List<int> flightIDs);
         void DeleteFlightSeatsByFlightID(int flightId);
         int GetAvailableSeatCountByClass(int flightId, string airplaneId, string seatClass);
-
     }
 }

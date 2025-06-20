@@ -1,5 +1,5 @@
 public interface ILoggerAccess
 {
-    bool WriteLogEntry(string logEntry);
+    void WriteLogEntry(string logEntry);
     List<LogEntry> ReadAllLogEntries();
 }

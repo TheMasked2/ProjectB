@@ -4,10 +4,7 @@ using Spectre.Console;
 
 public static class BookingUI
 {
-    private static readonly Style primaryStyle = new(new Color(134, 64, 0));
     private static readonly Style highlightStyle = new(new Color(255, 122, 0));
-    private static readonly Style errorStyle = new(new Color(162, 52, 0));
-    private static readonly Style successStyle = new(new Color(194, 87, 0));
     private static readonly bool[] BoolChoices = { true, false };
 
     public static void WaitForKeyPress()

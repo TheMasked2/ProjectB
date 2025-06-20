@@ -12,3 +12,5 @@
 2025-05-21 14:14:34;EDIT_USER;5;Lucio Ridder;5;Lucio Ridder;IsAdmin=Admin -> User
 2025-05-21 14:18:58;EDIT_USER;1;Addmin admin;5;Lucio Ridder;IsAdmin=User -> Admin
 2025-05-21 14:19:18;EDIT_USER;5;Lucio Ridder;5;Lucio Ridder;IsAdmin=Admin -> User
+2025-06-20 13:42:14;EDIT_USER;1;Addmin admin;11;My Name;FirstName=MyName -> My|LastName=Jeff -> Name|Email=jeff@gmail.com -> jeff@jeff.com|PhoneNumber=612345678 -> 0612345678
+2025-06-20 13:46:00;EDIT_USER;1;Addmin admin;7;Peter Lagemaat;FirstName=Cheng -> Peter|LastName=C -> Lagemaat|Email=1234@gmail.com -> peterlagemaat@gmail.com|City=N -> Rotterdam|Country=N -> Netherlands

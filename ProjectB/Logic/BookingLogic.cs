@@ -9,9 +9,7 @@ public static class BookingLogic
     public static IFlightAccess FlightAccessService { get; set; } = new FlightAccess();
     public static IFlightSeatAccess FlightSeatAccessService { get; set; } = new FlightSeatAccess();
     private static readonly Style primaryStyle = new(new Color(134, 64, 0));
-    private static readonly Style highlightStyle = new(new Color(255, 122, 0));
     private static readonly Style errorStyle = new(new Color(162, 52, 0));
-    private static readonly Style successStyle = new(new Color(194, 87, 0));
 
     public static void BackfillFlightSeats(int FlightID)
     {

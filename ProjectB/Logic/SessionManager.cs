@@ -1,6 +1,6 @@
 public static class SessionManager
 {
-    public static User CurrentUser { get; set; }
+    public static User? CurrentUser { get; set; }
     public static DateTime LoginTime { get; private set; }
 
     public static void SetCurrentUser(User user)

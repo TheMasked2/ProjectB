@@ -8,11 +8,6 @@ public class AirplaneAccess : IAirplaneAccess
 
     private const string Table = "AIRPLANE";
 
-    /// <summary>
-    /// Inserts a new airplane into the database.
-    /// </summary>
-    /// <param name="airplane">The airplane to insert.</param>
-
     public AirplaneModel GetAirplaneByID(string airplaneID)
     {
         string sql = $@"SELECT * FROM {Table} WHERE AirplaneID = @AirplaneId";

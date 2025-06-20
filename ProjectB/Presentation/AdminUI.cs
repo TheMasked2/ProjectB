@@ -210,6 +210,17 @@ public static class AdminUI
                 };
                 AnsiConsole.Write(successPanel);
 
+                User newUser = UserLogic.GetUserByEmail(email);
+                
+                try
+                {
+                    LoggerLogic.LogUserCreation(SessionManager.CurrentUser, newUser);
+                }
+                catch (Exception ex)
+                {
+                    AnsiConsole.MarkupLine($"[red]Error logging user creation: {Markup.Escape(ex.Message)}[/]");
+                }
+
                 AnsiConsole.MarkupLine("\n[grey]Press any key to continue...[/]");
                 Console.ReadKey(true);
             }
@@ -234,7 +245,6 @@ public static class AdminUI
         AnsiConsole.Write(new Rule("[#FF7A00]Admin Edit User[/]").RuleStyle(primaryStyle));
         AnsiConsole.WriteLine();
 
-        // Get filter criteria
         string filterOption = AnsiConsole.Prompt(
             new SelectionPrompt<string>()
                 .Title("[#864000]Filter users by:[/]")
@@ -284,7 +294,6 @@ public static class AdminUI
             return;
         }
 
-        // Display filtered users in a table like FlightUI
         var table = new Table()
             .Border(TableBorder.Rounded)
             .BorderStyle(primaryStyle)
@@ -309,7 +318,6 @@ public static class AdminUI
 
         AnsiConsole.Write(table);
         
-        // Select user to edit
         var userId = AnsiConsole.Prompt(
             new TextPrompt<int>("[#864000]Enter ID of user to edit:[/]")
                 .PromptStyle(highlightStyle)
@@ -320,12 +328,10 @@ public static class AdminUI
         
         var selectedUser = filteredUsers.First(u => u.UserID == userId);
         
-        // Edit user fields
         AnsiConsole.Clear();
         AnsiConsole.Write(new Rule("[#FF7A00]Edit User Details[/]").RuleStyle(primaryStyle));
         AnsiConsole.WriteLine();
         
-        // Use DefaultValue like in EditFlight
         selectedUser.FirstName = AnsiConsole.Prompt(
             new TextPrompt<string>("[#864000]Enter new first name[/]")
                 .DefaultValue(selectedUser.FirstName)
@@ -404,7 +410,7 @@ public static class AdminUI
 
         try
         {
-            List<LogEntry> logEntries = Logger.ReadLogEntries(); // Changed from Logger to LoggerLogic
+            List<LogEntry> logEntries = LoggerLogic.ReadLogEntries();
             
             if (logEntries.Count == 0)
             {

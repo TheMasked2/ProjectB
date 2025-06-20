@@ -70,10 +70,11 @@ public class FlightSeatAccess : IFlightSeatAccess
 
     public int GetAvailableSeatCountByClass(int flightID, string airplaneID, string seatClass)
     {
-        // This SQL query counts the number of unoccupied seats for a specific flight and seat class.
-        // It joins the FlightSeatsTable (fs) with the SeatsTable (s)
-        // on SeatID and AirplaneID to filter by the correct airplane configuration.
-        // It then filters by the given FlightID, SeatType (class), and where IsOccupied is 0 (false).
+        // This SQL query counts avialable seats for a specific flight and seat class.
+        // It uses the FlightSeatsTable (fs) to find seats for the given flight,
+        // and the SeatsTable (s) to filter by seat type (class).
+        // It then filters by the given FlightID, SeatType (class),
+        // and returns the count of unoccupied seats (IsOccupied = 0).
         string sql = $@"
             SELECT COUNT(fs.SeatID)
             FROM {FlightSeatsTable} fs
@@ -84,6 +85,5 @@ public class FlightSeatAccess : IFlightSeatAccess
         var parameters = new { FlightID = flightID, AirplaneID = airplaneID, SeatClass = seatClass };
 
         return _connection.ExecuteScalar<int>(sql, parameters);
-
     }
 }

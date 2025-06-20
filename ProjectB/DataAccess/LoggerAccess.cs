@@ -7,13 +7,11 @@ public class LoggerAccess : ILoggerAccess
 
     public LoggerAccess()
     {
-        // Create logs directory if it doesn't exist
         if (!Directory.Exists(LogDirectory))
         {
             Directory.CreateDirectory(LogDirectory);
         }
 
-        // Create the log file with headers if it doesn't exist
         if (!File.Exists(AdminActionsLog))
         {
             using (StreamWriter writer = new StreamWriter(AdminActionsLog, false, Encoding.UTF8))
@@ -23,7 +21,7 @@ public class LoggerAccess : ILoggerAccess
         }
     }
     
-    public bool WriteLogEntry(string logEntry)
+    public void WriteLogEntry(string logEntry)
     {
         try
         {
@@ -31,28 +29,26 @@ public class LoggerAccess : ILoggerAccess
             {
                 writer.WriteLine(logEntry);
             }
-            return true;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error writing to log file: {ex.Message}");
-            return false;
+            throw new InvalidOperationException($"Failed to write log entry: {ex.Message}", ex);
         }
     }
     
     public List<LogEntry> ReadAllLogEntries()
     {
-        List<LogEntry> entries = new List<LogEntry>();
-        
         try
         {
             if (!File.Exists(AdminActionsLog))
             {
-                return entries;
+                return new List<LogEntry>();
             }
             
             using (StreamReader reader = new StreamReader(AdminActionsLog, Encoding.UTF8))
             {
+                List<LogEntry> entries = new List<LogEntry>();
+                
                 // Skip the header line
                 reader.ReadLine();
                 
@@ -78,14 +74,13 @@ public class LoggerAccess : ILoggerAccess
                         entries.Add(entry);
                     }
                 }
+                
+                return entries;
             }
-            
-            return entries;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error reading log file: {ex.Message}");
-            return new List<LogEntry>();
+            throw new InvalidOperationException($"Failed to read log entries: {ex.Message}", ex);
         }
     }
 }

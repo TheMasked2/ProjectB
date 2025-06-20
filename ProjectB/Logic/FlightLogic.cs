@@ -9,9 +9,7 @@ public static class FlightLogic
     public static IPastFlightAccess PastFlightAccessService { get; set; } = new PastFlightAccess();
     public static ISeatAccess SeatAccessService { get; set; } = new SeatAccess();
     private static readonly Style primaryStyle = new(new Color(134, 64, 0));
-    private static readonly Style highlightStyle = new(new Color(255, 122, 0));
     private static readonly Style errorStyle = new(new Color(162, 52, 0));
-    private static readonly Style successStyle = new(new Color(194, 87, 0));
 
     /// <summary>
     /// Filters the data from the data access layer based on the provided criteria.

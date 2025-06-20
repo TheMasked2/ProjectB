@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-public static class Logger
+public static class LoggerLogic
 {
     public static ILoggerAccess LoggerAccessService { get; set; } = new LoggerAccess();
-    public static bool LogUserCreation(User adminUser, User createdUser)
+    public static void LogUserCreation(User adminUser, User createdUser)
     {
         string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
         string action = "CREATE_USER";
@@ -17,11 +17,10 @@ public static class Logger
 
         string logEntry = $"{timestamp};{action};{adminId};{adminName};{targetId};{targetName};{details}";
 
-        return LoggerAccessService.WriteLogEntry(logEntry);
+        LoggerAccessService.WriteLogEntry(logEntry);
     }
 
-
-    public static bool LogUserEdit(User adminUser, User editedUser, Dictionary<string, string> changedFields)
+    public static void LogUserEdit(User adminUser, User editedUser, Dictionary<string, string> changedFields)
     {
         string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
         string action = "EDIT_USER";
@@ -40,7 +39,7 @@ public static class Logger
 
         string logEntry = $"{timestamp};{action};{adminId};{adminName};{targetId};{targetName};{details}";
 
-        return LoggerAccessService.WriteLogEntry(logEntry);
+        LoggerAccessService.WriteLogEntry(logEntry);
     }
 
     public static List<LogEntry> ReadLogEntries()

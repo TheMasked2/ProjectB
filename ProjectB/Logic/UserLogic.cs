@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 
-
-//This class is not static so later on we can use inheritance and interfaces
 public static class UserLogic
 {
     public static List<string> errors = new List<string>();
@@ -115,7 +113,7 @@ public static class UserLogic
 
         UserAccess.AddUser(user);
 
-        Logger.LogUserCreation(SessionManager.CurrentUser, user);
+        LoggerLogic.LogUserCreation(SessionManager.CurrentUser, user);
 
         return true;
     }
@@ -276,7 +274,7 @@ public static class UserLogic
             // Log if admin update and if any fields actually changed
             if (isAdminUpdate && originalUser != null && changedFields != null && changedFields.Count > 0)
             {
-                Logger.LogUserEdit(SessionManager.CurrentUser, updatedUser, changedFields);
+                LoggerLogic.LogUserEdit(SessionManager.CurrentUser, updatedUser, changedFields);
             }
             // Check if the updated user is the currently logged-in user
             if (SessionManager.CurrentUser != null && SessionManager.CurrentUser.UserID == updatedUser.UserID)
