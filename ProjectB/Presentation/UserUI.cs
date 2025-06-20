@@ -459,7 +459,7 @@ public static class UserUI
     }
     public static void ShowGuestMenu()
     {
-        SessionManager.CurrentUser = new User
+        User guestUser = new User
         {
             UserID = 0,
             FirstName = "Guest",
@@ -467,6 +467,7 @@ public static class UserUI
             IsAdmin = false,
             Guest = true
         };
+        SessionManager.SetCurrentUser(guestUser);
 
         while (true)
         {
