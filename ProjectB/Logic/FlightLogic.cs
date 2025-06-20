@@ -103,23 +103,9 @@ public static class FlightLogic
     public static FlightModel GetFlightById(int flightId)
     {
         FlightModel flight = FlightAccessService.GetById(flightId);
-        if (flight == null)
-        {
-            return null;
-        }
         return flight;
     }
 
-    public static FlightModel GetReviewFlightById(int flightId)
-    {
-
-        FlightModel flight = flightAccess.GetReviewFlightByID(flightId);
-        if (flight == null)
-        {
-            return null;
-        }
-        return flight;
-    }
     public static void AddFlight(FlightModel flight)
     {
         ValidateFlight(flight);

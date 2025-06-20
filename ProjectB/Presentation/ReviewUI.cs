@@ -87,7 +87,7 @@ public static class ReviewUI
         {
             // var UserModel = UserAccess.GetUserInfoByID(review.UserID);
             var UserModel = UserLogic.GetUserByID(review.UserID);
-            var FlightModel = FlightLogic.GetReviewFlightById(review.FlightID);
+            var FlightModel = FlightLogic.GetFlightById(review.FlightID);
 
             if (UserModel == null || FlightModel == null)
             {
@@ -128,7 +128,7 @@ public static class ReviewUI
         foreach (var review in reviews)
         {
             var UserModel = UserLogic.GetUserByID(review.UserID);
-            var FlightModel = FlightLogic.GetReviewFlightById(review.FlightID);
+            var FlightModel = FlightLogic.GetFlightById(review.FlightID);
 
             string goldStars = string.Join(" ", Enumerable.Repeat("★", review.Rating));
             string grayStars = string.Join(" ", Enumerable.Repeat("☆", 5 - review.Rating));
