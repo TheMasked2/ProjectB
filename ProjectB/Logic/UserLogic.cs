@@ -112,9 +112,7 @@ public static class UserLogic
         );
 
         UserAccess.AddUser(user);
-
-        LoggerLogic.LogUserCreation(SessionManager.CurrentUser, user);
-
+        
         return true;
     }
 

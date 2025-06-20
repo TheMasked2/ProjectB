@@ -74,7 +74,7 @@ public static class ReviewUI
             {
                 AnsiConsole.MarkupLine($"[red]{errorMessage}[/]");
             }
-            WaitForKeyPress();
+            FlightUI.WaitForKeyPress();
             break;
         } while (!succes);
     }
