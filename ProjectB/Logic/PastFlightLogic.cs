@@ -1,6 +1,5 @@
-using Spectre.Console;
 using ProjectB.DataAccess;
-using Microsoft.VisualBasic;
+
 public static class PastFlightLogic
 {
     public static IFlightAccess FlightAccessService { get; set; } = new FlightAccess();

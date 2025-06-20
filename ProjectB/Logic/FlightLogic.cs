@@ -1,6 +1,6 @@
 using Spectre.Console;
 using ProjectB.DataAccess;
-using Microsoft.VisualBasic;
+
 public static class FlightLogic
 {
     public static IFlightAccess FlightAccessService { get; set; } = new FlightAccess();
@@ -11,13 +11,6 @@ public static class FlightLogic
     private static readonly Style primaryStyle = new(new Color(134, 64, 0));
     private static readonly Style errorStyle = new(new Color(162, 52, 0));
 
-    /// <summary>
-    /// Filters the data from the data access layer based on the provided criteria.
-    /// </summary>
-    /// <param name="origin">Origin airport filter.</param>
-    /// <param name="destination">Destination airport filter.</param>
-    /// <param name="departureDate">Departure date filter.</param>
-    /// <returns>List of filtered flights.</returns>
     public static List<FlightModel> GetFilteredFlights(
         string? origin,
         string? destination,
@@ -232,7 +225,6 @@ public static class FlightLogic
             flight.FlightStatus = "Boarding";
             FlightAccessService.Update(flight);
         }
-        return;
     }
 
     private static void PurgeOldPastFlights(DateTime monthAgo)
@@ -245,6 +237,5 @@ public static class FlightLogic
             FlightSeatAccessService.DeletePastFlightSeatsByFlightIDs(oldFlightIDs);
             PastFlightAccessService.DeleteOldPastFlights(oldFlightIDs);
         }
-        return;
     }
 }

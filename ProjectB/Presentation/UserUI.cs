@@ -163,11 +163,6 @@ public static class UserUI
         } while (!loginSuccess);
     }
 
-    public static void UserLogout()
-    {
-        SessionManager.Logout();
-    }
-
     public static void UserEditUser()
     {
         if (!SessionManager.IsLoggedIn())
@@ -496,7 +491,7 @@ public static class UserUI
                     FlightUI.SearchFlights();
                     break;
                 case "Back to main menu":
-                    UserLogout();
+                    SessionManager.Logout();
                     break;
             }
 
@@ -508,9 +503,10 @@ public static class UserUI
 
     public static void GuestEditUserInfo()
     {
+        
         string firstName = AnsiConsole.Prompt(
-               new TextPrompt<string>("[#864000]Please enter your first name:[/]")
-                   .PromptStyle(highlightStyle));
+                new TextPrompt<string>("[#864000]Please enter your first name:[/]")
+                    .PromptStyle(highlightStyle));
 
         string lastName = AnsiConsole.Prompt(
             new TextPrompt<string>("[#864000]Please enter your last name:[/]")
@@ -524,16 +520,29 @@ public static class UserUI
             new TextPrompt<string>("[#864000]Please enter your phone number:[/]")
                 .PromptStyle(highlightStyle));
 
-        string birthDateString = AnsiConsole.Prompt(
-            new TextPrompt<string>("[#864000]Please enter your birth date (yyyy-mm-dd):[/]")
-                .PromptStyle(highlightStyle));
+        bool inputValid = false;
+        do
+        {
+            string birthDateString = AnsiConsole.Prompt(
+                new TextPrompt<string>("[#864000]Please enter your birth date (yyyy-mm-dd):[/]")
+                    .PromptStyle(highlightStyle));
 
-        User guestUser = SessionManager.CurrentUser;
-        guestUser.FirstName = firstName;
-        guestUser.LastName = lastName;
-        guestUser.EmailAddress = email;
-        guestUser.PhoneNumber = phoneNumberString;
-        guestUser.BirthDate = DateTime.Parse(birthDateString);
-        guestUser.FirstTimeDiscount = false; // Guest users do not get discounts
+            UserLogic.UpdateGuestUser(firstName, lastName, email, phoneNumberString, birthDateString);
+
+            if (UserLogic.errors.Any())
+            {
+                AnsiConsole.MarkupLine("[red]Please fix the following errors:[/]");
+                foreach (string error in UserLogic.errors)
+                {
+                    AnsiConsole.MarkupLine($"[red]• {error}[/]");
+                }
+            }
+            else
+            {
+                AnsiConsole.MarkupLine("[green]User information updated successfully![/]");
+                inputValid = true;
+            }
+            
+        } while (!inputValid);
     }
 }

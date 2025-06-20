@@ -141,7 +141,6 @@ public static class SeatMapLogic
         return selectedSeat;
     }
 
-
     public static SeatModel TryGetAvailableSeat(List<SeatModel> seats, int row, string seatLetter)
     {
         var seat = seats.FirstOrDefault(s => s.RowNumber == row && s.SeatPosition == seatLetter);
@@ -155,5 +154,4 @@ public static class SeatMapLogic
         seat.IsOccupied = true;
         FlightSeatAccessService.SetSeatOccupancy(flightId, seat.SeatID, true);
     }
-    // make reverse bookseat method
 }

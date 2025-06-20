@@ -1,4 +1,3 @@
-using Spectre.Console;
 using ProjectB.DataAccess;
 public static class AirplaneLogic
 {

@@ -1,8 +1,6 @@
-using Microsoft.VisualBasic;
 using ProjectB.DataAccess;
 using Spectre.Console;
-using System.Linq;
-using System.Security.Cryptography.X509Certificates;
+
 public static class BookingLogic
 {
     public static IBookingAccess BookingAccessService { get; set; } = new BookingAccess();

@@ -4,7 +4,6 @@ using ProjectB.DataAccess;
 
 public class SeatAccess : ISeatAccess
 {
-
     private readonly SqliteConnection _connection = new SqliteConnection($"Data Source=DataSources/database.db");
     private const string Table = "SEATS";
     public float GetSeatClassPrice(string airplaneID)

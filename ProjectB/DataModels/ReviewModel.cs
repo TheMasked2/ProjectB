@@ -14,6 +14,4 @@ public class ReviewModel
         Rating = rating;
         CreatedAt = DateTime.Now;
     }
-
-    public ReviewModel() { }
 }

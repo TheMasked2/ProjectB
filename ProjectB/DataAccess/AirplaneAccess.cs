@@ -18,7 +18,7 @@ public class AirplaneAccess : IAirplaneAccess
     public List<AirplaneModel> GetAirplanes()
     {
         string sql = $@"SELECT AirplaneID, AirplaneName FROM {Table}";
-        IEnumerable<AirplaneModel> result = _connection.Query<AirplaneModel>(sql);
-        return result.ToList();
+        List<AirplaneModel> result = _connection.Query<AirplaneModel>(sql).ToList();
+        return result;
     }
 }

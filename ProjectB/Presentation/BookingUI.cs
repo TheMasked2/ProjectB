@@ -1,5 +1,3 @@
-using System.Net;
-using System.Reflection.Metadata;
 using Spectre.Console;
 
 public static class BookingUI

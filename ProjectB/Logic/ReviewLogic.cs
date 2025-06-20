@@ -1,12 +1,8 @@
-using Spectre.Console;
 using ProjectB.DataAccess;
-using Microsoft.VisualBasic;
 
 public static class ReviewLogic
 {
     public static IReviewAccess ReviewAccessService { get; set; } = new ReviewAccess();
-
-
 
     public static bool AddReview(ReviewModel review, out string errorMessage)
     {

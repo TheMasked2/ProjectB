@@ -58,15 +58,8 @@ public static class UserAccess
                         IsAdmin AS IsAdmin 
                         FROM USERS 
                         WHERE UserID = @UserID";
-        if (_connection.QuerySingleOrDefault<User>(sql, new { @UserID = userId }) == null)
-        {
-            return null;
-        }
-        else
-        {
-            var user = _connection.QuerySingleOrDefault<User>(sql, new { @UserID = userId });
-            return user;
-        }
+
+        return _connection.QuerySingleOrDefault<User>(sql, new { @UserID = userId });
     }
 
     public static User Login(string email, string password)

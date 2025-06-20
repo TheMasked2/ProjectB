@@ -67,7 +67,7 @@ public static class Menu
                     break;
 
                 case "Login":
-                    UserUI.UserLogout();
+                    SessionManager.Logout();
                     UserUI.UserLogin();
                     break;
 
@@ -76,7 +76,7 @@ public static class Menu
                     break;
 
                 case "Logout":
-                    UserUI.UserLogout();
+                    SessionManager.Logout();
                     break;
 
                 case "Book a flight":

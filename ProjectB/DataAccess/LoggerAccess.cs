@@ -1,5 +1,9 @@
 using System.Text;
-
+// LoggerAccess handles CSV file operations similar to how other Access classes handle SQL quereis.
+// Just as FlightAccess uses SQL queries and Dapper for object mapping, this class uses file I/O 
+// and manual CSV parsing to achieve the same result. The CSV file serves as our "database" for 
+// logging data, with the header row defining the schema and CSV parsing providing the ORM functionality.
+// This maintains consistency with our data access pattern across different storage mechanisms.
 public class LoggerAccess : ILoggerAccess
 {
     private static readonly string LogDirectory = "DataSources";

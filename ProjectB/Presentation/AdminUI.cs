@@ -326,7 +326,7 @@ public static class AdminUI
                         ? ValidationResult.Success() 
                         : ValidationResult.Error("[red]Invalid user ID[/]")));
         
-        var selectedUser = filteredUsers.First(u => u.UserID == userId);
+        User selectedUser = filteredUsers.First(u => u.UserID == userId);
         
         AnsiConsole.Clear();
         AnsiConsole.Write(new Rule("[#FF7A00]Edit User Details[/]").RuleStyle(primaryStyle));

@@ -1,4 +1,3 @@
-using Microsoft.VisualBasic;
 using Spectre.Console;
 
 public static class FlightUI
@@ -242,10 +241,14 @@ public static class FlightUI
             }
         }
     }
-    // BUG: If there is no flight with given airports, will be stuck in select flightid prompt
     public static void EditFlight()
     {
         List<FlightModel> flights = DisplayFilteredUpcomingFlights();
+        if (flights == null || !flights.Any())
+        {
+            WaitForKeyPress();
+            return;
+        }
 
         int flightId = AnsiConsole.Prompt(
             new TextPrompt<int>("[#864000]Enter Flight ID to edit flight:[/]")
@@ -438,9 +441,9 @@ public static class FlightUI
                 .Title("[#864000]Select an airplane:[/]")
                 .PageSize(10)
                 .HighlightStyle(highlightStyle)
-                .AddChoices(airplaneChoices));
-
-        // Extract the AirplaneID from the selection (gets the part before the hyphen)
+                .AddChoices(airplaneChoices)
+        );
+        
         return selectedAirplane.Split('-')[0].Trim();
     }
 }

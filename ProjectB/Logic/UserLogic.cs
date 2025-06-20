@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text.Json;
-
 public static class UserLogic
 {
     public static List<string> errors = new List<string>();
@@ -58,8 +53,6 @@ public static class UserLogic
             phoneNumber.ToString(), birthDate, DateTime.Now, isAdmin: false, firstTimeDiscount: true
         );
 
-
-
         UserAccess.AddUser(user);
         return true;
     }
@@ -112,7 +105,7 @@ public static class UserLogic
         );
 
         UserAccess.AddUser(user);
-        
+
         return true;
     }
 
@@ -182,6 +175,33 @@ public static class UserLogic
         return UserAccess.GetAllUsers();
     }
 
+    public static void UpdateGuestUser(
+        string firstName,
+        string lastName,
+        string email,
+        string phoneNumber,
+        string birthDateStr)
+    {
+        errors.Clear();
+
+        if (!DateTime.TryParse(birthDateStr, out DateTime birthDate))
+        {
+            errors.Add("Birth date is not in the correct format (yyyy-mm-dd).");
+            return;
+        }
+
+        User guestUser = SessionManager.CurrentUser;
+
+        // Update guest user properties
+        guestUser.FirstName = firstName;
+        guestUser.LastName = lastName;
+        guestUser.EmailAddress = email;
+        guestUser.PhoneNumber = phoneNumber;
+        guestUser.BirthDate = birthDate;
+        guestUser.FirstTimeDiscount = false; // Guest users do not get discounts
+
+        SessionManager.SetCurrentUser(guestUser);
+    }
     public static bool UpdateUser(User updatedUser)
     {
         errors.Clear();

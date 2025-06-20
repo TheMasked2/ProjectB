@@ -10,6 +10,12 @@ public class FlightSeatAccess : IFlightSeatAccess
 
     public List<SeatModel> GetSeatsForFlight(int flightId)
     {
+        // This SQL query retrieves all seat information for a specific flight.
+        // It combines data from two tables: FlightSeats (fs) and Seats (s).
+        // FlightSeats contains flight-specific seat data,
+        // while Seats contains the general seat information.
+        // The INNER JOIN connects these tables using SeatID to get complete seat details.
+        // Results are ordered by row number and seat position for logical display.
         string sql = $@"
             SELECT 
                 s.SeatID,
