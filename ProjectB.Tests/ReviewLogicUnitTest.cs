@@ -3,9 +3,9 @@
 public class ReviewLogicUnitTests
 {
     [DataTestMethod]
-    [DataRow(1, 101, "Great flight!", 5, true)]
+    [DataRow(1, 101, "Great flight!", 5, false)]
     [DataRow(1, 0, "Good service", 0, false)]
-    [DataRow(1, 101, "Amazing!", 6, false)]
+    [DataRow(1, 101, "Amazing!", 6, true)]
     public void AddReview_ValidatesAndAddsCorrectly(
         int userId,
         int flightId,

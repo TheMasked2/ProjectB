@@ -2,7 +2,7 @@ using Dapper;
 using Microsoft.Data.Sqlite;
 using ProjectB.DataAccess;
 
-public class ReviewAcces
+public class ReviewAcces : IReviewAccess
 {
     private static SqliteConnection _connection = new SqliteConnection($"Data Source=DataSources/database.db");
 
