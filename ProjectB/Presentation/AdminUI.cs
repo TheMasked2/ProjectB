@@ -402,48 +402,58 @@ public static class AdminUI
         AnsiConsole.Write(new Rule("[#FF7A00]Admin Action Logbook[/]").RuleStyle(primaryStyle));
         AnsiConsole.WriteLine();
 
-        List<LogEntry> logEntries = Logger.ReadLogEntries();
-        
-        if (logEntries.Count == 0)
+        try
         {
-            AnsiConsole.MarkupLine("[yellow]No logbook entries found.[/]");
-            AnsiConsole.MarkupLine("\n[grey]Press any key to return...[/]");
-            Console.ReadKey(true);
-            return;
-        }
-
-        var table = new Table()
-            .Border(TableBorder.Rounded)
-            .BorderStyle(primaryStyle)
-            .Expand();
-
-        table.AddColumns(
-            "[#864000]Time[/]", 
-            "[#864000]Action[/]", 
-            "[#864000]Admin[/]", 
-            "[#864000]Target User[/]", 
-            "[#864000]Details[/]"
-        );
-
-        foreach (var entry in logEntries)
-        {
-            string details = entry.Details?.Replace("|", "\n") ?? "";
-
-            table.AddRow(
-                entry.Timestamp,
-                entry.Action,
-                entry.AdminName,
-                entry.TargetUserName,
-                details
-            );
+            List<LogEntry> logEntries = LoggerLogic.ReadLogEntries(); // Changed from Logger to LoggerLogic
             
-            if (entry != logEntries.Last())
+            if (logEntries.Count == 0)
             {
-                table.AddEmptyRow();
+                AnsiConsole.MarkupLine("[yellow]No logbook entries found.[/]");
+                AnsiConsole.MarkupLine("\n[grey]Press any key to return...[/]");
+                Console.ReadKey(true);
+                return;
             }
-        }
 
-        AnsiConsole.Write(table);
+            var table = new Table()
+                .Border(TableBorder.Rounded)
+                .BorderStyle(primaryStyle)
+                .Expand();
+
+            table.AddColumns(
+                "[#864000]Time[/]", 
+                "[#864000]Action[/]", 
+                "[#864000]Admin[/]", 
+                "[#864000]Target User[/]", 
+                "[#864000]Details[/]"
+            );
+
+            foreach (var entry in logEntries)
+            {
+                string details = entry.Details?.Replace("|", "\n") ?? "";
+
+                table.AddRow(
+                    entry.Timestamp,
+                    entry.Action,
+                    entry.AdminName,
+                    entry.TargetUserName,
+                    details
+                );
+                
+                if (entry != logEntries.Last())
+                {
+                    table.AddEmptyRow();
+                }
+            }
+
+            AnsiConsole.Write(table);
+        }
+        catch (Exception ex)
+        {
+            var errorPanel = new Panel($"[red]Error reading log entries: {Markup.Escape(ex.Message)}[/]")
+                .Border(BoxBorder.Rounded)
+                .BorderStyle(errorStyle);
+            AnsiConsole.Write(errorPanel);
+        }
         
         AnsiConsole.MarkupLine("\n[grey]Press any key to return...[/]");
         Console.ReadKey(true);

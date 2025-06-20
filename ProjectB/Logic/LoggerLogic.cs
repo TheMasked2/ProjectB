@@ -45,17 +45,8 @@ public static class Logger
 
     public static List<LogEntry> ReadLogEntries()
     {
-        try
-        {
-            var entries = LoggerAccessService.ReadAllLogEntries();
-
-            // Order by timestamp descending (newest first)
-            return entries.OrderByDescending(e => DateTime.TryParse(e.Timestamp, out var dt) ? dt : DateTime.MinValue).ToList();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error reading log entries: {ex.Message}");
-            return new List<LogEntry>();
-        }
+        var entries = LoggerAccessService.ReadAllLogEntries();
+        // Order by timestamp descending (newest first)
+        return entries.OrderByDescending(e => DateTime.TryParse(e.Timestamp, out var dt) ? dt : DateTime.MinValue).ToList();
     }
 }
