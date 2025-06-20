@@ -404,7 +404,7 @@ public static class AdminUI
 
         try
         {
-            List<LogEntry> logEntries = LoggerLogic.ReadLogEntries(); // Changed from Logger to LoggerLogic
+            List<LogEntry> logEntries = Logger.ReadLogEntries(); // Changed from Logger to LoggerLogic
             
             if (logEntries.Count == 0)
             {

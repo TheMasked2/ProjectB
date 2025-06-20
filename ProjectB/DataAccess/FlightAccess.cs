@@ -130,10 +130,4 @@ public class FlightAccess : IFlightAccess
 
         return _connection.Query<FlightModel>(sql, parameters).ToList();
     }
-
-    public FlightModel GetReviewFlightByID(int flightId)
-    {
-        string sql = $@"SELECT * FROM {Table} WHERE FlightID = @FlightId";
-        return _connection.QueryFirstOrDefault<FlightModel>(sql, new { FlightId = flightId });
-    }
 }
