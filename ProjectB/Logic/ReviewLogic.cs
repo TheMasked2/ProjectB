@@ -10,16 +10,20 @@ public static class ReviewLogic
     private static readonly Style errorStyle = new(new Color(162, 52, 0));
     private static readonly Style successStyle = new(new Color(194, 87, 0));
 
-    public static bool AddReview(ReviewModel review)
+
+
+    public static bool AddReview(ReviewModel review, out string errorMessage)
     {
+        errorMessage = null;
+
         if (review.Rating < 1 || review.Rating > 5)
         {
-            AnsiConsole.MarkupLine("[red]Rating must be between 1 and 5.[/]");
+            errorMessage = "Rating must be between 1 and 5.";
             return false;
         }
-        if(FlightLogic.GetFlightById(review.FlightID) == null)
+        if (FlightLogic.GetFlightById(review.FlightID) == null)
         {
-            AnsiConsole.MarkupLine("[red]Flight does not exist.[/]");
+            errorMessage = "Flight does not exist.";
             return false;
         }
         try
@@ -29,33 +33,45 @@ public static class ReviewLogic
         }
         catch (Exception ex)
         {
-            AnsiConsole.MarkupLine($"[red]Error adding review: {ex.Message}[/]");
+            errorMessage = $"Error adding review: {ex.Message}";
             return false;
         }
     }
     
-    public static List<ReviewModel> GetAllReviews()
+    public static List<ReviewModel> GetAllReviews(out string errorMessage)
     {
+        errorMessage = null;
         try
         {
+            if (ReviewAccessService.GetAllReviews().Count == 0)
+            {
+                errorMessage = "Its quiet here, maybe a bit too quiet, no reviews yet.";
+                return new List<ReviewModel>();
+            }
             return ReviewAccessService.GetAllReviews();
         }
         catch (Exception ex)
         {
-            AnsiConsole.MarkupLine($"[red]Error retrieving reviews: {ex.Message}[/]");
+            errorMessage = $"Error retrieving reviews: {ex.Message}";
             return new List<ReviewModel>();
         }
     }
 
-        public static List<ReviewModel> FilterReviewsByFlightID(int flightid)
+        public static List<ReviewModel> FilterReviewsByFlightID(int flightid, out string errorMessage)
     {
+        errorMessage = null;
         try
         {
+            if (FlightLogic.GetFlightById(flightid) == null)
+            {
+                errorMessage = $"No reviews found with FlightID: {flightid}";
+                return new List<ReviewModel>();
+            }
             return ReviewAccessService.GetReviewsByFlight(flightid);
         }
         catch (Exception ex)
         {
-            AnsiConsole.MarkupLine($"[red]Error retrieving reviews: {ex.Message}[/]");
+            errorMessage = $"Error retrieving reviews: {ex.Message}";
             return new List<ReviewModel>();
         }
     }

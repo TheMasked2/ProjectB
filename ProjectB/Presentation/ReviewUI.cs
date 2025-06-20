@@ -6,6 +6,12 @@ public static class ReviewUI
     private static readonly Style highlightStyle = new(new Color(255, 122, 0));
     private static readonly Style errorStyle = new(new Color(162, 52, 0));
     private static readonly Style successStyle = new(new Color(194, 87, 0));
+
+    public static void WaitForKeyPress()
+    {
+        AnsiConsole.MarkupLine("\n[grey]Press any key to return to the reviews menu...[/]");
+        Console.ReadKey(true);
+    }
     public static void ShowReviewMenu()
     {
         while (true)
@@ -61,11 +67,13 @@ public static class ReviewUI
                     .PromptStyle(highlightStyle));
 
             int FlightID = AnsiConsole.Prompt(
-            new TextPrompt<int>("[#864000]Please enter the flight id of the review:[/]")
-                .PromptStyle(highlightStyle));
+                new TextPrompt<int>("[#864000]Please enter the flight id of the review:[/]")
+                    .PromptStyle(highlightStyle));
 
             ReviewModel Review = new ReviewModel(SessionManager.CurrentUser.UserID, FlightID, Content, Rating);
-            succes = ReviewLogic.AddReview(Review);
+
+            string errorMessage;
+            succes = ReviewLogic.AddReview(Review, out errorMessage);
 
             if (succes)
             {
@@ -73,15 +81,24 @@ public static class ReviewUI
             }
             else
             {
-                AnsiConsole.MarkupLine($"[red]Failed to add review![/]");
+                AnsiConsole.MarkupLine($"[red]{errorMessage}[/]");
             }
-            FlightUI.WaitForKeyPress();
+            WaitForKeyPress();
+            break;
         } while (!succes);
     }
     
     public static void ViewReviews()
     {
-        List<ReviewModel> reviews = ReviewLogic.GetAllReviews();
+        string errorMessage;
+        List<ReviewModel> reviews = ReviewLogic.GetAllReviews(out errorMessage);
+
+        if (!string.IsNullOrEmpty(errorMessage))
+        {
+            AnsiConsole.MarkupLine($"[red]{errorMessage}[/]");
+            FlightUI.WaitForKeyPress();
+            return;
+        }
 
         foreach (var review in reviews)
         {
@@ -123,7 +140,15 @@ public static class ReviewUI
                 new TextPrompt<int>("[#864000]Please enter the flight id to filter reviews:[/]")
                     .PromptStyle(highlightStyle));
                     
-        List<ReviewModel> reviews = ReviewLogic.FilterReviewsByFlightID(flightId);
+        string errorMessage;
+        List<ReviewModel> reviews = ReviewLogic.FilterReviewsByFlightID(flightId, out errorMessage);
+
+        if (!string.IsNullOrEmpty(errorMessage))
+        {
+            AnsiConsole.MarkupLine($"[red]{errorMessage}[/]");
+            FlightUI.WaitForKeyPress();
+            return;
+        }
 
         foreach (var review in reviews)
         {
