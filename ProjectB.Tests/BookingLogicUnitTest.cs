@@ -36,7 +36,7 @@ namespace ProjectB.Tests
                 FirstTimeDiscount = false,
                 BirthDate = DateTime.Now.AddYears(-30) // A standard non-senior user
             };
-            SessionManager.CurrentUser = user;
+            SessionManager.SetCurrentUser(user);
         }
 
 

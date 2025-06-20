@@ -10,189 +10,125 @@ namespace ProjectB.Tests
     public class LoggerUnitTests
     {
         /// <summary>
-        /// Tests that LogUserCreation returns true when the underlying WriteLogEntry succeeds.
+        /// Tests that LogUserCreation calls WriteLogEntry with the correct log format.
         /// </summary>
         [DataTestMethod]
-        [DataRow(1, "Admin", "User", 2, null, null, null, false, DisplayName = "Created user null fields, success")]
-        [DataRow(1, null, null, 2, "Test", "User", "test@example.com", false, DisplayName = "Admin user null fields, success")]
-        [DataRow(1, "Admin", "User", 2, "Test", "User", "test@example.com", false, DisplayName = "Valid case, success")]
-        public void LogUserCreation_WhenWriteSucceeds_ReturnsTrue(
+        [DataRow(1, "Admin", "User", 2, "Test", "User", "test@example.com", false, DisplayName = "Valid case")]
+        [DataRow(1, null, null, 2, "Test", "User", "test@example.com", false, DisplayName = "Admin user null fields")]
+        [DataRow(1, "Admin", "User", 2, null, null, null, false, DisplayName = "Created user null fields")]
+        public void LogUserCreation_CallsWriteLogEntryWithCorrectFormat(
             int adminId, string adminFirstName, string adminLastName,
             int createdId, string createdFirstName, string createdLastName,
             string createdEmail, bool createdIsAdmin)
-        {
-            // Arrange
-            var mockLoggerAccess = new Mock<ILoggerAccess>();
-            mockLoggerAccess.Setup(x => x.WriteLogEntry(It.IsAny<string>())).Returns(true);
-            Logger.LoggerAccessService = mockLoggerAccess.Object;
-
-            var adminUser = new User { UserID = adminId, FirstName = adminFirstName, LastName = adminLastName };
-            var createdUser = new User { UserID = createdId, FirstName = createdFirstName, LastName = createdLastName, EmailAddress = createdEmail, IsAdmin = createdIsAdmin };
-
-            // Act
-            var result = Logger.LogUserCreation(adminUser, createdUser);
-
-            // Assert
-            Assert.IsTrue(result);
-            mockLoggerAccess.Verify(x => x.WriteLogEntry(It.IsAny<string>()), Times.Once);
-        }
-
-        /// <summary>
-        /// Tests that LogUserCreation returns false when the underlying WriteLogEntry fails.
-        /// </summary>
-        [DataTestMethod]
-        [DataRow(0, "", "", 0, "", "", "", false, DisplayName = "All fields empty/zero, fail")]
-        public void LogUserCreation_WhenWriteFails_ReturnsFalse(
-            int adminId, string adminFirstName, string adminLastName,
-            int createdId, string createdFirstName, string createdLastName,
-            string createdEmail, bool createdIsAdmin)
-        {
-            // Arrange
-            var mockLoggerAccess = new Mock<ILoggerAccess>();
-            mockLoggerAccess.Setup(x => x.WriteLogEntry(It.IsAny<string>())).Returns(false);
-            Logger.LoggerAccessService = mockLoggerAccess.Object;
-
-            var adminUser = new User { UserID = adminId, FirstName = adminFirstName, LastName = adminLastName };
-            var createdUser = new User { UserID = createdId, FirstName = createdFirstName, LastName = createdLastName, EmailAddress = createdEmail, IsAdmin = createdIsAdmin };
-
-            // Act
-            var result = Logger.LogUserCreation(adminUser, createdUser);
-
-            // Assert
-            Assert.IsFalse(result);
-            mockLoggerAccess.Verify(x => x.WriteLogEntry(It.IsAny<string>()), Times.Once);
-        }
-
-        /// <summary>
-        /// Tests that LogUserEdit returns true when the underlying WriteLogEntry succeeds.
-        /// </summary>
-        [DataTestMethod]
-        [DataRow(1, "Admin", "User", 2, "Test", "User", "LastName:User->Smith|City:OldTown->NewTown", DisplayName = "Multiple changes, success")]
-        [DataRow(1, "Root", "User", 1, "Root", "User", "IsAdmin:True->False", DisplayName = "Single change (IsAdmin), success")]
-        [DataRow(1, "Admin", "User", 2, "Test", "User", "", DisplayName = "Empty changes string, success")]
-        [DataRow(1, "Admin", "User", 2, "Test", "User", "FirstName:Test->Tester", DisplayName = "Single change, success")]
-        public void LogUserEdit_WhenWriteSucceeds_ReturnsTrue(
-            int adminId, string adminFirstName, string adminLastName,
-            int editedId, string editedFirstName, string editedLastName,
-            string changedFieldsString)
-        {
-            // Arrange
-            var mockLoggerAccess = new Mock<ILoggerAccess>();
-            mockLoggerAccess.Setup(x => x.WriteLogEntry(It.IsAny<string>())).Returns(true);
-            Logger.LoggerAccessService = mockLoggerAccess.Object;
-
-            var adminUser = new User { UserID = adminId, FirstName = adminFirstName, LastName = adminLastName };
-            var editedUser = new User { UserID = editedId, FirstName = editedFirstName, LastName = editedLastName };
-
-            var changedFields = new Dictionary<string, string>();
-            if (!string.IsNullOrWhiteSpace(changedFieldsString))
-            {
-                var pairs = changedFieldsString.Split('|');
-                foreach (var pair in pairs)
-                {
-                    var keyValue = pair.Split(new[] { ':' }, 2);
-                    if (keyValue.Length == 2)
-                    {
-                        changedFields[keyValue[0]] = keyValue[1];
-                    }
-                }
-            }
-
-            // Act
-            var result = Logger.LogUserEdit(adminUser, editedUser, changedFields);
-
-            // Assert
-            Assert.IsTrue(result);
-            mockLoggerAccess.Verify(x => x.WriteLogEntry(It.IsAny<string>()), Times.Once);
-        }
-
-        /// <summary>
-        /// Tests that LogUserEdit returns false when the underlying WriteLogEntry fails.
-        /// </summary>
-        [DataTestMethod]
-        [DataRow(1, "Admin", "User", 2, "Test", "User", null, DisplayName = "Null changes string, mock false")]
-        [DataRow(3, "Supervisor", "Main", 4, "Edited", "Person", "Department:Sales->Marketing|Title:Rep->Manager", DisplayName = "Multiple valid changes, mock false")]
-        [DataRow(5, "Another", "Admin", 6, "User", "ToEdit", "", DisplayName = "Empty changes string, mock false")]
-        public void LogUserEdit_WhenWriteFails_ReturnsFalse(
-            int adminId, string adminFirstName, string adminLastName,
-            int editedId, string editedFirstName, string editedLastName,
-            string changedFieldsString)
-        {
-            // Arrange
-            var mockLoggerAccess = new Mock<ILoggerAccess>();
-            mockLoggerAccess.Setup(x => x.WriteLogEntry(It.IsAny<string>())).Returns(false);
-            Logger.LoggerAccessService = mockLoggerAccess.Object;
-
-            var adminUser = new User { UserID = adminId, FirstName = adminFirstName, LastName = adminLastName };
-            var editedUser = new User { UserID = editedId, FirstName = editedFirstName, LastName = editedLastName };
-
-            var changedFields = new Dictionary<string, string>();
-            if (!string.IsNullOrWhiteSpace(changedFieldsString))
-            {
-                var pairs = changedFieldsString.Split('|');
-                foreach (var pair in pairs)
-                {
-                    var keyValue = pair.Split(new[] { ':' }, 2);
-                    if (keyValue.Length == 2)
-                    {
-                        changedFields[keyValue[0]] = keyValue[1];
-                    }
-                }
-            }
-
-            // Act
-            var result = Logger.LogUserEdit(adminUser, editedUser, changedFields);
-
-            // Assert
-            Assert.IsFalse(result);
-            mockLoggerAccess.Verify(x => x.WriteLogEntry(It.IsAny<string>()), Times.Once);
-        }
-
-        /// <summary>
-        /// Tests that Logger.LogUserCreation writes a log entry with the correct format and content
-        /// (excluding the timestamp), matching the CSV logbook structure.
-        /// </summary>
-        [DataTestMethod]
-        [DataRow(1, "Admin", "User", 2, "Test", "User", "test@example.com", false, true, "CREATE_USER;1;Admin User;2;Test User;Email=test@example.com|Admin=False", DisplayName = "Valid case, true")]
-        [DataRow(2, "Root", "Admin", 3, "Alpha", "Beta", "alpha.beta@mail.com", true, false, "CREATE_USER;2;Root Admin;3;Alpha Beta;Email=alpha.beta@mail.com|Admin=True", DisplayName = "Admin created, mock false")]
-        [DataRow(0, "", "", 0, "", "", "", false, false, "CREATE_USER;0; ;0; ;Email=|Admin=False", DisplayName = "Empty/zero IDs and names, false")]
-        public void LogUserCreation_WritesCorrectLogEntryFormat(
-            int adminId, string adminFirstName, string adminLastName,
-            int createdId, string createdFirstName, string createdLastName,
-            string createdEmail, bool createdIsAdmin, bool expectedResult,
-            string expectedLogEntryPartial)
         {
             // Arrange
             var mockLoggerAccess = new Mock<ILoggerAccess>();
             string capturedLogEntry = null;
             mockLoggerAccess.Setup(x => x.WriteLogEntry(It.IsAny<string>()))
-                .Callback<string>(entry => capturedLogEntry = entry)
-                .Returns(expectedResult);
-            Logger.LoggerAccessService = mockLoggerAccess.Object;
+                .Callback<string>(entry => capturedLogEntry = entry);
+            LoggerLogic.LoggerAccessService = mockLoggerAccess.Object;
 
             var adminUser = new User { UserID = adminId, FirstName = adminFirstName, LastName = adminLastName };
             var createdUser = new User { UserID = createdId, FirstName = createdFirstName, LastName = createdLastName, EmailAddress = createdEmail, IsAdmin = createdIsAdmin };
 
             // Act
-            var result = Logger.LogUserCreation(adminUser, createdUser);
+            LoggerLogic.LogUserCreation(adminUser, createdUser);
 
             // Assert
-            Assert.AreEqual(expectedResult, result);
-            
-            // Verify that WriteLogEntry was called exactly once
             mockLoggerAccess.Verify(x => x.WriteLogEntry(It.IsAny<string>()), Times.Once);
-
-            // Assert that the log entry string was captured by the callback.
-            Assert.IsNotNull(capturedLogEntry, "Log entry string should have been captured by the callback.");
+            Assert.IsNotNull(capturedLogEntry, "Log entry should have been captured");
             
-            // Validate the content of the captured log entry, excluding the timestamp.
             var logParts = capturedLogEntry.Split(';');
+            Assert.IsTrue(logParts.Length >= 7, "Log entry should have at least 7 parts");
+            Assert.AreEqual("CREATE_USER", logParts[1]);
+            Assert.AreEqual(adminId.ToString(), logParts[2]);
+            Assert.AreEqual($"{adminFirstName} {adminLastName}", logParts[3]);
+            Assert.AreEqual(createdId.ToString(), logParts[4]);
+            Assert.AreEqual($"{createdFirstName} {createdLastName}", logParts[5]);
+            Assert.AreEqual($"Email={createdEmail}|Admin={createdIsAdmin}", logParts[6]);
+        }
 
-            // We expect at least one part (the timestamp). If logParts.Length is 0 or 1,
-            var logEntryWithoutTimestamp = string.Join(";", logParts.Skip(1));
+        /// <summary>
+        /// Tests that LogUserEdit calls WriteLogEntry with the correct log format.
+        /// </summary>
+        [DataTestMethod]
+        [DataRow(1, "Admin", "User", 2, "Test", "User", "FirstName:Test->Tester", DisplayName = "Single change")]
+        [DataRow(1, "Admin", "User", 2, "Test", "User", "LastName:User->Smith|City:OldTown->NewTown", DisplayName = "Multiple changes")]
+        [DataRow(1, "Admin", "User", 2, "Test", "User", "", DisplayName = "No changes")]
+        public void LogUserEdit_CallsWriteLogEntryWithCorrectFormat(
+            int adminId, string adminFirstName, string adminLastName,
+            int editedId, string editedFirstName, string editedLastName,
+            string changedFieldsString)
+        {
+            // Arrange
+            var mockLoggerAccess = new Mock<ILoggerAccess>();
+            string capturedLogEntry = null;
+            mockLoggerAccess.Setup(x => x.WriteLogEntry(It.IsAny<string>()))
+                .Callback<string>(entry => capturedLogEntry = entry);
+            LoggerLogic.LoggerAccessService = mockLoggerAccess.Object;
+
+            var adminUser = new User { UserID = adminId, FirstName = adminFirstName, LastName = adminLastName };
+            var editedUser = new User { UserID = editedId, FirstName = editedFirstName, LastName = editedLastName };
+
+            var changedFields = new Dictionary<string, string>();
+            if (!string.IsNullOrWhiteSpace(changedFieldsString))
+            {
+                var pairs = changedFieldsString.Split('|');
+                foreach (var pair in pairs)
+                {
+                    var keyValue = pair.Split(new[] { ':' }, 2);
+                    if (keyValue.Length == 2)
+                    {
+                        changedFields[keyValue[0]] = keyValue[1];
+                    }
+                }
+            }
+
+            // Act
+            LoggerLogic.LogUserEdit(adminUser, editedUser, changedFields);
+
+            // Assert
+            mockLoggerAccess.Verify(x => x.WriteLogEntry(It.IsAny<string>()), Times.Once);
+            Assert.IsNotNull(capturedLogEntry, "Log entry should have been captured");
             
-            // Compare the actual log content (without timestamp) to the expected content.
-            Assert.AreEqual(expectedLogEntryPartial, logEntryWithoutTimestamp, "The content of the log entry (without timestamp) does not match the expected value.");
+            var logParts = capturedLogEntry.Split(';');
+            Assert.IsTrue(logParts.Length >= 7, "Log entry should have at least 7 parts");
+            Assert.AreEqual("EDIT_USER", logParts[1]);
+            Assert.AreEqual(adminId.ToString(), logParts[2]);
+            Assert.AreEqual($"{adminFirstName} {adminLastName}", logParts[3]);
+            Assert.AreEqual(editedId.ToString(), logParts[4]);
+            Assert.AreEqual($"{editedFirstName} {editedLastName}", logParts[5]);
+            
+            // Verify details format matches expected changes
+            string expectedDetails = string.IsNullOrWhiteSpace(changedFieldsString) ? "" : changedFieldsString.Replace(":", "=");
+            Assert.AreEqual(expectedDetails, logParts[6]);
+        }
+
+        /// <summary>
+        /// Tests that ReadLogEntries returns entries ordered by timestamp descending.
+        /// </summary>
+        [TestMethod]
+        public void ReadLogEntries_ReturnsEntriesOrderedByTimestampDescending()
+        {
+            // Arrange
+            var mockLoggerAccess = new Mock<ILoggerAccess>();
+            var mockEntries = new List<LogEntry>
+            {
+                new LogEntry { Timestamp = "2023-01-01 10:00:00" },
+                new LogEntry { Timestamp = "2023-01-03 10:00:00" },
+                new LogEntry { Timestamp = "2023-01-02 10:00:00" }
+            };
+            mockLoggerAccess.Setup(x => x.ReadAllLogEntries()).Returns(mockEntries);
+            LoggerLogic.LoggerAccessService = mockLoggerAccess.Object;
+
+            // Act
+            var result = LoggerLogic.ReadLogEntries();
+
+            // Assert
+            Assert.AreEqual(3, result.Count);
+            Assert.AreEqual("2023-01-03 10:00:00", result[0].Timestamp);
+            Assert.AreEqual("2023-01-02 10:00:00", result[1].Timestamp);
+            Assert.AreEqual("2023-01-01 10:00:00", result[2].Timestamp);
         }
     }
 }

@@ -1,13 +1,17 @@
 using Microsoft.Data.Sqlite;
 using Dapper;
 
-public static class UserAccess
+public class UserAccess : IUserAccess
 {
-    private static SqliteConnection _connection = new SqliteConnection($"Data Source=DataSources/database.db");
+    private readonly SqliteConnection _connection;
+    private readonly string Table = "USERS";
 
-    private static string Table = "USERS";
+    public UserAccess()
+    {
+        _connection = new SqliteConnection($"Data Source=DataSources/database.db");
+    }
 
-    public static void AddUser(User user)
+    public void AddUser(User user)
     {
         string sql = $@"INSERT INTO {Table} 
                         (FirstName, LastName, Country, City, Email, Password, PhoneNumber, BirthDate, AccCreatedAt, IsAdmin) 
@@ -16,13 +20,7 @@ public static class UserAccess
         _connection.Execute(sql, user);
     }
 
-    public static void RemoveUser(string email)
-    {
-        string sql = $"DELETE FROM {Table} WHERE Email = @EmailAddress";
-        _connection.Execute(sql, new { EmailAddress = email });
-    }
-
-    public static User GetUserInfoByEmail(string email)
+    public User GetUserInfoByEmail(string email)
     {
         string sql = $@"SELECT 
                         UserID AS UserID,
@@ -42,7 +40,7 @@ public static class UserAccess
         return _connection.QueryFirstOrDefault<User>(sql, new { EmailAddress = email });
     }
 
-    public static User GetUserInfoByID(int userId)
+    public User GetUserById(int userId)
     {
         string sql = $@"SELECT 
                         UserID AS UserID,
@@ -62,7 +60,12 @@ public static class UserAccess
         return _connection.QuerySingleOrDefault<User>(sql, new { @UserID = userId });
     }
 
-    public static User Login(string email, string password)
+    public User GetUserInfoByID(int userId)
+    {
+        return GetUserById(userId);
+    }
+
+    public User Login(string email, string password)
     {
         string sql = $@"SELECT 
                         UserID AS UserId,
@@ -82,7 +85,7 @@ public static class UserAccess
         return _connection.QueryFirstOrDefault<User>(sql, new { EmailAddress = email, Password = password });
     }
 
-    public static List<User> GetAllUsers()
+    public List<User> GetAllUsers()
     {
         string sql = $@"SELECT 
                         UserID AS UserId,
@@ -101,7 +104,7 @@ public static class UserAccess
         return _connection.Query<User>(sql).ToList();
     }
 
-    public static void UpdateUser(User user)
+    public void UpdateUser(User user)
     {
         string sql = $@"UPDATE {Table} 
                         SET FirstName = @FirstName,
@@ -118,7 +121,7 @@ public static class UserAccess
         _connection.Execute(sql, user);
     }
 
-    public static int GetHighestUserId()
+    public int GetHighestUserId()
     {
         string sql = $@"SELECT MAX(UserID) FROM {Table}";
         var result = _connection.ExecuteScalar<int?>(sql);

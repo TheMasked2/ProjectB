@@ -4,5 +4,8 @@ public interface IUserAccess
     List<User> GetAllUsers();
     void AddUser(User user);
     void UpdateUser(User user);
-    void DeleteUser(int userId);
+    int GetHighestUserId();
+    User Login(string email, string password);
+    User GetUserInfoByEmail(string email);
+    User GetUserInfoByID(int userId);
 }

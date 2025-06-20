@@ -1,5 +1,6 @@
 public static class UserLogic
 {
+    public static IUserAccess UserAccessService { get; set; } = new UserAccess();
     public static List<string> errors = new List<string>();
 
     public static bool Register(
@@ -48,12 +49,12 @@ public static class UserLogic
         }
 
         var user = new User(
-            userID: UserAccess.GetHighestUserId() + 1,
+            userID: UserAccessService.GetHighestUserId() + 1,
             firstName, lastName, country, city, emailAddress, password,
             phoneNumber.ToString(), birthDate, DateTime.Now, isAdmin: false, firstTimeDiscount: true
         );
 
-        UserAccess.AddUser(user);
+        UserAccessService.AddUser(user);
         return true;
     }
 
@@ -99,12 +100,12 @@ public static class UserLogic
         }
 
         var user = new User(
-            userID: UserAccess.GetHighestUserId() + 1,
+            userID: UserAccessService.GetHighestUserId() + 1,
             firstName, lastName, country, city, emailAddress, password,
             phoneNumber.ToString(), birthDate, accCreatedAt, isAdmin
         );
 
-        UserAccess.AddUser(user);
+        UserAccessService.AddUser(user);
 
         return true;
     }
@@ -117,7 +118,7 @@ public static class UserLogic
             return false;
         }
 
-        User loggedInUser = UserAccess.Login(email, password);
+        User loggedInUser = UserAccessService.Login(email, password);
 
         if (loggedInUser == null)
         {
@@ -137,7 +138,7 @@ public static class UserLogic
 
     private static bool CheckEmail(string email)
     {
-        if (UserAccess.GetUserInfoByEmail(email) != null)
+        if (UserAccessService.GetUserInfoByEmail(email) != null)
         {
             errors.Add("Email already exists.");
             return false;
@@ -155,7 +156,7 @@ public static class UserLogic
     // Had to make public cause of UserEditUser()
     public static bool VerifyPassword(string email, string userPassword)
     {
-        var userInfo = UserAccess.GetUserInfoByEmail(email);
+        var userInfo = UserAccessService.GetUserInfoByEmail(email);
 
         if (userInfo == null)
         {
@@ -172,7 +173,7 @@ public static class UserLogic
 
     public static List<User> GetAllUsers()
     {
-        return UserAccess.GetAllUsers();
+        return UserAccessService.GetAllUsers();
     }
 
     public static void UpdateGuestUser(
@@ -213,7 +214,7 @@ public static class UserLogic
         Dictionary<string, string> changedFields = null;
         if (isAdminUpdate)
         {
-            originalUser = UserAccess.GetUserInfoByID(updatedUser.UserID);
+            originalUser = UserAccessService.GetUserInfoByID(updatedUser.UserID);
             if (originalUser != null)
             {
                 changedFields = new Dictionary<string, string>();
@@ -287,7 +288,7 @@ public static class UserLogic
 
         try
         {
-            UserAccess.UpdateUser(updatedUser);
+            UserAccessService.UpdateUser(updatedUser);
 
             // Log if admin update and if any fields actually changed
             if (isAdminUpdate && originalUser != null && changedFields != null && changedFields.Count > 0)
@@ -312,14 +313,14 @@ public static class UserLogic
     public static List<User> GetUsersByEmail(string emailFilter)
     {
         emailFilter = emailFilter.ToLower();
-        return UserAccess.GetAllUsers().Where(u =>
+        return UserAccessService.GetAllUsers().Where(u =>
             u.EmailAddress.ToLower().Contains(emailFilter)).ToList();
     }
 
     public static List<User> GetUsersByName(string nameFilter)
     {
         nameFilter = nameFilter.ToLower();
-        return UserAccess.GetAllUsers().Where(u =>
+        return UserAccessService.GetAllUsers().Where(u =>
             u.FirstName.ToLower().Contains(nameFilter) ||
             u.LastName.ToLower().Contains(nameFilter) ||
             (u.FirstName.ToLower() + " " + u.LastName.ToLower()).Contains(nameFilter)
@@ -328,12 +329,12 @@ public static class UserLogic
 
     public static List<User> GetUsersByAdminStatus(bool isAdmin)
     {
-        return UserAccess.GetAllUsers().Where(u => u.IsAdmin == isAdmin).ToList();
+        return UserAccessService.GetAllUsers().Where(u => u.IsAdmin == isAdmin).ToList();
     }
 
     public static User GetUserByEmail(string email)
     {
-        return UserAccess.GetUserInfoByEmail(email);
+        return UserAccessService.GetUserInfoByEmail(email);
     }
 
     public static string GetUserInfo()
@@ -358,12 +359,12 @@ public static class UserLogic
     }
     public static int GetNextUserId()
     {
-        int highestId = UserAccess.GetHighestUserId();
+        int highestId = UserAccessService.GetHighestUserId();
         return highestId + 1;
     }
     
     public static User GetUserByID(int userId)
     {
-        return UserAccess.GetUserInfoByID(userId);
+        return UserAccessService.GetUserInfoByID(userId);
     }
 }
