@@ -2,103 +2,53 @@ using Microsoft.Data.Sqlite;
 using Dapper;
 using ProjectB.DataAccess;
 
-public class FlightAccess : IFlightAccess
+public class FlightAccess : GenericAccess<FlightModel, int>, IFlightAccess
 {
-    private readonly SqliteConnection _connection = new SqliteConnection($"Data Source=DataSources/database.db");
-    private const string Table = "FLIGHTS";
-
-    /// <summary>
-    /// Inserts a new flight into the database.
-    /// </summary>
-    /// <param name="flight">The flight to insert.</param>
-    public void Write(FlightModel flight)
+    protected override string Table => "FLIGHTS";
+    protected override string PrimaryKey => "FlightID";
+    public override void Insert(FlightModel flight)
     {
-        string sql = $@"INSERT INTO {Table} 
-                        (FlightID, Airline, AirplaneID, AvailableSeats, DepartureAirport, ArrivalAirport, 
-                         DepartureTime, ArrivalTime, FlightStatus) 
+        string sql = $@"INSERT INTO {Table}
+                        (Airline, 
+                        AirplaneID, 
+                        AvailableSeats, 
+                        DepartureAirport, 
+                        ArrivalAirport, 
+                        DepartureTime, 
+                        ArrivalTime, 
+                        FlightStatus) 
                         VALUES 
-                        (@flightID, @airline, @airplaneID, @availableSeats, 
-                         @departureAirport, @arrivalAirport, @departureTime, @arrivalTime, @flightStatus)";
-        _connection.Execute(sql, new
-        {
-            flightID = flight.FlightID,
-            airline = flight.Airline,
-            airplaneID = flight.AirplaneID,
-            availableSeats = flight.AvailableSeats,
-            departureAirport = flight.DepartureAirport,
-            arrivalAirport = flight.ArrivalAirport,
-            departureTime = flight.DepartureTime,
-            arrivalTime = flight.ArrivalTime,
-            flightStatus = flight.FlightStatus
-        });
+                        (@Airline, 
+                        @AirplaneID, 
+                        @AvailableSeats, 
+                        @DepartureAirport, 
+                        @ArrivalAirport, 
+                        @DepartureTime, 
+                        @ArrivalTime,
+                        @FlightStatus)";
+        _connection.Execute(sql, flight);
     }
 
-    /// <summary>
-    /// Retrieves a flight by its ID.
-    /// </summary>
-    /// <param name="flightId">The ID of the flight to retrieve.</param>
-    /// <returns>The flight with the specified ID, or null if not found.</returns>
-    public FlightModel GetById(int flightId)
-    {
-        string sql = $@"SELECT * FROM {Table} WHERE FlightID = @FlightId";
-        return _connection.QueryFirstOrDefault<FlightModel>(sql, new { FlightId = flightId });
-    }
-
-    /// <summary>
-    /// Updates an existing flight in the database.
-    /// </summary>
-    /// <param name="flight">The flight to update.</param>
-    public void Update(FlightModel flight)
+    public override void Update(FlightModel flight)
     {
         string sql = $@"UPDATE {Table} 
-                        SET Airline = @airline, 
-                            AirplaneID = @airplaneID, 
-                            AvailableSeats = @availableSeats, 
-                            DepartureAirport = @departureAirport, 
-                            ArrivalAirport = @arrivalAirport, 
-                            DepartureTime = @departureTime, 
-                            ArrivalTime = @arrivalTime,
-                            FlightStatus = @flightStatus 
-                        WHERE FlightID = @flightID";
-        _connection.Execute(sql, new
-        {
-            flightID = flight.FlightID,
-            airline = flight.Airline,
-            airplaneID = flight.AirplaneID,
-            availableSeats = flight.AvailableSeats,
-            departureAirport = flight.DepartureAirport,
-            arrivalAirport = flight.ArrivalAirport,
-            departureTime = flight.DepartureTime,
-            arrivalTime = flight.ArrivalTime,
-            flightStatus = flight.FlightStatus
-        });
-    }
-
-    /// <summary>
-    /// Deletes a flight from the database.
-    /// </summary>
-    /// <param name="flightId">The ID of the flight to delete.</param>
-    public void Delete(int flightId)
-    {
-        string sql = $"DELETE FROM {Table} WHERE FlightID = @FlightId";
-        _connection.Execute(sql, new { FlightId = flightId });
-    }
-
-    /// <summary>
-    /// Retrieves all flights from the database.
-    /// </summary>
-    /// <returns>A list of all flights.</returns>
-    public List<FlightModel> GetAllFlightData()
-    {
-        string sql = $@"SELECT * FROM {Table}";
-        var result = _connection.Query<FlightModel>(sql).ToList();
-        return result;
+                        SET Airline = @Airline, 
+                            AirplaneID = @AirplaneID, 
+                            AvailableSeats = @AvailableSeats, 
+                            DepartureAirport = @DepartureAirport, 
+                            ArrivalAirport = @ArrivalAirport, 
+                            DepartureTime = @DepartureTime, 
+                            ArrivalTime = @ArrivalTime,
+                            FlightStatus = @FlightStatus 
+                        WHERE FlightID = @FlightID";
+        _connection.Execute(sql, flight);
     }
 
     public List<FlightModel> GetPastFlights(DateTime currentDate)
     {
         string sql = $@"SELECT * FROM {Table} 
-                        WHERE DepartureTime < @CurrentTime";
+                        WHERE DepartureTime < @CurrentTime
+                        AND FlightStatus = 'Departed'";
 
         return _connection.Query<FlightModel>(sql, new { CurrentTime = currentDate }).ToList();
     }
@@ -106,7 +56,9 @@ public class FlightAccess : IFlightAccess
     public List<FlightModel> GetUpcomingFlights(DateTime departingSoonDate)
     {
         string sql = $@"SELECT * FROM {Table} 
-                        WHERE DepartureTime <= @SoonDate";
+                        WHERE DepartureTime <= @SoonDate
+                        AND FlightStatus != 'Departed'";
+                        
 
         return _connection.Query<FlightModel>(sql, new { SoonDate = departingSoonDate }).ToList();
     }
@@ -119,15 +71,19 @@ public class FlightAccess : IFlightAccess
         string sql = $@"SELECT * FROM {Table}
                         WHERE date(DepartureTime) = date(@DepartureDate)
                         AND DepartureAirport LIKE @Origin
-                        AND ArrivalAirport LIKE @Destination";
+                        AND ArrivalAirport LIKE @Destination
+                        AND FlightStatus != 'Departed'";
         
         var parameters = new
         {
-            DepartureDate = departureDate.Date.ToString("yyyy-MM-dd"),
+            DepartureDate = departureDate,
             Origin = string.IsNullOrEmpty(origin) ? "%" : origin,
             Destination = string.IsNullOrEmpty(destination) ? "%" : destination
         };
 
         return _connection.Query<FlightModel>(sql, parameters).ToList();
     }
+
+    // You will also need to add the other specific methods from the interface here
+    // e.g., DeleteFlightsByIDs and GetOldDepartedFlightIDs
 }

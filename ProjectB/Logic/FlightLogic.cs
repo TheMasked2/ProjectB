@@ -115,7 +115,7 @@ public static class FlightLogic
 
         AutoIncrementFlightID(flight);
 
-        FlightAccessService.Write(flight);
+        FlightAccessService.Insert(flight);
 
         BookingLogic.BackfillFlightSeats(flight.FlightID);
 
@@ -142,7 +142,7 @@ public static class FlightLogic
 
     private static void AutoIncrementFlightID(FlightModel flight)
     {
-        var existingFlights = FlightAccessService.GetAllFlightData();
+        var existingFlights = FlightAccessService.GetAll();
 
         int nextId = 1;
 
