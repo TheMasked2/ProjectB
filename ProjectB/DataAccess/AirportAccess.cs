@@ -2,20 +2,33 @@ using Dapper;
 using Microsoft.Data.Sqlite;
 using ProjectB.DataAccess;
 
-public class AirportAccess : IAirportAccess
+public class AirportAccess : GenericAccess<AirportModel, string>, IAirportAccess
 {
-    private static SqliteConnection _connection = new SqliteConnection($"Data Source=DataSources/database.db");
-
-    public List<AirportModel> GetAllAirports()
+    protected override string Table => "AIRPORTS";
+    protected override string PrimaryKey => "IataCode";
+    public override void Insert(AirportModel airport)
     {
-        string sql = "SELECT * FROM AIRPORTS ORDER BY City, Name";
-        return _connection.Query<AirportModel>(sql).ToList();
+        string sql = $@"INSERT INTO {Table} 
+                        (IataCode, 
+                        Name, 
+                        City, 
+                        Country) 
+                        VALUES 
+                        (@IataCode, 
+                        @Name, 
+                        @City, 
+                        @Country)";
+        _connection.Execute(sql, airport);
     }
 
-    public AirportModel GetAirportByCode(string iataCode)
+    public override void Update(AirportModel airport)
     {
-        string sql = "SELECT * FROM AIRPORTS WHERE IataCode = @IataCode";
-        var parameters = new { IataCode = iataCode };
-        return _connection.QueryFirstOrDefault<AirportModel>(sql, parameters);
+        string sql = $@"UPDATE {Table} 
+                        SET Name = @Name, 
+                            City = @City, 
+                            Country = @Country 
+                        WHERE IataCode = @IataCode";
+        _connection.Execute(sql, airport);
     }
+
 }

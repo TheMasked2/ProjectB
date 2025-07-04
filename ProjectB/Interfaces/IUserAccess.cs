@@ -1,10 +1,9 @@
-public interface IUserAccess
+namespace ProjectB.DataAccess
 {
-    User GetUserById(int userId);
-    List<User> GetAllUsers();
-    void AddUser(User user);
-    void UpdateUser(User user);
-    int GetHighestUserId();
-    User Login(string email, string password);
-    User GetUserInfoByEmail(string email);
+    public interface IUserAccess : IGenericAccess<User, int>
+    {
+        User Login(string email, string password);
+        User? GetUserInfoByEmail(string email);
+        int GetHighestUserId();
+    }
 }

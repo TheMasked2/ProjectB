@@ -1,12 +1,9 @@
 namespace ProjectB.DataAccess
 {
-    public interface IReviewAccess
+    public interface IReviewAccess : IGenericAccess<ReviewModel, int>
     {
-        void AddReview(ReviewModel review);
-        List<ReviewModel> GetAllReviews();
         List<ReviewModel> GetReviewsByFlight(int flightId);
         List<ReviewModel> GetReviewsByUser(int userId);
-
     }
 
 }

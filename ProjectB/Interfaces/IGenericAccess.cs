@@ -1,4 +1,4 @@
-namespace ProjectB.DataAccess;
+namespace ProjectB.DataAccess
 {
     public interface IGenericAccess<TModel, TKey> where TModel : class
     {

@@ -90,18 +90,16 @@ public static class FlightLogic
 
         return table;
     }
-    
-    public static FlightModel GetFlightById(int flightId)
-    {
-        FlightModel flight = FlightAccessService.GetById(flightId);
-        return flight;
-    }
 
+    public static FlightModel? GetFlightById(int flightId)
+    {
+        return FlightAccessService.GetById(flightId);
+    }
     public static void AddFlight(FlightModel flight)
     {
         ValidateFlight(flight);
 
-        AirplaneModel airplane = AirplaneLogic.GetAirplaneByID(flight.AirplaneID);
+        AirplaneModel? airplane = AirplaneLogic.GetAirplaneByID(flight.AirplaneID);
 
         if (airplane == null)
         {

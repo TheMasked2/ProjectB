@@ -20,7 +20,7 @@ public static class ReviewLogic
         }
         try
         {
-            ReviewAccessService.AddReview(review);
+            ReviewAccessService.Insert(review);
             return true;
         }
         catch (Exception ex)
@@ -30,17 +30,17 @@ public static class ReviewLogic
         }
     }
     
-    public static List<ReviewModel> GetAllReviews(out string errorMessage)
+    public static List<ReviewModel>? GetAllReviews(out string errorMessage)
     {
         errorMessage = null;
         try
         {
-            if (ReviewAccessService.GetAllReviews().Count == 0)
+            if (ReviewAccessService.GetAll().Count == 0)
             {
                 errorMessage = "Its quiet here, maybe a bit too quiet, no reviews yet.";
                 return new List<ReviewModel>();
             }
-            return ReviewAccessService.GetAllReviews();
+            return ReviewAccessService.GetAll();
         }
         catch (Exception ex)
         {
