@@ -30,7 +30,7 @@ public static class BookingLogic
         SeatModel seat,
         int amountLuggage,
         bool isInsurance,
-        (bool, bool) coupon)
+        Coupons? coupon)
     {
         decimal finalPrice = (decimal)seat.Price;
         decimal totalDiscount = 1.0m;
@@ -59,21 +59,23 @@ public static class BookingLogic
             totalDiscount -= 0.2m; // 20% discount
         }
 
-        if (coupon.Item1) // isValidCoupon
+        if (coupon.HasValue)
         {
-            totalDiscount -= 0.05m; // 5% discount 
+            if (coupon.Value == Coupons.Spice)
+            {
+                // Easter egg, will pay in spice.
+                return (-(finalPrice * totalDiscount), totalDiscount, insurancePrice);
+            }
+            else
+            {
+                totalDiscount -= (decimal)coupon.Value / 100.0m;
+            }
         }
-
-        if (coupon.Item2) // isSpice
-        {
-            return (-1 * finalPrice * totalDiscount, totalDiscount, insurancePrice); // is minus, pay with spice (easter egg)
-        }
-    
 
         return (finalPrice * totalDiscount, totalDiscount, insurancePrice);
     }
 
-    public static BookingModel BookingBuilder(User user, FlightModel flight, SeatModel seat, (bool, bool) coupon, int amountLuggage = 0, bool insuranceStatus = false)
+    public static BookingModel BookingBuilder(User user, FlightModel flight, SeatModel seat, Coupons? coupon, int amountLuggage = 0, bool insuranceStatus = false)
     {
         (decimal finalPrice, decimal discount, decimal insurancePrice) calculatedPrice = CalculateBookingPrice(user, flight, seat, amountLuggage, insuranceStatus, coupon);
 
@@ -163,7 +165,7 @@ public static class BookingLogic
             newSeatId, 
             newLuggageAmount, 
             booking.HasInsurance, 
-            (false, false));
+            null);
         booking.TotalPrice = totalprice;
         booking.SeatID = newSeatId.SeatID;
         booking.LuggageAmount = newLuggageAmount;
