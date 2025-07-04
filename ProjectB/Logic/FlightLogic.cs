@@ -6,7 +6,6 @@ public static class FlightLogic
     public static IFlightAccess FlightAccessService { get; set; } = new FlightAccess();
     public static IFlightSeatAccess FlightSeatAccessService { get; set; } = new FlightSeatAccess();
     public static IAirplaneAccess AirplaneAccessService { get; set; } = new AirplaneAccess();
-    public static IPastFlightAccess PastFlightAccessService { get; set; } = new PastFlightAccess();
     public static ISeatAccess SeatAccessService { get; set; } = new SeatAccess();
     private static readonly Style primaryStyle = new(new Color(134, 64, 0));
     private static readonly Style errorStyle = new(new Color(162, 52, 0));
@@ -208,10 +207,6 @@ public static class FlightLogic
             // Update flight
             flight.FlightStatus = "Departed";
             FlightAccessService.Update(flight);
-            // Move to past flights
-            PastFlightAccessService.WritePastFlight(flight);
-            // Remove from current flights
-            FlightAccessService.Delete(flight.FlightID);
         }
         // Remove past flights and their seats which are older than a month
         PurgeOldPastFlights(monthAgo);
@@ -229,13 +224,14 @@ public static class FlightLogic
 
     private static void PurgeOldPastFlights(DateTime monthAgo)
     {
-        List<int> oldFlightIDs = PastFlightAccessService.GetOldPastFlightIDs(monthAgo);
+        List<int> oldFlightIDs = FlightAccessService.GetOldDepartedFlightIDs(monthAgo);
         // Only call if there are any flights to delete
         if (oldFlightIDs != null && oldFlightIDs.Count != 0)
         {
             // Delete seats and flights
-            FlightSeatAccessService.DeletePastFlightSeatsByFlightIDs(oldFlightIDs);
-            PastFlightAccessService.DeleteOldPastFlights(oldFlightIDs);
+            FlightSeatAccessService.DeleteFlightSeatsByFlightIDs(oldFlightIDs);
+            FlightAccessService.DeleteFlightsByIDs(oldFlightIDs);
         }
+        
     }
 }

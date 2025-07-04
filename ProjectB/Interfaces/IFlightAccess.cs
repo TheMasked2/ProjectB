@@ -13,5 +13,7 @@ namespace ProjectB.DataAccess
             string? origin,
             string? destination,
             DateTime departureDate);
+        void DeleteFlightsByIDs(List<int> flightIDs);
+        List<int> GetOldDepartedFlightIDs(DateTime monthAgo);
     }
 }

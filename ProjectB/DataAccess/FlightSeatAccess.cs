@@ -60,7 +60,7 @@ public class FlightSeatAccess : IFlightSeatAccess
         _connection.Execute(sql, new { FlightID = flightId, SeatID = airplaneId });
     }
 
-    public void DeletePastFlightSeatsByFlightIDs(List<int> flightIDs)
+    public void DeleteFlightSeatsByFlightIDs(List<int> flightIDs)
     {
         string sql = $@"DELETE FROM {FlightSeatsTable} WHERE FlightID IN @FlightIDs";
         var parameters = new { FlightIDs = flightIDs };

@@ -106,7 +106,8 @@ public class FlightAccess : IFlightAccess
     public List<FlightModel> GetUpcomingFlights(DateTime departingSoonDate)
     {
         string sql = $@"SELECT * FROM {Table} 
-                        WHERE DepartureTime <= @SoonDate";
+                        WHERE DepartureTime <= @SoonDate
+                        AND FlightStatus != 'Departed'"               ;
 
         return _connection.Query<FlightModel>(sql, new { SoonDate = departingSoonDate }).ToList();
     }
@@ -119,8 +120,9 @@ public class FlightAccess : IFlightAccess
         string sql = $@"SELECT * FROM {Table}
                         WHERE date(DepartureTime) = date(@DepartureDate)
                         AND DepartureAirport LIKE @Origin
-                        AND ArrivalAirport LIKE @Destination";
-        
+                        AND ArrivalAirport LIKE @Destination
+                        AND FlightStatus != 'Departed'";
+
         var parameters = new
         {
             DepartureDate = departureDate.Date.ToString("yyyy-MM-dd"),
@@ -129,5 +131,21 @@ public class FlightAccess : IFlightAccess
         };
 
         return _connection.Query<FlightModel>(sql, parameters).ToList();
+    }
+
+    public void DeleteFlightsByIDs(List<int> flightIDs)
+    {
+        string sql = $@"DELETE FROM {Table} WHERE FlightID IN @FlightIDs";
+        var parameters = new { FlightIDs = flightIDs };
+        _connection.Execute(sql, parameters);
+    }
+
+    public List<int> GetOldDepartedFlightIDs(DateTime monthAgo)
+    {
+        string sql = $@"SELECT FlightID FROM {Table} 
+                        WHERE DepartureTime < @MonthAgo 
+                        AND FlightStatus = 'Departed'";
+        var parameters = new { MonthAgo = monthAgo };
+        return _connection.Query<int>(sql, parameters).ToList();
     }
 }
