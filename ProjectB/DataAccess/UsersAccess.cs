@@ -32,8 +32,7 @@ public class UserAccess : IUserAccess
                         Password AS Password,
                         PhoneNumber AS PhoneNumber,
                         BirthDate AS BirthDate,
-                        AccCreatedAt AS AccCreatedAt,
-                        IsAdmin AS IsAdmin
+                        AccCreatedAt AS AccCreatedAt
                     FROM {Table}
                     WHERE Email = @EmailAddress";
 
@@ -58,11 +57,6 @@ public class UserAccess : IUserAccess
                         WHERE UserID = @UserID";
 
         return _connection.QuerySingleOrDefault<User>(sql, new { @UserID = userId });
-    }
-
-    public User GetUserInfoByID(int userId)
-    {
-        return GetUserById(userId);
     }
 
     public User Login(string email, string password)

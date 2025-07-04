@@ -7,5 +7,4 @@ public interface IUserAccess
     int GetHighestUserId();
     User Login(string email, string password);
     User GetUserInfoByEmail(string email);
-    User GetUserInfoByID(int userId);
 }

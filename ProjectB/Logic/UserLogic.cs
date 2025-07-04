@@ -214,7 +214,7 @@ public static class UserLogic
         Dictionary<string, string> changedFields = null;
         if (isAdminUpdate)
         {
-            originalUser = UserAccessService.GetUserInfoByID(updatedUser.UserID);
+            originalUser = UserAccessService.GetUserById(updatedUser.UserID);
             if (originalUser != null)
             {
                 changedFields = new Dictionary<string, string>();
@@ -365,6 +365,6 @@ public static class UserLogic
     
     public static User GetUserByID(int userId)
     {
-        return UserAccessService.GetUserInfoByID(userId);
+        return UserAccessService.GetUserById(userId);
     }
 }
