@@ -115,17 +115,34 @@ public static class FlightUI
                         "[red]Invalid airport code or same as origin. Please use a different valid IATA code from the table above.[/]")
             ).ToUpper().Trim();
 
-            string departureDateInput = AnsiConsole.Prompt(
-                new TextPrompt<string>("[#864000]Departure date (yyyy-MM-dd). Press Enter to enter current date:[/]")
-                .DefaultValue(DateTime.Now.ToString("yyyy-MM-dd"))
-                    .PromptStyle(highlightStyle));
             DateTime departureDate;
-            if (!DateTime.TryParse(departureDateInput, out departureDate))
-            {
-                AnsiConsole.MarkupLine("[red]Invalid date format. Please use yyyy-MM-dd.[/]");
-                WaitForKeyPress();
-                continue;
-            }
+            string departureDateInput;
+
+            departureDateInput = AnsiConsole.Prompt(
+                new TextPrompt<string>("[#864000]Departure date (yyyy-MM-dd). Press Enter to enter current date:[/]")
+                    .DefaultValue(DateTime.Now.ToString("yyyy-MM-dd"))
+                    .PromptStyle(highlightStyle)
+                    .Validate(input =>
+                    {
+                        if (DateTime.TryParse(input, out DateTime parsedDate))
+                        {
+                            if (parsedDate >= DateTime.Today) 
+                            {
+                                return ValidationResult.Success();
+                            }
+                            else
+                            {
+                                return ValidationResult.Error("[red]Departure date cannot be in the past. Please enter a date from today onwards.[/]");
+                            }
+                        }
+                        else
+                        {
+                            return ValidationResult.Error("[red]Invalid date format. Please use yyyy-MM-dd.[/]");
+                        }
+                    }));
+
+            // Since validation ensures the date is valid, we can safely parse it
+            departureDate = DateTime.Parse(departureDateInput);
 
             var seatClassOptions = new List<string>
             {
