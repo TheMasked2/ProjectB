@@ -11,8 +11,8 @@ public static class BookingLogic
 
     public static void BackfillFlightSeats(int FlightID)
     {
-        FlightModel flight = FlightAccessService.GetById(FlightID);
-        AirplaneModel airplane = AirplaneLogic.GetAirplaneByID(flight.AirplaneID);
+        FlightModel? flight = FlightAccessService.GetById(FlightID);
+        AirplaneModel? airplane = AirplaneLogic.GetAirplaneByID(flight.AirplaneID);
 
         // If flight and airplane exist, and there are no seats for the flight, create them
         if (flight != null && airplane != null && !FlightSeatAccessService.HasAnySeatsForFlight(FlightID))
@@ -119,8 +119,8 @@ public static class BookingLogic
     public static (bool success, bool freeCancel) CancelBooking(int bookingId)
     {
         // Retrieve the booking
-        BookingModel booking = BookingAccessService.GetBookingById(bookingId);
-        if (booking == null)
+        BookingModel? booking = BookingAccessService.GetById(bookingId);
+        if (booking is null)
         {
             return (false, false);
         }
@@ -144,15 +144,15 @@ public static class BookingLogic
         booking.BookingStatus = "Cancelled";
         
         // Save the changes
-        BookingAccessService.UpdateBooking(booking);
+        BookingAccessService.Update(booking);
         
         return (true, freeCancel);
     }
 
     public static bool ModifyBooking(int bookingId, SeatModel newSeatId, int newLuggageAmount)
     {
-        BookingModel booking = BookingAccessService.GetBookingById(bookingId);
-        if (booking == null)
+        BookingModel? booking = BookingAccessService.GetById(bookingId);
+        if (booking is null)
         {
             return false;
         }
@@ -160,29 +160,31 @@ public static class BookingLogic
         FlightSeatAccessService.SetSeatOccupancy(booking.FlightID, booking.SeatID, false);
         FlightSeatAccessService.SetSeatOccupancy(booking.FlightID, newSeatId.SeatType, true);
 
-        (decimal totalprice, decimal discount, decimal insuranceprice) = CalculateBookingPrice(SessionManager.CurrentUser, 
-            FlightAccessService.GetById(booking.FlightID), 
-            newSeatId, 
-            newLuggageAmount, 
-            booking.HasInsurance, 
-            null);
+        (decimal totalprice, decimal discount, decimal insuranceprice) = CalculateBookingPrice(
+            SessionManager.CurrentUser,
+            FlightAccessService.GetById(booking.FlightID),
+            newSeatId,
+            newLuggageAmount,
+            booking.HasInsurance,
+            null
+        );
         booking.TotalPrice = totalprice;
         booking.SeatID = newSeatId.SeatID;
         booking.LuggageAmount = newLuggageAmount;
         booking.SeatClass = newSeatId.SeatType;
-        BookingAccessService.UpdateBooking(booking);
 
+        BookingAccessService.Update(booking);
         return true;
     }
 
-    public static BookingModel GetBookingById(int bookingId)
+    public static BookingModel? GetBookingById(int bookingId)
     {
-        return BookingAccessService.GetBookingById(bookingId);
+        return BookingAccessService.GetById(bookingId);
     }
     public static void BookTheDamnFlight(BookingModel booking)
     {
         booking.BookingStatus = "Confirmed";
-        BookingAccessService.AddBooking(booking);
+        BookingAccessService.Insert(booking);
     }
 
     public static Spectre.Console.Rendering.IRenderable CreateBookingTable(List<BookingModel> bookings)
@@ -195,7 +197,7 @@ public static class BookingLogic
             return panel;
         }
 
-        Spectre.Console.Table table = new Table()
+        Table table = new Table()
             .Border(TableBorder.Rounded)
             .BorderStyle(primaryStyle)
             .Expand();

@@ -1,12 +1,7 @@
 namespace ProjectB.DataAccess
 {
-    public interface IFlightAccess
+    public interface IFlightAccess : IGenericAccess<FlightModel, int>
     {
-        List<FlightModel> GetAllFlightData();
-        FlightModel GetById(int flightId);
-        void Write(FlightModel flight);
-        void Update(FlightModel flight);
-        void Delete(int flightId);
         List<FlightModel> GetPastFlights(DateTime currentDate);
         List<FlightModel> GetUpcomingFlights(DateTime departingSoonDate);
         List<FlightModel> GetFilteredFlights(

@@ -1,10 +1,7 @@
 namespace ProjectB.DataAccess
 {
-    public interface IBookingAccess
+    public interface IBookingAccess : IGenericAccess<BookingModel, int>
     {
-        void AddBooking(BookingModel booking);
         List<BookingModel> GetBookingsByUser(int userId);
-        BookingModel GetBookingById(int bookingId);
-        void UpdateBooking(BookingModel booking);
     }
 }

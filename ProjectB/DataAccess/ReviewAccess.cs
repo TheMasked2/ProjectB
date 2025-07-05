@@ -2,16 +2,27 @@ using Dapper;
 using Microsoft.Data.Sqlite;
 using ProjectB.DataAccess;
 
-public class ReviewAccess : IReviewAccess
+public class ReviewAccess : GenericAccess<ReviewModel, int>, IReviewAccess
 {
-    private static SqliteConnection _connection = new SqliteConnection($"Data Source=DataSources/database.db");
-
-    private static string Table = "REVIEWS";
-
-    public void AddReview(ReviewModel review)
+    protected override string PrimaryKey => "ReviewID";
+    protected override string Table => "REVIEWS";
+    
+    public override void Insert(ReviewModel review)
     {
-        string sql = @$"INSERT INTO {Table} (UserID, FlightID, Content, Rating, CreatedAt) 
-                       VALUES (@UserID, @FlightID, @Content, @Rating, @CreatedAt)";
+        string sql = @$"INSERT INTO {Table} 
+                        (FlightID, UserID, Rating, Comment) 
+                        VALUES (@FlightID, @UserID, @Rating, @Comment)";
+        _connection.Execute(sql, review);
+    }
+
+    public override void Update(ReviewModel review)
+    {
+        string sql = @$"UPDATE {Table} 
+                        SET FlightID = @FlightID, 
+                            UserID = @UserID, 
+                            Rating = @Rating, 
+                            Comment = @Comment 
+                        WHERE ReviewID = @ReviewID";
         _connection.Execute(sql, review);
     }
 
@@ -19,12 +30,6 @@ public class ReviewAccess : IReviewAccess
     {
         string sql = @$"SELECT * FROM {Table} WHERE FlightID = @FlightId";
         return _connection.Query<ReviewModel>(sql, new { FlightId = flightId }).ToList();
-    }
-
-    public List<ReviewModel> GetAllReviews()
-    {
-        string sql = @$"SELECT * FROM {Table}";
-        return _connection.Query<ReviewModel>(sql).ToList();
     }
 
     public List<ReviewModel> GetReviewsByUser(int userId)
