@@ -424,7 +424,7 @@ public static class FlightUI
 
     public static string SelectAirplaneIDFromList()
     {
-        List<AirplaneModel> airplanes = AirplaneLogic.GetAllAirplanes();
+        List<AirplaneModel>? airplanes = AirplaneLogic.GetAllAirplanes();
 
         if (!airplanes.Any())
         {
