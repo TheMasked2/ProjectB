@@ -80,7 +80,7 @@ public class UserAccess : GenericAccess<User, int>, IUserAccess
                         PhoneNumber AS PhoneNumber,
                         BirthDate AS BirthDate,
                         AccCreatedAt AS AccCreatedAt,
-                        IsAdmin AS IsAdmin 
+                        Role AS Role 
                     FROM {Table} 
                     WHERE Email = @EmailAddress AND Password = @Password";
         var parameters = new { EmailAddress = email, Password = password };

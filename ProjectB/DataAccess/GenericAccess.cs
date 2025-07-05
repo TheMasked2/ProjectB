@@ -1,8 +1,6 @@
 using Dapper;
 using Microsoft.Data.Sqlite;
 using ProjectB.DataAccess;
-using System;
-using System.IO;
 
 public abstract class GenericAccess<TModel, TKey> : IGenericAccess<TModel, TKey> where TModel : class
 {

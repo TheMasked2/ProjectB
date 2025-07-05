@@ -7,7 +7,6 @@ public class BookingAccess : GenericAccess<BookingModel, int>, IBookingAccess
     protected override string Table => "BOOKINGS";
     protected override string PrimaryKey => "BookingID";
 
-
     public override void Insert(BookingModel booking)
     {
         string sql = $@"INSERT INTO {Table} 

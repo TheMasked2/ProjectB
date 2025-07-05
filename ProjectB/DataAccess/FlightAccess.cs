@@ -84,6 +84,4 @@ public class FlightAccess : GenericAccess<FlightModel, int>, IFlightAccess
         return _connection.Query<FlightModel>(sql, parameters).ToList();
     }
 
-    // You will also need to add the other specific methods from the interface here
-    // e.g., DeleteFlightsByIDs and GetOldDepartedFlightIDs
 }
