@@ -49,12 +49,12 @@ public static class BookingLogic
         }
 
         // Apply discounts
-        if (user.FirstTimeDiscount)
+        if (user.IsCustomer && user.FirstTimeDiscount)
         {
             totalDiscount -= 0.1m; // 10% discount
         }
 
-        if (DateTime.Now >= user.BirthDate.AddYears(65) && !user.Guest)
+        if (user.IsCustomer && DateTime.Now >= user.BirthDate.AddYears(65))
         {
             totalDiscount -= 0.2m; // 20% discount
         }

@@ -52,7 +52,7 @@ public static class UserLogic
         var user = new User(
             userID: UserAccessService.GetHighestUserId() + 1,
             firstName, lastName, country, city, emailAddress, password,
-            phoneNumber.ToString(), birthDate, DateTime.Now, isAdmin: false, firstTimeDiscount: true
+            phoneNumber.ToString(), birthDate, DateTime.Now, UserRole.Customer, firstTimeDiscount: true
         );
 
         UserAccessService.Insert(user);
@@ -69,7 +69,7 @@ public static class UserLogic
         string phoneNumberString,
         string birthDateString,
         DateTime accCreatedAt,
-        bool isAdmin
+        UserRole role
     )
     {
         errors.Clear();
@@ -103,7 +103,7 @@ public static class UserLogic
         var user = new User(
             userID: UserAccessService.GetHighestUserId() + 1,
             firstName, lastName, country, city, emailAddress, password,
-            phoneNumber.ToString(), birthDate, accCreatedAt, isAdmin
+            phoneNumber.ToString(), birthDate, accCreatedAt, role
         );
 
         UserAccessService.Insert(user);
@@ -121,20 +121,16 @@ public static class UserLogic
 
         User loggedInUser = UserAccessService.Login(email, password);
 
-        if (loggedInUser == null)
-        {
-            errors.Add("Password or email is incorrect.");
-            return false;
-        }
-
-        if (VerifyPassword(email, password))
+        if (loggedInUser != null)
         {
             SessionManager.SetCurrentUser(loggedInUser);
             return true;
         }
-
-        errors.Add("Password or email is incorrect.");
-        return false;
+        else
+        {
+            errors.Add("Password or email is incorrect.");
+            return false;
+        }
     }
 
     private static bool CheckEmail(string email)
@@ -238,10 +234,8 @@ public static class UserLogic
                 if (updatedUser.Country != originalUser.Country)
                     changedFields.Add("Country", $"{originalUser.Country} -> {updatedUser.Country}");
 
-                string originalAdminStatus = originalUser.IsAdmin ? "Admin" : "User";
-                string newAdminStatus = updatedUser.IsAdmin ? "Admin" : "User";
-                if (originalAdminStatus != newAdminStatus)
-                    changedFields.Add("IsAdmin", $"{originalAdminStatus} -> {newAdminStatus}");
+                if (originalUser.Role != updatedUser.Role)
+                    changedFields.Add("Role", $"{originalUser.Role} -> {updatedUser.Role}");
             }
         }
 
@@ -324,13 +318,13 @@ public static class UserLogic
         return UserAccessService.GetAll().Where(u =>
             u.FirstName.ToLower().Contains(nameFilter) ||
             u.LastName.ToLower().Contains(nameFilter) ||
-            (u.FirstName.ToLower() + " " + u.LastName.ToLower()).Contains(nameFilter)
+            $"{u.FirstName.ToLower()} {u.LastName.ToLower()}".Contains(nameFilter)
         ).ToList();
     }
 
-    public static List<User>? GetUsersByAdminStatus(bool isAdmin)
+    public static List<User>? GetUsersByRole(UserRole role)
     {
-        return UserAccessService.GetAll().Where(u => u.IsAdmin == isAdmin).ToList();
+        return UserAccessService.GetAll().Where(u => u.Role == role).ToList();
     }
 
     public static User? GetUserByEmail(string email)

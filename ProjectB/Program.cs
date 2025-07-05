@@ -1,6 +1,6 @@
 using Spectre.Console;
 
-public static class Programs
+public static class Program
 {
 	public static void Main()
 	{

@@ -29,7 +29,7 @@ public static class BookingUI
         // Apply discount if applicable (first time booking, senior citizen, coupon)
         Coupons? couponCode = AddCouponCode();
         // If user is logged in, use their info, otherwise prompt for information from guest
-        if (SessionManager.CurrentUser.Guest)
+        if (SessionManager.CurrentUser.IsGuest)
         {
             UserUI.GuestEditUserInfo();
         }

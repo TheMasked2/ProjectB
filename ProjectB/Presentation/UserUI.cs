@@ -199,7 +199,7 @@ public static class UserUI
             PhoneNumber = currentUser.PhoneNumber,
             BirthDate = currentUser.BirthDate,        // Can't be changed
             AccCreatedAt = currentUser.AccCreatedAt,  // Can't be changed
-            IsAdmin = currentUser.IsAdmin,            // Can't be changed
+            Role = currentUser.Role,            // Can't be changed
             FirstTimeDiscount = currentUser.FirstTimeDiscount // Can't be changed
         };
 
@@ -385,7 +385,7 @@ public static class UserUI
             [rgb(134,64,0)]Birth Date:[/] [rgb(255,122,0)]{user.BirthDate:yyyy-MM-dd}[/]
             [rgb(134,64,0)]Member Since:[/] [rgb(255,122,0)]{user.AccCreatedAt:yyyy-MM-dd}[/]
             [rgb(134,64,0)]Logged in since:[/] [rgb(255,122,0)]{SessionManager.LoginTime}[/]
-            [rgb(134,64,0)]Account Type:[/] [rgb(255,122,0)]{(user.IsAdmin ? "Administrator" : "User")}[/]
+            [rgb(134,64,0)]Account Type:[/] [rgb(255,122,0)]{user.Role}[/]
             """)
             .Border(BoxBorder.Rounded)
             .BorderStyle(new Style(new Color(184, 123, 74)))
@@ -454,16 +454,6 @@ public static class UserUI
     }
     public static void ShowGuestMenu()
     {
-        User guestUser = new User
-        {
-            UserID = 0,
-            FirstName = "Guest",
-            LastName = "User",
-            IsAdmin = false,
-            Guest = true
-        };
-        SessionManager.SetCurrentUser(guestUser);
-
         while (true)
         {
             AnsiConsole.Clear();

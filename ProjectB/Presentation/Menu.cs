@@ -14,7 +14,7 @@ public static class Menu
 
             var choices = new List<string>();
 
-            if (SessionManager.CurrentUser == null)
+            if (!SessionManager.IsLoggedIn())
             {
                 choices.AddRange(new[]
                 {
@@ -52,17 +52,18 @@ public static class Menu
             var input = AnsiConsole.Prompt(
                 new SelectionPrompt<string>()
                     .Title("[yellow]Select an option:[/]")
-                    .PageSize(10)
+                    .PageSize(7)
                     .AddChoices(choices));
 
             switch (input)
             {
-                case "Exit" when SessionManager.CurrentUser == null:
+                case "Exit":
                     Console.Clear();
                     Environment.Exit(0);
                     break;
 
                 case "Guest":
+                    SessionManager.SetGuestUser();
                     UserUI.ShowGuestMenu();
                     break;
 

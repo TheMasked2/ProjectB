@@ -1,10 +1,12 @@
 using Dapper;
 using Microsoft.Data.Sqlite;
 using ProjectB.DataAccess;
+using System;
+using System.IO;
 
 public abstract class GenericAccess<TModel, TKey> : IGenericAccess<TModel, TKey> where TModel : class
 {
-    protected readonly SqliteConnection _connection = new SqliteConnection("Data Source=database.db");
+    protected readonly SqliteConnection _connection = new SqliteConnection($"Data Source=DataSources/database.db");
     protected abstract string Table { get; }
     protected abstract string PrimaryKey { get; }
 
@@ -21,13 +23,20 @@ public abstract class GenericAccess<TModel, TKey> : IGenericAccess<TModel, TKey>
         return _connection.Query<TModel>(sql).ToList();
     }
 
+    public virtual void Insert(TModel model)
+    {
+        throw new NotImplementedException();
+    }
+
+    public virtual void Update(TModel model)
+    {
+        throw new NotImplementedException();
+    }
+
     public virtual void Delete(TKey id)
     {
         string sql = $"DELETE FROM {Table} WHERE {PrimaryKey} = @Id";
-        var parameters = new { Id = id };
-        _connection.Execute(sql, parameters);
+        var paramaters = new { Id = id };
+        _connection.Execute(sql, paramaters);
     }
-    
-    public abstract void Insert(TModel model);
-    public abstract void Update(TModel model);
 }
