@@ -27,9 +27,9 @@ public static class BookingUI
         // Ask for insurance
         bool insuranceStatus = PurchasheInsurance();
         // Apply discount if applicable (first time booking, senior citizen, coupon)
-        (bool isValidCoupon, bool isSpice) couponCode = AddCouponCode();
+        Coupons? couponCode = AddCouponCode();
         // If user is logged in, use their info, otherwise prompt for information from guest
-        if (SessionManager.CurrentUser.Guest)
+        if (SessionManager.CurrentUser.IsGuest)
         {
             UserUI.GuestEditUserInfo();
         }
@@ -166,18 +166,9 @@ public static class BookingUI
         return insuranceStatus;
     }
 
-    private static (bool validCoupon, bool isSpice) AddCouponCode()
+    private static Coupons? AddCouponCode()
     {
-        List<string> validCouponCodes = new List<string>
-        {
-            "LISANALGAIB",
-            "MUADDIB",
-            "ATREIDES",
-            "SHAIHULUD",
-            "SPICE"
-        };
-
-        bool couponCode = AnsiConsole.Prompt(
+        bool wantsCoupon = AnsiConsole.Prompt(
             new SelectionPrompt<bool>()
                 .Title("[#864000]Do you have a coupon code?[/]")
                 .AddChoices(BoolChoices)
@@ -185,12 +176,12 @@ public static class BookingUI
                 .HighlightStyle(highlightStyle)
         );
 
-        if (!couponCode)
+        if (!wantsCoupon)
         {
-            AnsiConsole.MarkupLine("[red]No coupon code.[/]");
+            AnsiConsole.MarkupLine("[red]No coupon code applied.[/]");
             AnsiConsole.MarkupLine("\n[grey]Press any key to continue...[/]");
             Console.ReadKey(true);
-            return (false, false);
+            return null;
         }
 
         while (true)
@@ -206,16 +197,15 @@ public static class BookingUI
                 AnsiConsole.MarkupLine("[red]No coupon code entered. No discount applied.[/]");
                 AnsiConsole.MarkupLine("\n[grey]Press any key to continue...[/]");
                 Console.ReadKey(true);
-                return (false, false);
+                return null;
             }
 
-            if (validCouponCodes.Contains(code))
+            if (Enum.TryParse(code, ignoreCase:true, out Coupons coupon))
             {
-                bool isSpice = code == "SPICE";
                 AnsiConsole.MarkupLine("[green]Coupon code applied successfully![/]");
                 AnsiConsole.MarkupLine("\n[grey]Press any key to continue...[/]");
                 Console.ReadKey(true);
-                return (true, isSpice);
+                return coupon;
             }
 
             AnsiConsole.MarkupLine("[red]Invalid coupon code. Please try again or leave empty to skip.[/]");

@@ -89,18 +89,16 @@ public static class FlightLogic
 
         return table;
     }
-    
-    public static FlightModel GetFlightById(int flightId)
-    {
-        FlightModel flight = FlightAccessService.GetById(flightId);
-        return flight;
-    }
 
+    public static FlightModel? GetFlightById(int flightId)
+    {
+        return FlightAccessService.GetById(flightId);
+    }
     public static void AddFlight(FlightModel flight)
     {
         ValidateFlight(flight);
 
-        AirplaneModel airplane = AirplaneLogic.GetAirplaneByID(flight.AirplaneID);
+        AirplaneModel? airplane = AirplaneLogic.GetAirplaneByID(flight.AirplaneID);
 
         if (airplane == null)
         {
@@ -114,7 +112,7 @@ public static class FlightLogic
 
         AutoIncrementFlightID(flight);
 
-        FlightAccessService.Write(flight);
+        FlightAccessService.Insert(flight);
 
         BookingLogic.BackfillFlightSeats(flight.FlightID);
 
@@ -141,7 +139,7 @@ public static class FlightLogic
 
     private static void AutoIncrementFlightID(FlightModel flight)
     {
-        var existingFlights = FlightAccessService.GetAllFlightData();
+        var existingFlights = FlightAccessService.GetAll();
 
         int nextId = 1;
 

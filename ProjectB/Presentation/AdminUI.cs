@@ -149,15 +149,15 @@ public static class AdminUI
                 new TextPrompt<string>("[#864000]Enter birth date (yyyy-mm-dd):[/]")
                     .PromptStyle(highlightStyle));
 
-            bool isAdmin = AnsiConsole.Prompt(
-                new SelectionPrompt<string>()
-                    .Title("[#864000]Should this user be an admin?[/]")
+            UserRole role = AnsiConsole.Prompt(
+                new SelectionPrompt<UserRole>()
+                    .Title("[#864000]Select user role:[/]")
                     .PageSize(3)
-                    .AddChoices(new[] { "No", "Yes" })) == "Yes";
+                    .AddChoices(UserRole.Admin, UserRole.Customer));
 
             DateTime accCreatedAt = DateTime.Now;
 
-            registrationSuccess = UserLogic.Register(firstName, lastName, country, city, email, password, phoneNumberString, birthDateString, accCreatedAt, isAdmin);
+            registrationSuccess = UserLogic.Register(firstName, lastName, country, city, email, password, phoneNumberString, birthDateString, accCreatedAt, role);
 
             if (!registrationSuccess)
             {
@@ -183,8 +183,7 @@ public static class AdminUI
             }
             else
             {
-                string adminStatus = isAdmin ? "admin" : "User";
-                var successPanel = new Panel($"[#FFD58A]User {firstName} {lastName} registered successfully as {adminStatus} user![/]")
+                var successPanel = new Panel($"[#FFD58A]User {firstName} {lastName} registered successfully as a {role} user![/]")
                 {
                     Border = BoxBorder.Double,
                     BorderStyle = successStyle,
@@ -231,7 +230,7 @@ public static class AdminUI
             new SelectionPrompt<string>()
                 .Title("[#864000]Filter users by:[/]")
                 .PageSize(4)
-                .AddChoices(new[] { "All Users", "Email", "Name", "Admin Status" }));
+                .AddChoices(new[] { "All Users", "Email", "Name", "Role" }));
 
         List<User> filteredUsers = new List<User>();
         
@@ -255,13 +254,14 @@ public static class AdminUI
                 filteredUsers = UserLogic.GetUsersByName(nameFilter);
                 break;
                 
-            case "Admin Status":
-                bool isAdminFilter = AnsiConsole.Prompt(
-                    new SelectionPrompt<string>()
-                        .Title("[#864000]Filter by admin status:[/]")
-                        .PageSize(3)
-                        .AddChoices(new[] { "Admin Users", "Regular Users" })) == "Admin Users";
-                filteredUsers = UserLogic.GetUsersByAdminStatus(isAdminFilter);
+            case "Role":
+                var filterRole = AnsiConsole.Prompt(
+                    new SelectionPrompt<UserRole>()
+                        .Title("[#864000]Filter by user role:[/]")
+                        .PageSize(4)
+                        .AddChoices(UserRole.Admin, UserRole.Customer));
+                
+                filteredUsers = UserLogic.GetUsersByRole(filterRole);
                 break;
         }
 
@@ -294,7 +294,7 @@ public static class AdminUI
                 user.EmailAddress,
                 user.PhoneNumber,
                 $"{user.City}, {user.Country}",
-                user.IsAdmin ? "Admin" : "User"
+                user.Role.ToString()
             );
         }
 
@@ -343,18 +343,14 @@ public static class AdminUI
             new TextPrompt<string>("[#864000]Enter new country[/]")
                 .DefaultValue(selectedUser.Country)
                 .PromptStyle(highlightStyle));
-        
-        bool currentIsAdmin = selectedUser.IsAdmin;
-        string selectedRole = AnsiConsole.Prompt(
-            new SelectionPrompt<string>()
-                .Title("[#864000]Select admin status[/]")
-                .PageSize(3)
+
+        selectedUser.Role = AnsiConsole.Prompt(
+            new SelectionPrompt<UserRole>()
+                .Title("[#864000]Select new role[/]")
+                .PageSize(4)
                 .HighlightStyle(highlightStyle)
-                .AddChoices(new[] { "Admin", "User" })
-                .UseConverter(role => role == "Admin" ? "[grey]Admin[/]" : "[grey]User[/]"));
-        
-        selectedUser.IsAdmin = selectedRole == "Admin";
-        
+                .AddChoices(UserRole.Customer, UserRole.Admin));
+
         // Save changes
         bool updateSuccess = UserLogic.UpdateUser(selectedUser);
         

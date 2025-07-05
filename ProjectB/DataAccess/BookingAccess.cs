@@ -2,38 +2,46 @@ using Dapper;
 using Microsoft.Data.Sqlite;
 using ProjectB.DataAccess;
 
-public class BookingAccess : IBookingAccess
+public class BookingAccess : GenericAccess<BookingModel, int>, IBookingAccess
 {
-    private static SqliteConnection _connection = new SqliteConnection($"Data Source=DataSources/database.db");
+    protected override string Table => "BOOKINGS";
+    protected override string PrimaryKey => "BookingID";
 
-    private static string Table = "BOOKINGS";
-
-    public void AddBooking(BookingModel booking)
+    public override void Insert(BookingModel booking)
     {
         string sql = $@"INSERT INTO {Table} 
-            (UserID, BookingStatus, PassengerFirstName, PassengerLastName, PassengerEmail, PassengerPhone,
-            FlightID, Airline, AirplaneModel, DepartureAirport, ArrivalAirport,
-            DepartureTime, ArrivalTime, SeatID, SeatClass, LuggageAmount, HasInsurance,
-            Discount, TotalPrice)
-            VALUES (@UserID, @BookingStatus, @PassengerFirstName, @PassengerLastName, @PassengerEmail, @PassengerPhone,
-            @FlightID, @Airline, @AirplaneModel, @DepartureAirport, @ArrivalAirport,
-            @DepartureTime, @ArrivalTime, @SeatID, @SeatClass, @LuggageAmount, @HasInsurance,
-            @Discount, @TotalPrice)";
+                        (UserID, 
+                        FlightID, 
+                        BookingStatus, 
+                        PassengerFirstName, 
+                        PassengerLastName, 
+                        PassengerEmail, 
+                        PassengerPhone, 
+                        SeatID, 
+                        SeatClass, 
+                        LuggageAmount, 
+                        HasInsurance, 
+                        Discount, 
+                        TotalPrice) 
+                        VALUES 
+                        (@UserID, 
+                        @FlightID, 
+                        @BookingStatus, 
+                        @PassengerFirstName, 
+                        @PassengerLastName, 
+                        @PassengerEmail, 
+                        @PassengerPhone, 
+                        @SeatID, 
+                        @SeatClass, 
+                        @LuggageAmount, 
+                        @HasInsurance,
+                        @Discount,
+                        @TotalPrice)";
         _connection.Execute(sql, booking);
     }
 
-    public List<BookingModel> GetBookingsByUser(int userId)
-    {
-        string sql = $@"SELECT * FROM {Table} WHERE UserID = @UserID";
-        return _connection.Query<BookingModel>(sql, new { UserID = userId }).ToList();
-    }
-    public BookingModel GetBookingById(int bookingId)
-    {
-        string sql = $@"SELECT * FROM {Table} WHERE BookingID = @BookingID";
-        return _connection.QueryFirstOrDefault<BookingModel>(sql, new { BookingID = bookingId });
-    }
-
-    public void UpdateBooking(BookingModel booking)
+    // TODO: Change bookingmodel to inherit info from user
+    public override void Update(BookingModel booking)
     {
         string sql = $@"UPDATE {Table} 
                         SET BookingStatus = @BookingStatus,
@@ -51,4 +59,9 @@ public class BookingAccess : IBookingAccess
         _connection.Execute(sql, booking);
     }
 
+    public List<BookingModel> GetBookingsByUser(int userId)
+    {
+        string sql = $@"SELECT * FROM {Table} WHERE UserID = @UserID";
+        return _connection.Query<BookingModel>(sql, new { UserID = userId }).ToList();
+    }
 }

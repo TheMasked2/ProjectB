@@ -1,8 +1,7 @@
 namespace ProjectB.DataAccess
 {
-    public interface IAirportAccess
+    public interface IAirportAccess : IGenericAccess<AirportModel, string>
     {
-        AirportModel GetAirportByCode(string iataCode);
-        List<AirportModel> GetAllAirports();
+
     }
 }

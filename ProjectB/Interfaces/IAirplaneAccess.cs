@@ -1,8 +1,7 @@
 namespace ProjectB.DataAccess
 {
-    public interface IAirplaneAccess
-    {
-        AirplaneModel GetAirplaneByID(string airplaneID);
-        List<AirplaneModel> GetAirplanes();
+    public interface IAirplaneAccess : IGenericAccess<AirplaneModel, string>
+    { 
+        
     }
 }

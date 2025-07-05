@@ -2,23 +2,23 @@ using Microsoft.Data.Sqlite;
 using Dapper;
 using ProjectB.DataAccess;
 
-public class AirplaneAccess : IAirplaneAccess
+public class AirplaneAccess : GenericAccess<AirplaneModel, string>, IAirplaneAccess
 {
-    private static SqliteConnection _connection = new SqliteConnection($"Data Source=DataSources/database.db");
+    protected override string Table => "AIRPLANE";
+    protected override string PrimaryKey => "AirplaneID";
 
-    private const string Table = "AIRPLANE";
-
-    public AirplaneModel GetAirplaneByID(string airplaneID)
+    public override void Insert(AirplaneModel airplane)
     {
-        string sql = $@"SELECT * FROM {Table} WHERE AirplaneID = @AirplaneId";
-        AirplaneModel? result = _connection.QueryFirstOrDefault<AirplaneModel>(sql, new { AirplaneId = airplaneID });
-        return result;
+        string sql = $@"INSERT INTO {Table} (AirplaneID, AirplaneName) 
+                        VALUES (@AirplaneID, @AirplaneName)";
+        _connection.Execute(sql, airplane);
     }
 
-    public List<AirplaneModel> GetAirplanes()
+    public override void Update(AirplaneModel airplane)
     {
-        string sql = $@"SELECT AirplaneID, AirplaneName FROM {Table}";
-        List<AirplaneModel> result = _connection.Query<AirplaneModel>(sql).ToList();
-        return result;
+        string sql = $@"UPDATE {Table} 
+                        SET AirplaneName = @AirplaneName 
+                        WHERE AirplaneID = @AirplaneID";
+        _connection.Execute(sql, airplane);
     }
 }

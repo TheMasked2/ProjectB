@@ -8,7 +8,18 @@ public static class SessionManager
         CurrentUser = user;
         LoginTime = DateTime.Now;
     }
-
+    public static void SetGuestUser()
+    {
+        User guest = new User
+        {
+            UserID = -1,
+            FirstName = "Guest",
+            LastName = "User",
+            Role = UserRole.Guest
+        };
+        CurrentUser = guest;
+        LoginTime = DateTime.Now;
+    }
     public static void Logout()
     {
         CurrentUser = null;
