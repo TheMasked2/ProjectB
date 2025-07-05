@@ -4,83 +4,14 @@ public static class FlightUI
 {
     private static readonly Style primaryStyle = new(new Color(134, 64, 0));
     private static readonly Style highlightStyle = new(new Color(255, 122, 0));
+    
     public static void WaitForKeyPress()
     {
         AnsiConsole.MarkupLine("\n[grey]Press any key to return to the main menu...[/]");
         Console.ReadKey(true);
     }
 
-    public static List<FlightModel> DisplayFilteredUpcomingFlights()
-    {
-        AnsiConsole.Clear();
-        AnsiConsole.Write(
-            new FigletText("Flight Search")
-                .Centered()
-                .Color(Color.Orange1));
-
-        List<AirportModel> airports = AirportLogic.GetAllAirports();
-        Table airportTable = AirportLogic.CreateAirportsTable(airports);
-        AnsiConsole.Write(airportTable);
-
-        List<string> validIataCodes = airports.Select(airport => airport.IataCode).ToList();
-
-        AnsiConsole.MarkupLine("\n[#864000]Enter filter criteria:[/]");
-
-        string origin = AnsiConsole.Prompt(
-            new TextPrompt<string>("[#864000]Enter origin airport code (IATA):[/]")
-                .PromptStyle(highlightStyle)
-                .Validate(code =>
-                    validIataCodes.Contains(code.ToUpper()),
-                    "[red]Invalid airport code. Please use a valid IATA code from the table above.[/]")
-        ).ToUpper().Trim();
-
-        string destination = AnsiConsole.Prompt(
-            new TextPrompt<string>("[#864000]Enter destination airport code (IATA):[/]")
-                .PromptStyle(highlightStyle)
-                .Validate(code =>
-                    validIataCodes.Contains(code.ToUpper()) && code.ToUpper() != origin,
-                    "[red]Invalid airport code or same as origin. Please use a different valid IATA code from the table above.[/]")
-        ).ToUpper().Trim();
-
-        string departureDateInput;
-        DateTime departureDate;
-        DateTime today = DateTime.Today;
-        bool validDate = false;
-
-        do
-        {
-            departureDateInput = AnsiConsole.Prompt(
-                new TextPrompt<string>("[#864000]Departure date (yyyy-MM-dd). Press Enter to enter current date:[/]")
-                .DefaultValue(DateTime.Now.ToString("yyyy-MM-dd"))
-                .PromptStyle(highlightStyle));
-
-            if (DateTime.TryParse(departureDateInput, out departureDate))
-            {
-                validDate = true;
-                if (departureDate < today)
-                {
-                    AnsiConsole.MarkupLine("[red]Departure date cannot be in the past. Please enter a valid date.[/]");
-                    validDate = false;
-                }
-                else
-                {
-                    departureDate = departureDate.Date; // Normalize to date only
-                }
-            }
-            else
-            {
-                AnsiConsole.MarkupLine("[red]Invalid date format. Please use yyyy-MM-dd.[/]");
-            }
-        } while (!validDate);
-
-        List<FlightModel> flights = FlightLogic.GetFilteredFlights(origin, destination, departureDate);
-
-        AnsiConsole.Write(FlightLogic.CreateDisplayableFlightsTable(flights));
-
-        return flights;
-    }
-
-    public static List<FlightModel> DisplayAllBookableFlights()
+    public static List<FlightModel> DisplayFilteredFlights()
     {
         while (true)
         {
@@ -89,7 +20,6 @@ public static class FlightUI
                 new FigletText("Flight Search")
                     .Centered()
                     .Color(Color.Orange1));
-
 
             List<AirportModel> airports = AirportLogic.GetAllAirports();
             Table airportTable = AirportLogic.CreateAirportsTable(airports);
@@ -126,7 +56,7 @@ public static class FlightUI
                     {
                         if (DateTime.TryParse(input, out DateTime parsedDate))
                         {
-                            if (parsedDate >= DateTime.Today) 
+                            if (parsedDate >= DateTime.Today)
                             {
                                 return ValidationResult.Success();
                             }
@@ -144,58 +74,59 @@ public static class FlightUI
             // Since validation ensures the date is valid, we can safely parse it
             departureDate = DateTime.Parse(departureDateInput);
 
-            var seatClassOptions = new List<string>
-            {
-                "Luxury",
-                "Business",
-                "Premium",
-                "Standard Extra Legroom",
-                "Standard"
-            };
+            string seatClass = null;
+            List<FlightModel> flights;
 
-            var input = AnsiConsole.Prompt(
-                new SelectionPrompt<string>()
-                    .Title("[#864000]Select seat class (default is 'Standard'):[/]")
-                    .PageSize(6)
-                    .AddChoices(seatClassOptions));
-
-            string seatClass;
-            switch (input)
+            if (!SessionManager.CurrentUser.IsAdmin)
             {
-                case "Standard":
-                    seatClass = "Standard";
-                    break;
-                case "Business":
-                    seatClass = "Business";
-                    break;
-                case "Premium":
-                    seatClass = "Premium";
-                    break;
-                case "Luxury":
-                    seatClass = "Luxury";
-                    break;
-                case "Standard Extra Legroom":
-                    seatClass = "Standard Extra Legroom";
-                    break;
-                default:
-                    seatClass = "Standard"; // Any
-                    break;
+                List<string> seatClassOptions = new()
+                {
+                    "Luxury",
+                    "Business",
+                    "Premium",
+                    "Standard Extra Legroom",
+                    "Standard"
+                };
+
+                string input = AnsiConsole.Prompt(
+                    new SelectionPrompt<string>()
+                        .Title("[#864000]Select seat class (default is 'Standard'):[/]")
+                        .PageSize(6)
+                        .AddChoices(seatClassOptions));
+
+                switch (input)
+                {
+                    case "Standard":
+                        seatClass = "Standard";
+                        break;
+                    case "Business":
+                        seatClass = "Business";
+                        break;
+                    case "Premium":
+                        seatClass = "Premium";
+                        break;
+                    case "Luxury":
+                        seatClass = "Luxury";
+                        break;
+                    case "Standard Extra Legroom":
+                        seatClass = "Standard Extra Legroom";
+                        break;
+                    default:
+                        seatClass = "Standard";
+                        break;
+                }
+
+                flights = FlightLogic.GetFilteredFlights(origin, destination, departureDate, seatClass);
             }
-
-            List<FlightModel> flights = FlightLogic.GetFilteredFlights(origin, destination, departureDate, seatClass);
-
+            else
+            {
+                flights = FlightLogic.GetFilteredFlights(origin, destination, departureDate);
+            }
             AnsiConsole.Write(FlightLogic.CreateDisplayableFlightsTable(flights, seatClass));
 
-            if (!flights.Any())
-            {
-                WaitForKeyPress();
-                break;
-            }
             return flights;
         }
-        return null;
     }
-
 
     public static void AddFlight()
     {
@@ -258,9 +189,10 @@ public static class FlightUI
             }
         }
     }
+
     public static void EditFlight()
     {
-        List<FlightModel> flights = DisplayFilteredUpcomingFlights();
+        List<FlightModel> flights = DisplayFilteredFlights();
         if (flights == null || !flights.Any())
         {
             WaitForKeyPress();
@@ -342,7 +274,7 @@ public static class FlightUI
     {
         while (true)
         {
-            List<FlightModel> flights = DisplayFilteredUpcomingFlights();
+            List<FlightModel> flights = DisplayFilteredFlights();
             
             if (!flights.Any())
             {
@@ -425,9 +357,9 @@ public static class FlightUI
             [rgb(134,64,0)]Arrival Airport:[/] [rgb(255,122,0)]{Flight.ArrivalAirport}[/]
             [rgb(134,64,0)]Departure Time:[/] [rgb(255,122,0)]{Flight.DepartureTime:yyyy-MM-dd}[/]
             [rgb(134,64,0)]Arrival Time:[/] [rgb(255,122,0)]{Flight.ArrivalTime:yyyy-MM-dd}[/]
-            [rgb(134,64,0)]Price:[/] [rgb(255,122,0)]{Flight.Price + "$"}[/]
             [rgb(134,64,0)]FlightStatus:[/] [rgb(255,122,0)]{Flight.FlightStatus}[/]
             """)
+            // [rgb(134,64,0)]Price:[/] [rgb(255,122,0)]{Flight.Price + "$"}[/]
             .Border(BoxBorder.Rounded)
             .BorderStyle(new Style(new Color(184, 123, 74)))
             .Padding(1, 1);

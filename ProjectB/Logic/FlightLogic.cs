@@ -19,7 +19,7 @@ public static class FlightLogic
         string? origin,
         string? destination,
         DateTime departureDate,
-        string seatClass)
+        string? seatClass)
     {
         List<FlightModel> flights = FlightAccessService.GetFilteredFlights(origin, destination, departureDate);
 
@@ -32,7 +32,7 @@ public static class FlightLogic
         return bookableFlights;
     }
 
-    public static Spectre.Console.Rendering.IRenderable CreateDisplayableFlightsTable(List<FlightModel> flights, string seatClass = null)
+    public static Spectre.Console.Rendering.IRenderable CreateDisplayableFlightsTable(List<FlightModel> flights, string? seatClass)
     {
         if (flights == null || !flights.Any())
         {
@@ -106,7 +106,6 @@ public static class FlightLogic
         }
 
         flight.AirplaneID = airplane.AirplaneID;
-        flight.AvailableSeats = airplane.TotalSeats;
 
         flight.FlightStatus = "Scheduled";
 

@@ -91,41 +91,11 @@ public static class ReviewUI
             return;
         }
 
-        foreach (var review in reviews)
-        {
-            // var UserModel = UserAccess.GetUserInfoByID(review.UserID);
-            var UserModel = UserLogic.GetUserByID(review.UserID);
-            var FlightModel = FlightLogic.GetFlightById(review.FlightID);
-
-            if (UserModel == null || FlightModel == null)
-            {
-                continue;
-            }
-
-            string goldStars = string.Join(" ", Enumerable.Repeat("★", review.Rating));
-            string grayStars = string.Join(" ", Enumerable.Repeat("☆", 5 - review.Rating));
-            
-            string profile = $"[rgb(134,64,0)]Firstname:[/][rgb(255,122,0)]{UserModel.FirstName}[/]\n" +
-                             $"[rgb(134,64,0)]Date:[/]     [rgb(255,122,0)]{review.CreatedAt:yyyy-MM-dd}[/]\n" +
-                             $"[rgb(134,64,0)]Airline:[/]  [rgb(255,122,0)]{FlightModel.Airline}[/]\n" +
-                             $"[rgb(134,64,0)]Departure:[/][rgb(255,122,0)]{FlightModel.DepartureAirport}[/]\n" +
-                             $"[rgb(134,64,0)]Arrival:[/]  [rgb(255,122,0)]{FlightModel.ArrivalAirport}[/]\n" +
-                             $"[rgb(134,64,0)]Rating:[/]   [rgb(255,122,0)]{goldStars + " " + grayStars}[/]\n" +
-                             $"[rgb(134,64,0)]Content:[/]  [rgb(255,122,0)]{review.Content}[/]";
-
-            var panel = new Panel(profile)
-                .Header("[rgb(134,64,0)]Review[/]")
-                .HeaderAlignment(Justify.Center)
-                .Border(BoxBorder.Rounded)
-                .BorderStyle(new Style(new Color(184, 123, 74)))
-                .Padding(new Padding(1, 1, 1, 1));
-
-            AnsiConsole.Write(panel);
-        }
+        DisplayReviews(reviews);
         FlightUI.WaitForKeyPress();
     }
 
-        public static void FilterViewReviews()
+    public static void FilterViewReviews()
     {
         int flightId = AnsiConsole.Prompt(
                 new TextPrompt<int>("[#864000]Please enter the flight id to filter reviews:[/]")
@@ -141,19 +111,36 @@ public static class ReviewUI
             return;
         }
 
+        DisplayReviews(reviews);
+        FlightUI.WaitForKeyPress();
+    }
+
+    private static void DisplayReviews(List<ReviewModel> reviews)
+    {
+        if (reviews == null || !reviews.Any())
+        {
+            AnsiConsole.MarkupLine("[yellow]No reviews found.[/]");
+            return;
+        }
+
         foreach (var review in reviews)
         {
-            var UserModel = UserLogic.GetUserByID(review.UserID);
-            var FlightModel = FlightLogic.GetFlightById(review.FlightID);
+            var userModel = UserLogic.GetUserByID(review.UserID);
+            var flightModel = FlightLogic.GetFlightById(review.FlightID);
 
-            string goldStars = string.Join(" ", Enumerable.Repeat("★", review.Rating));
-            string grayStars = string.Join(" ", Enumerable.Repeat("☆", 5 - review.Rating));
+            if (userModel == null || flightModel == null)
+            {
+                continue;
+            }
 
-            string profile = $"[rgb(134,64,0)]Firstname:[/][rgb(255,122,0)]{UserModel.FirstName}[/]\n" +
+            string goldStars = string.Join(" ", Enumerable.Repeat("★", (int)review.Rating));
+            string grayStars = string.Join(" ", Enumerable.Repeat("☆", 5 - (int)review.Rating));
+            
+            string profile = $"[rgb(134,64,0)]Firstname:[/][rgb(255,122,0)]{userModel.FirstName}[/]\n" +
                              $"[rgb(134,64,0)]Date:[/]     [rgb(255,122,0)]{review.CreatedAt:yyyy-MM-dd}[/]\n" +
-                             $"[rgb(134,64,0)]Airline:[/]  [rgb(255,122,0)]{FlightModel.Airline}[/]\n" +
-                             $"[rgb(134,64,0)]Departure:[/][rgb(255,122,0)]{FlightModel.DepartureAirport}[/]\n" +
-                             $"[rgb(134,64,0)]Arrival:[/]  [rgb(255,122,0)]{FlightModel.ArrivalAirport}[/]\n" +
+                             $"[rgb(134,64,0)]Airline:[/]  [rgb(255,122,0)]{flightModel.Airline}[/]\n" +
+                             $"[rgb(134,64,0)]Departure:[/][rgb(255,122,0)]{flightModel.DepartureAirport}[/]\n" +
+                             $"[rgb(134,64,0)]Arrival:[/]  [rgb(255,122,0)]{flightModel.ArrivalAirport}[/]\n" +
                              $"[rgb(134,64,0)]Rating:[/]   [rgb(255,122,0)]{goldStars + " " + grayStars}[/]\n" +
                              $"[rgb(134,64,0)]Content:[/]  [rgb(255,122,0)]{review.Content}[/]";
 
@@ -166,6 +153,5 @@ public static class ReviewUI
 
             AnsiConsole.Write(panel);
         }
-        FlightUI.WaitForKeyPress();
     }
 }

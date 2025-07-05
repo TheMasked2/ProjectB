@@ -11,7 +11,7 @@ public static class SeatMapLogic
 
     public static (List<string> seatLetters, List<int> rowNumbers) GetSeatLayout(List<SeatModel> seats)
     {
-        var seatLetters = seats.Select(s => s.SeatPosition).Distinct().OrderBy(c => c).ToList();
+        var seatLetters = seats.Select(s => s.ColumnLetter).Distinct().OrderBy(c => c).ToList();
         var rowNumbers = seats.Select(s => s.RowNumber).Distinct().OrderBy(n => n).ToList();
         return (seatLetters, rowNumbers);
     }
@@ -62,7 +62,7 @@ public static class SeatMapLogic
             for (int i = 0; i < seatLetters.Count; i++)
             {
                 var letter = seatLetters[i];
-                var seat = seats.FirstOrDefault(s => s.RowNumber == row && s.SeatPosition == letter);
+                var seat = seats.FirstOrDefault(s => s.RowNumber == row && s.ColumnLetter == letter);
                 if (seat == null)
                 {
                     line += "   ";
@@ -73,7 +73,7 @@ public static class SeatMapLogic
                 }
                 else
                 {
-                    var seatType = (seat.SeatType ?? "").Trim().ToLower();
+                    var seatType = (seat.SeatClass ?? "").Trim().ToLower();
                     switch (seatType)
                     {
                         case "luxury":
@@ -143,7 +143,7 @@ public static class SeatMapLogic
 
     public static SeatModel TryGetAvailableSeat(List<SeatModel> seats, int row, string seatLetter)
     {
-        var seat = seats.FirstOrDefault(s => s.RowNumber == row && s.SeatPosition == seatLetter);
+        var seat = seats.FirstOrDefault(s => s.RowNumber == row && s.ColumnLetter == seatLetter);
         if (seat != null && !seat.IsOccupied)
             return seat;
         return null;

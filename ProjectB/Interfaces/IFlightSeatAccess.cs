@@ -1,6 +1,6 @@
 namespace ProjectB.DataAccess
 {
-    public interface IFlightSeatAccess
+    public interface IFlightSeatAccess : IGenericAccess<SeatModel, string>
     {
         List<SeatModel> GetSeatsForFlight(int flightId);
         bool HasAnySeatsForFlight(int flightId);

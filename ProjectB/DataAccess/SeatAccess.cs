@@ -2,10 +2,10 @@ using Microsoft.Data.Sqlite;
 using Dapper;
 using ProjectB.DataAccess;
 
-public class SeatAccess : ISeatAccess
+public class SeatAccess : GenericAccess<SeatModel, string>, ISeatAccess
 {
-    private readonly SqliteConnection _connection = new SqliteConnection($"Data Source=DataSources/database.db");
-    private const string Table = "SEATS";
+    protected override string Table => "SEATS";
+    protected override string PrimaryKey => "SeatID";
     public float GetSeatClassPrice(string airplaneID)
     {
 

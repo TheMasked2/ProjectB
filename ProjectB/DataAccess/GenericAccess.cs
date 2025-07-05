@@ -20,6 +20,13 @@ public abstract class GenericAccess<TModel, TKey> : IGenericAccess<TModel, TKey>
         string sql = $"SELECT * FROM {Table}";
         return _connection.Query<TModel>(sql).ToList();
     }
+    
+    public virtual void Delete(TKey id)
+    {
+        string sql = $"DELETE FROM {Table} WHERE {PrimaryKey} = @Id";
+        var paramaters = new { Id = id };
+        _connection.Execute(sql, paramaters);
+    }
 
     public virtual void Insert(TModel model)
     {
@@ -31,10 +38,4 @@ public abstract class GenericAccess<TModel, TKey> : IGenericAccess<TModel, TKey>
         throw new NotImplementedException();
     }
 
-    public virtual void Delete(TKey id)
-    {
-        string sql = $"DELETE FROM {Table} WHERE {PrimaryKey} = @Id";
-        var paramaters = new { Id = id };
-        _connection.Execute(sql, paramaters);
-    }
 }

@@ -9,8 +9,9 @@ public class User {
     public string PhoneNumber { get; set; }
     public DateTime BirthDate { get; set; }
     public DateTime AccCreatedAt { get; set; }
-    public bool FirstTimeDiscount { get; set; } // Default to true, can be set to false after first use
     public UserRole Role { get; set; }
+    public bool FirstTimeDiscount { get; set; } // Default to true, can be set to false after first use
+    // Not in database, but used for logic
     public bool IsAdmin => Role == UserRole.Admin;
     public bool IsGuest => Role == UserRole.Guest;
     public bool IsCustomer => Role == UserRole.Customer;
@@ -29,7 +30,7 @@ public class User {
         DateTime birthDate,
         DateTime accCreatedAt,
         UserRole role = UserRole.Customer,
-        bool firstTimeDiscount = false
+        bool firstTimeDiscount = true
     )
     {
         UserID = userID;
@@ -42,7 +43,7 @@ public class User {
         PhoneNumber = phoneNumber;
         BirthDate = birthDate;
         AccCreatedAt = accCreatedAt;
-        FirstTimeDiscount = firstTimeDiscount;
         Role = role;
+        FirstTimeDiscount = firstTimeDiscount;
     }
 }

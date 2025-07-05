@@ -84,11 +84,8 @@ public static class AdminUI
                     FlightUI.RemoveFlight();
                     break;
                 case "View upcoming flights":
-                    List<FlightModel> flights = FlightUI.DisplayFilteredUpcomingFlights();
+                    List<FlightModel> flights = FlightUI.DisplayFilteredFlights();
                     break;
-                // case "View past flights":
-                //     PastFlightUI.DisplayFilteredPastFlights(); 
-                    // break;
                 case "Back to main menu":
                     return;
             }

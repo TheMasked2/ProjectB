@@ -16,7 +16,7 @@ public class FlightAccess : GenericAccess<FlightModel, int>, IFlightAccess
                         ArrivalAirport, 
                         DepartureTime, 
                         ArrivalTime, 
-                        FlightStatus) 
+                        Status) 
                         VALUES 
                         (@Airline, 
                         @AirplaneID, 
@@ -34,12 +34,11 @@ public class FlightAccess : GenericAccess<FlightModel, int>, IFlightAccess
         string sql = $@"UPDATE {Table} 
                         SET Airline = @Airline, 
                             AirplaneID = @AirplaneID, 
-                            AvailableSeats = @AvailableSeats, 
                             DepartureAirport = @DepartureAirport, 
                             ArrivalAirport = @ArrivalAirport, 
                             DepartureTime = @DepartureTime, 
                             ArrivalTime = @ArrivalTime,
-                            FlightStatus = @FlightStatus 
+                            Status = @FlightStatus 
                         WHERE FlightID = @FlightID";
         _connection.Execute(sql, flight);
     }
@@ -48,7 +47,7 @@ public class FlightAccess : GenericAccess<FlightModel, int>, IFlightAccess
     {
         string sql = $@"SELECT * FROM {Table} 
                         WHERE DepartureTime < @CurrentTime
-                        AND FlightStatus = 'Departed'";
+                        AND Status = 'Departed'";
 
         return _connection.Query<FlightModel>(sql, new { CurrentTime = currentDate }).ToList();
     }
@@ -57,7 +56,7 @@ public class FlightAccess : GenericAccess<FlightModel, int>, IFlightAccess
     {
         string sql = $@"SELECT * FROM {Table} 
                         WHERE DepartureTime <= @SoonDate
-                        AND FlightStatus != 'Departed'";
+                        AND Status != 'Departed'";
 
         return _connection.Query<FlightModel>(sql, new { SoonDate = departingSoonDate }).ToList();
     }
@@ -71,7 +70,7 @@ public class FlightAccess : GenericAccess<FlightModel, int>, IFlightAccess
                         WHERE date(DepartureTime) = date(@DepartureDate)
                         AND DepartureAirport LIKE @Origin
                         AND ArrivalAirport LIKE @Destination
-                        AND FlightStatus != 'Departed'";
+                        AND Status != 'Departed'";
         var parameters = new
         {
             DepartureDate = departureDate,
@@ -93,7 +92,7 @@ public class FlightAccess : GenericAccess<FlightModel, int>, IFlightAccess
     {
         string sql = $@"SELECT FlightID FROM {Table} 
                         WHERE DepartureTime < @MonthAgo 
-                        AND FlightStatus = 'Departed'";
+                        AND Status = 'Departed'";
         var parameters = new { MonthAgo = monthAgo };
         return _connection.Query<int>(sql, parameters).ToList();
     }
