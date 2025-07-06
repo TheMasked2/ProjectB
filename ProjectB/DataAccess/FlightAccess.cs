@@ -25,7 +25,7 @@ public class FlightAccess : GenericAccess<FlightModel, int>, IFlightAccess
                         @ArrivalAirport, 
                         @DepartureTime, 
                         @ArrivalTime,
-                        @FlightStatus)";
+                        @Status)";
         _connection.Execute(sql, flight);
     }
 
@@ -38,7 +38,7 @@ public class FlightAccess : GenericAccess<FlightModel, int>, IFlightAccess
                             ArrivalAirport = @ArrivalAirport, 
                             DepartureTime = @DepartureTime, 
                             ArrivalTime = @ArrivalTime,
-                            Status = @FlightStatus 
+                            Status = @Status 
                         WHERE FlightID = @FlightID";
         _connection.Execute(sql, flight);
     }
@@ -46,8 +46,7 @@ public class FlightAccess : GenericAccess<FlightModel, int>, IFlightAccess
     public List<FlightModel> GetPastFlights(DateTime currentDate)
     {
         string sql = $@"SELECT * FROM {Table} 
-                        WHERE DepartureTime < @CurrentTime
-                        AND Status = 'Departed'";
+                        WHERE DepartureTime < @CurrentTime";
 
         return _connection.Query<FlightModel>(sql, new { CurrentTime = currentDate }).ToList();
     }

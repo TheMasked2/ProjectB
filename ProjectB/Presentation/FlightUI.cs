@@ -84,20 +84,20 @@ public static class FlightUI
                     "Luxury",
                     "Business",
                     "Premium",
-                    "Standard Extra Legroom",
-                    "Standard"
+                    "Extra Legroom",
+                    "Economy"
                 };
 
                 string input = AnsiConsole.Prompt(
                     new SelectionPrompt<string>()
-                        .Title("[#864000]Select seat class (default is 'Standard'):[/]")
+                        .Title("[#864000]Select seat class (default is 'Economy'):[/]")
                         .PageSize(6)
                         .AddChoices(seatClassOptions));
 
                 switch (input)
                 {
-                    case "Standard":
-                        seatClass = "Standard";
+                    case "Economy":
+                        seatClass = "Economy";
                         break;
                     case "Business":
                         seatClass = "Business";
@@ -108,11 +108,11 @@ public static class FlightUI
                     case "Luxury":
                         seatClass = "Luxury";
                         break;
-                    case "Standard Extra Legroom":
-                        seatClass = "Standard Extra Legroom";
+                    case "Extra Legroom":
+                        seatClass = "Extra Legroom";
                         break;
                     default:
-                        seatClass = "Standard";
+                        seatClass = "Economy";
                         break;
                 }
 
@@ -357,7 +357,7 @@ public static class FlightUI
             [rgb(134,64,0)]Arrival Airport:[/] [rgb(255,122,0)]{Flight.ArrivalAirport}[/]
             [rgb(134,64,0)]Departure Time:[/] [rgb(255,122,0)]{Flight.DepartureTime:yyyy-MM-dd}[/]
             [rgb(134,64,0)]Arrival Time:[/] [rgb(255,122,0)]{Flight.ArrivalTime:yyyy-MM-dd}[/]
-            [rgb(134,64,0)]FlightStatus:[/] [rgb(255,122,0)]{Flight.FlightStatus}[/]
+            [rgb(134,64,0)]FlightStatus:[/] [rgb(255,122,0)]{Flight.Status}[/]
             """)
             // [rgb(134,64,0)]Price:[/] [rgb(255,122,0)]{Flight.Price + "$"}[/]
             .Border(BoxBorder.Rounded)

@@ -49,8 +49,8 @@ public static class FlightLogic
 
         table.AddColumns(
             "[#864000]ID[/]", "[#864000]Aircraft ID[/]", "[#864000]Airline[/]",
-            "[#864000]From[/]", "[#864000]To[/]", "[#864000]Departure[/]",
-            "[#864000]Arrival[/]", "[#864000]Status[/]"
+            "[#864000]From[/]", "[#864000]To[/]", "[#864000]Departure time[/]",
+            "[#864000]Arrival time[/]", "[#864000]Status[/]"
         );
 
         if (seatClass != null)
@@ -70,7 +70,7 @@ public static class FlightLogic
                 flight.ArrivalAirport,
                 flight.DepartureTime.ToString("g"),
                 flight.ArrivalTime.ToString("g"),
-                flight.FlightStatus,
+                flight.Status,
                 GetSeatClassPrice(flight.AirplaneID, seatClass).ToString("C"));
             }
             else
@@ -83,7 +83,7 @@ public static class FlightLogic
                 flight.ArrivalAirport,
                 flight.DepartureTime.ToString("g"),
                 flight.ArrivalTime.ToString("g"),
-                flight.FlightStatus);
+                flight.Status);
             };
         }
 
@@ -107,7 +107,7 @@ public static class FlightLogic
 
         flight.AirplaneID = airplane.AirplaneID;
 
-        flight.FlightStatus = "Scheduled";
+        flight.Status = "Scheduled";
 
         AutoIncrementFlightID(flight);
 
@@ -202,7 +202,7 @@ public static class FlightLogic
         foreach (FlightModel flight in pastFlights)
         {
             // Update flight
-            flight.FlightStatus = "Departed";
+            flight.Status = "Departed";
             FlightAccessService.Update(flight);
         }
         // Remove past flights and their seats which are older than a month
@@ -214,7 +214,7 @@ public static class FlightLogic
         foreach (FlightModel flight in upcomingFlights)
         {
             // Update flight status to "Boarding"
-            flight.FlightStatus = "Boarding";
+            flight.Status = "Boarding";
             FlightAccessService.Update(flight);
         }
     }

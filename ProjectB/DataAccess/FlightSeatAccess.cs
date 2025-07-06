@@ -21,14 +21,14 @@ public class FlightSeatAccess : GenericAccess<SeatModel, string>, IFlightSeatAcc
                 s.SeatID,
                 s.AirplaneID,
                 s.RowNumber,
-                s.SeatPosition,
-                s.SeatType,
+                s.ColumnLetter,
+                s.SeatClass,
                 s.Price,
                 fs.IsOccupied
             FROM {Table} fs
             INNER JOIN {SeatsTable} s ON fs.SeatID = s.SeatID
             WHERE fs.FlightID = @FlightID
-            ORDER BY s.RowNumber, s.SeatPosition
+            ORDER BY s.RowNumber, s.ColumnLetter
         ";
         return _connection.Query<SeatModel>(sql, new { FlightID = flightId }).ToList();
     }

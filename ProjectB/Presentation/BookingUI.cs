@@ -122,8 +122,8 @@ public static class BookingUI
         AnsiConsole.MarkupLine("");
         AnsiConsole.MarkupLine("[yellow]Pricing Details:[/]");
         AnsiConsole.MarkupLine(booking.TotalPrice < 0 
-            ? $"[yellow]Price[/]: [white]{Math.Abs(booking.TotalPrice)} Imperial units of Spice[/]" 
-            : $"[yellow]Price[/]: [white]€{booking.TotalPrice}[/]");
+            ? $"[yellow]Price[/]: [white]{Math.Abs(booking.TotalPrice):F2} Imperial units of Spice[/]" 
+            : $"[yellow]Price[/]: [white]€{booking.TotalPrice:F2}[/]");
         
         if (booking.Discount < 1.0m)
         {
@@ -231,7 +231,7 @@ public static class BookingUI
             AnsiConsole.MarkupLine(seat);
 
         AnsiConsole.MarkupLine(
-            "[yellow]L[/]=Luxury: $900  [cyan]B[/]=Business: $700  [magenta]P[/]=Premium: $500  [blue]E[/]=Standard Extra Legroom: $400  [green]O[/]=Standard: $300  [red]X[/]=Occupied"
+            "[yellow]L[/]=Luxury: $900  [cyan]B[/]=Business: $700  [magenta]P[/]=Premium: $500  [blue]E[/]=Extra Legroom: $400  [green]O[/]=Economy: $300  [red]X[/]=Occupied"
         );
     }
 

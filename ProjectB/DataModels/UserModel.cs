@@ -11,7 +11,7 @@ public class User {
     public DateTime AccCreatedAt { get; set; }
     public UserRole Role { get; set; }
     public bool FirstTimeDiscount { get; set; } // Default to true, can be set to false after first use
-    // Not in database, but used for logic
+    // Not in database, but used for logic:
     public bool IsAdmin => Role == UserRole.Admin;
     public bool IsGuest => Role == UserRole.Guest;
     public bool IsCustomer => Role == UserRole.Customer;

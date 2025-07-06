@@ -9,7 +9,7 @@ public class FlightModel
     public string ArrivalAirport { get; set; } // Foreign Key
     public DateTime DepartureTime { get; set; }
     public DateTime ArrivalTime { get; set; }
-    public string FlightStatus { get; set; }
+    public string Status { get; set; }
     
     public FlightModel() { }
 }

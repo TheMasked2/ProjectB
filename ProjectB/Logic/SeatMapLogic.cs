@@ -82,13 +82,13 @@ public static class SeatMapLogic
                         case "premium":
                             line += "[magenta] P [/]";
                             break;
-                        case "standard extra legroom":
+                        case "extra legroom":
                             line += "[blue] E [/]";
                             break;
                         case "business":
                             line += "[cyan] B [/]";
                             break;
-                        case "standard":
+                        case "economy":
                             line += "[green] O [/]";
                             break;
                         default:
