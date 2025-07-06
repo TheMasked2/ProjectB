@@ -2,7 +2,7 @@ using ProjectB.DataAccess;
 public static class UserLogic
 {
     public static IUserAccess UserAccessService { get; set; } = new UserAccess();
-    public static List<string> errors = new List<string>();
+    public static List<string> errors = new();
 
     public static bool Register(
         string firstName,
@@ -18,9 +18,9 @@ public static class UserLogic
     {
         errors.Clear();
 
-        if (!int.TryParse(phoneNumberString, out int phoneNumber))
+        if (string.IsNullOrWhiteSpace(phoneNumberString) || !phoneNumberString.All(char.IsDigit))
         {
-            errors.Add("Phone number is not a number.");
+            errors.Add("Phone number must contain only digits and cannot be empty.");
         }
 
         if (!DateTime.TryParse(birthDateString, out DateTime birthDate))
@@ -52,7 +52,7 @@ public static class UserLogic
         var user = new User(
             userID: UserAccessService.GetHighestUserId() + 1,
             firstName, lastName, country, city, emailAddress, password,
-            phoneNumber.ToString(), birthDate, DateTime.Now, UserRole.Customer, firstTimeDiscount: true
+            phoneNumberString, birthDate, DateTime.Now, UserRole.Customer, firstTimeDiscount: true
         );
 
         UserAccessService.Insert(user);
@@ -74,9 +74,9 @@ public static class UserLogic
     {
         errors.Clear();
 
-        if (!int.TryParse(phoneNumberString, out int phoneNumber))
+        if (string.IsNullOrWhiteSpace(phoneNumberString) || !phoneNumberString.All(char.IsDigit))
         {
-            errors.Add("Phone number is not a number.");
+            errors.Add("Phone number must contain only digits and cannot be empty.");
         }
 
         if (!DateTime.TryParse(birthDateString, out DateTime birthDate))
@@ -103,7 +103,7 @@ public static class UserLogic
         var user = new User(
             userID: UserAccessService.GetHighestUserId() + 1,
             firstName, lastName, country, city, emailAddress, password,
-            phoneNumber.ToString(), birthDate, accCreatedAt, role
+            phoneNumberString, birthDate, accCreatedAt, role
         );
 
         UserAccessService.Insert(user);
@@ -193,7 +193,7 @@ public static class UserLogic
         // Update guest user properties
         guestUser.FirstName = firstName;
         guestUser.LastName = lastName;
-        guestUser.EmailAddress = email;
+        guestUser.Email = email;
         guestUser.PhoneNumber = phoneNumber;
         guestUser.BirthDate = birthDate;
         guestUser.FirstTimeDiscount = false; // Guest users do not get discounts
@@ -222,8 +222,8 @@ public static class UserLogic
                 if (updatedUser.LastName != originalUser.LastName)
                     changedFields.Add("LastName", $"{originalUser.LastName} -> {updatedUser.LastName}");
 
-                if (updatedUser.EmailAddress != originalUser.EmailAddress)
-                    changedFields.Add("Email", $"{originalUser.EmailAddress} -> {updatedUser.EmailAddress}");
+                if (updatedUser.Email != originalUser.Email)
+                    changedFields.Add("Email", $"{originalUser.Email} -> {updatedUser.Email}");
 
                 if (updatedUser.PhoneNumber != originalUser.PhoneNumber)
                     changedFields.Add("PhoneNumber", $"{originalUser.PhoneNumber} -> {updatedUser.PhoneNumber}");
@@ -260,7 +260,7 @@ public static class UserLogic
             errors.Add("[#A23400]City cannot be empty[/]");
         }
 
-        if (string.IsNullOrWhiteSpace(updatedUser.EmailAddress))
+        if (string.IsNullOrWhiteSpace(updatedUser.Email))
         {
             errors.Add("[#A23400]Email address cannot be empty[/]");
         }
@@ -309,7 +309,7 @@ public static class UserLogic
     {
         emailFilter = emailFilter.ToLower();
         return UserAccessService.GetAll().Where(u =>
-            u.EmailAddress.ToLower().Contains(emailFilter)).ToList();
+            u.Email.ToLower().Contains(emailFilter)).ToList();
     }
 
     public static List<User> GetUsersByName(string nameFilter)
@@ -346,7 +346,7 @@ public static class UserLogic
             $"Last Name: {SessionManager.CurrentUser.LastName}\n" +
             $"Country: {SessionManager.CurrentUser.Country}\n" +
             $"City: {SessionManager.CurrentUser.City}\n" +
-            $"Email: {SessionManager.CurrentUser.EmailAddress}\n" +
+            $"Email: {SessionManager.CurrentUser.Email}\n" +
             $"Phone Number: {SessionManager.CurrentUser.PhoneNumber}\n" +
             $"Birth Date: {SessionManager.CurrentUser.BirthDate.ToString("yyyy-MM-dd")}\n" +
             $"Account Created At: {SessionManager.CurrentUser.AccCreatedAt.ToString("yyyy-MM-dd")}\n" +

@@ -109,19 +109,19 @@ public static class UserUI
                     .Centered()
                     .Color(Color.Cyan1));
 
-            var panel = new Panel("[#FFD58A]Please enter your login credentials[/]")
+            Panel panel = new Panel("[#FFD58A]Please enter your login credentials[/]")
                 .Border(BoxBorder.Rounded)
                 .Header("[#864000]Login[/]", Justify.Center)
                 .Padding(1, 1, 1, 1);
             AnsiConsole.Write(panel);
 
-            var email = AnsiConsole.Prompt(
+            string email = AnsiConsole.Prompt(
                 new TextPrompt<string>("[#864000]Enter your email:[/]")
                     .PromptStyle(highlightStyle)
                     .ValidationErrorMessage("[#A23400]Email cannot be empty[/]")
                     .Validate(input => !string.IsNullOrWhiteSpace(input)));
 
-            var password = AnsiConsole.Prompt(
+            string password = AnsiConsole.Prompt(
                 new TextPrompt<string>("[#864000]Enter your password:[/]")
                     .Secret()
                     .PromptStyle(highlightStyle)
@@ -192,7 +192,7 @@ public static class UserUI
             UserID = currentUser.UserID,
             FirstName = currentUser.FirstName,
             LastName = currentUser.LastName,
-            EmailAddress = currentUser.EmailAddress,  // Can't be changed
+            Email = currentUser.Email,  // Can't be changed
             Password = currentUser.Password,
             Country = currentUser.Country,
             City = currentUser.City,
@@ -243,7 +243,7 @@ public static class UserUI
                     .Secret()
                     .PromptStyle(highlightStyle));
 
-            if (UserLogic.VerifyPassword(currentUser.EmailAddress, currentPassword))
+            if (UserLogic.VerifyPassword(currentUser.Email, currentPassword))
             {
                 bool passwordsMatch = false;
                 do
@@ -379,7 +379,7 @@ public static class UserUI
         var profileData = new Panel($"""
             [rgb(134,64,0)]Name:[/] [rgb(255,122,0)]{user.FirstName} {user.LastName}[/]
             [rgb(134,64,0)]Location:[/] [rgb(255,122,0)]{user.City}, {user.Country}[/]
-            [rgb(134,64,0)]Contact:[/] [rgb(255,122,0)]{user.EmailAddress}[/]
+            [rgb(134,64,0)]Email:[/] [rgb(255,122,0)]{user.Email}[/]
             [rgb(134,64,0)]Password:[/] [rgb(255,122,0)]{user.Password}[/]
             [rgb(134,64,0)]Phone:[/] [rgb(255,122,0)]{user.PhoneNumber}[/]
             [rgb(134,64,0)]Birth Date:[/] [rgb(255,122,0)]{user.BirthDate:yyyy-MM-dd}[/]

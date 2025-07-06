@@ -11,7 +11,7 @@ public static class LoggerLogic
         string adminName = $"{adminUser.FirstName} {adminUser.LastName}";
         string targetId = createdUser.UserID.ToString();
         string targetName = $"{createdUser.FirstName} {createdUser.LastName}";
-        string details = $"Email={createdUser.EmailAddress}|Admin={createdUser.IsAdmin}";
+        string details = $"Email={createdUser.Email}|Admin={createdUser.IsAdmin}";
 
         string logEntry = $"{timestamp};{action};{adminId};{adminName};{targetId};{targetName};{details}";
 

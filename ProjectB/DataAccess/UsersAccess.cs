@@ -18,17 +18,21 @@ public class UserAccess : GenericAccess<User, int>, IUserAccess
                         Password, 
                         PhoneNumber, 
                         BirthDate, 
-                        AccCreatedAt)
+                        AccCreatedAt,
+                        Role,
+                        FirstTimeDiscount)
                         VALUES 
                         (@FirstName, 
                         @LastName, 
                         @Country, 
                         @City, 
-                        @Email, 
+                        @EmailAddress,
                         @Password, 
                         @PhoneNumber, 
                         @BirthDate, 
-                        @AccCreatedAt)";
+                        @AccCreatedAt,
+                        @Role,
+                        @FirstTimeDiscount)";
         _connection.Execute(sql, model);
     }
 
@@ -43,7 +47,7 @@ public class UserAccess : GenericAccess<User, int>, IUserAccess
                             Email = @Email,
                             Password = @Password,
                             PhoneNumber = @PhoneNumber,
-                            BirthDate = @BirthDate
+                            BirthDate = @BirthDate,
                             Role = @Role,
                             FirstTimeDiscount = @FirstTimeDiscount
                         WHERE UserID = @UserID";

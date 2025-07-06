@@ -4,7 +4,7 @@ public class User {
     public string LastName { get; set; }
     public string Country { get; set; }
     public string City { get; set; }
-    public string EmailAddress { get; set; }
+    public string Email { get; set; }
     public string Password { get; set; }
     public string PhoneNumber { get; set; }
     public DateTime BirthDate { get; set; }
@@ -38,7 +38,7 @@ public class User {
         LastName = lastName;
         Country = country;
         City = city;
-        EmailAddress = emailAddress;
+        Email = emailAddress;
         Password = password;
         PhoneNumber = phoneNumber;
         BirthDate = birthDate;

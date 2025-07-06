@@ -288,7 +288,7 @@ public static class AdminUI
             table.AddRow(
                 user.UserID.ToString(),
                 $"{user.FirstName} {user.LastName}",
-                user.EmailAddress,
+                user.Email,
                 user.PhoneNumber,
                 $"{user.City}, {user.Country}",
                 user.Role.ToString()
@@ -321,9 +321,9 @@ public static class AdminUI
                 .DefaultValue(selectedUser.LastName)
                 .PromptStyle(highlightStyle));
         
-        selectedUser.EmailAddress = AnsiConsole.Prompt(
+        selectedUser.Email = AnsiConsole.Prompt(
             new TextPrompt<string>("[#864000]Enter new email[/]")
-                .DefaultValue(selectedUser.EmailAddress)
+                .DefaultValue(selectedUser.Email)
                 .PromptStyle(highlightStyle));
         
         selectedUser.PhoneNumber = AnsiConsole.Prompt(

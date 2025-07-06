@@ -99,7 +99,7 @@ public static class BookingUI
 
         if (!ComesFromModify)
         {
-            AnsiConsole.MarkupLine($"[green]Booking confirmation will be sent to: {user.EmailAddress}[/]");
+            AnsiConsole.MarkupLine($"[green]Booking confirmation will be sent to: {user.Email}[/]");
         }
         AnsiConsole.MarkupLine("[yellow]Booking Details:[/]");
         AnsiConsole.MarkupLine($"[yellow]Seat[/]: [white]{(booking.SeatID.Contains("-") ? booking.SeatID.Split('-')[1] : booking.SeatID)}[/]");
@@ -113,7 +113,7 @@ public static class BookingUI
         AnsiConsole.MarkupLine("");
         AnsiConsole.MarkupLine("[yellow]Personal Details:[/]");
         AnsiConsole.MarkupLine($"[yellow]Passenger[/]: [white]{user.FirstName} {user.LastName}[/]");
-        AnsiConsole.MarkupLine($"[yellow]Email[/]: [white]{user.EmailAddress ?? "N/A"}[/]");
+        AnsiConsole.MarkupLine($"[yellow]Email[/]: [white]{user.Email ?? "N/A"}[/]");
         AnsiConsole.MarkupLine($"[yellow]Phone[/]: [white]{user.PhoneNumber ?? "N/A"}[/]");
         AnsiConsole.MarkupLine("");
         AnsiConsole.MarkupLine("[yellow]Extra Options:[/]");
@@ -279,9 +279,9 @@ public static class BookingUI
             AnsiConsole.MarkupLine("[yellow]Thank you for booking with Airtreides![/]");
     
             // If user has email, confirm that confirmation will be sent
-            if (!string.IsNullOrEmpty(SessionManager.CurrentUser.EmailAddress))
+            if (!string.IsNullOrEmpty(SessionManager.CurrentUser.Email))
             {
-                AnsiConsole.MarkupLine($"[green]Booking confirmation has been sent to: {SessionManager.CurrentUser.EmailAddress}[/]");
+                AnsiConsole.MarkupLine($"[green]Booking confirmation has been sent to: {SessionManager.CurrentUser.Email}[/]");
             }
         }
         else
