@@ -25,7 +25,8 @@ public static class ReviewUI
                 new SelectionPrompt<string>()
                     .Title("[yellow]Select an option:[/]")
                     .PageSize(10)
-                    .AddChoices(choices));
+                    .AddChoices(choices)
+                    .WrapAround(true));
 
             switch (input)
             {
@@ -46,37 +47,49 @@ public static class ReviewUI
 
     public static void MakeAReview()
     {
-        bool succes = false;
-        do
+        int flightID = AnsiConsole.Prompt(
+            new TextPrompt<int>("[#864000]Please enter the flight ID you wish to review:[/]")
+                .PromptStyle(highlightStyle)
+                .Validate(id =>
+                {
+                    FlightModel? flight = FlightLogic.GetFlightById(id);
+                    if (flight == null)
+                    {
+                        return ValidationResult.Error("[red]Flight not found.[/]");
+                    }
+                    if (flight.Status != "Departed")
+                    {
+                        return ValidationResult.Error($"[red]You can't review a flight that hasn't flown yet. This flight's status is '{flight.Status}'.[/]");
+                    }
+                    return ValidationResult.Success();
+                })
+        );
+
+        // If we get here, the flightID is valid. Now get the rest of the review details.
+        int rating = AnsiConsole.Prompt(
+            new TextPrompt<int>("[#864000]Please enter the rating for the review (1-5):[/]")
+                .PromptStyle(highlightStyle)
+                .ValidationErrorMessage("[red]Invalid rating. Please enter a whole number between 1 and 5.[/]")
+                .Validate(r => r >= 1 && r <= 5)
+        );
+
+        string content = AnsiConsole.Prompt(
+            new TextPrompt<string>("[#864000]Please enter the content of the review:[/]")
+                .PromptStyle(highlightStyle));
+
+        ReviewModel review = new ReviewModel(SessionManager.CurrentUser.UserID, flightID, content, rating);
+
+        string errorMessage;
+        if (ReviewLogic.AddReview(review, out errorMessage))
         {
-            int Rating = AnsiConsole.Prompt(
-                new TextPrompt<int>("[#864000]Please enter the rating of the review (1-5):[/]")
-                    .PromptStyle(highlightStyle));
-
-            string Content = AnsiConsole.Prompt(
-                new TextPrompt<string>("[#864000]Please enter the content of the review:[/]")
-                    .PromptStyle(highlightStyle));
-
-            int FlightID = AnsiConsole.Prompt(
-                new TextPrompt<int>("[#864000]Please enter the flight id of the review:[/]")
-                    .PromptStyle(highlightStyle));
-
-            ReviewModel Review = new ReviewModel(SessionManager.CurrentUser.UserID, FlightID, Content, Rating);
-
-            string errorMessage;
-            succes = ReviewLogic.AddReview(Review, out errorMessage);
-
-            if (succes)
-            {
-                AnsiConsole.MarkupLine($"[green]Review added successfully![/]");
-            }
-            else
-            {
-                AnsiConsole.MarkupLine($"[red]{errorMessage}[/]");
-            }
+            AnsiConsole.MarkupLine("[green]Review added successfully![/]");
             FlightUI.WaitForKeyPress();
-            break;
-        } while (!succes);
+        }
+        else
+        {
+            AnsiConsole.MarkupLine($"[red]Error: {errorMessage}[/]");
+            FlightUI.WaitForKeyPress();
+        }
     }
     
     public static void ViewReviews()

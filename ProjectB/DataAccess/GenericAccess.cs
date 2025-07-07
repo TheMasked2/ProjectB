@@ -12,7 +12,7 @@ public abstract class GenericAccess<TModel, TKey> : IGenericAccess<TModel, TKey>
     {
         string sql = $"SELECT * FROM {Table} WHERE {PrimaryKey} = @Id";
         var paramaters = new { Id = id };
-        return _connection.QuerySingleOrDefault<TModel>(sql, paramaters);
+        return _connection.QueryFirstOrDefault<TModel>(sql, paramaters);
     }
 
     public virtual List<TModel>? GetAll()

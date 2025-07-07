@@ -10,12 +10,14 @@ public static class BookingUI
         AnsiConsole.MarkupLine("\n[grey]Press any key to continue...[/]");
         Console.ReadKey(true);
     }
+
     public static void BookADamnFlight()
     {
         // Display all bookable flights based on user input
         List<FlightModel> bookableFlights = FlightUI.DisplayFilteredFlights();
         if (bookableFlights == null || !bookableFlights.Any())
         {
+            WaitForKeyPress();
             return;
         }
         FlightModel selectedFlight = SelectBookableFlight(bookableFlights);
@@ -231,7 +233,7 @@ public static class BookingUI
             AnsiConsole.MarkupLine(seat);
 
         AnsiConsole.MarkupLine(
-            "[yellow]L[/]=Luxury: $900  [cyan]B[/]=Business: $700  [magenta]P[/]=Premium: $500  [blue]E[/]=Extra Legroom: $400  [green]O[/]=Economy: $300  [red]X[/]=Occupied"
+            "[yellow]L[/]=Luxury: $400  [cyan]B[/]=Business: $250  [magenta]P[/]=Premium: $150  [blue]E[/]=Economy Extra Legroom: $120  [green]O[/]=Economy: $100  [red]X[/]=Occupied"
         );
     }
 
@@ -446,8 +448,8 @@ public static class BookingUI
             WaitForKeyPress();
             return;
         }
-        var user = SessionManager.CurrentUser;
-        var bookings = BookingLogic.GetBookingsForUser(user.UserID, upcoming);
+        User? user = SessionManager.CurrentUser;
+        List<BookingModel>? bookings = BookingLogic.GetBookingsForUser(user.UserID, upcoming);
         if (!bookings.Any())
         {
             AnsiConsole.MarkupLine("[yellow]No bookings found.[/]");

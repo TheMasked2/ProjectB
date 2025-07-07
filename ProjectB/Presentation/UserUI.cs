@@ -421,7 +421,8 @@ public static class UserUI
                     .Title("[#864000]Booking Management[/]")
                     .PageSize(10)
                     .AddChoices(choices)
-                    .HighlightStyle(highlightStyle));
+                    .HighlightStyle(highlightStyle)
+                    .WrapAround(true));
 
             switch (input)
             {
@@ -470,7 +471,8 @@ public static class UserUI
                 new SelectionPrompt<string>()
                     .Title("[yellow]Select an option:[/]")
                     .PageSize(5)
-                    .AddChoices(choices));
+                    .AddChoices(choices)
+                    .WrapAround(true));
 
             switch (input)
             {

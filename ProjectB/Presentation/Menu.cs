@@ -53,7 +53,8 @@ public static class Menu
                 new SelectionPrompt<string>()
                     .Title("[yellow]Select an option:[/]")
                     .PageSize(7)
-                    .AddChoices(choices));
+                    .AddChoices(choices)
+                    .WrapAround(true));
 
             switch (input)
             {
@@ -111,7 +112,7 @@ public static class Menu
                 case "Reviews":
                     ReviewUI.ShowReviewMenu();
                     break;
-                
+
             }
         }
     }

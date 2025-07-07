@@ -39,15 +39,6 @@ public class FlightSeatAccess : GenericAccess<SeatModel, string>, IFlightSeatAcc
         return _connection.QueryFirstOrDefault<int?>(sql, new { FlightID = flightId }) != null;
     }
 
-    public void BulkCreateAllFlightSeats(List<(int flightId, string airplaneId)> toBackfill)
-    {
-        foreach (var (flightId, airplaneId) in toBackfill)
-        {
-            string sql = $@"INSERT INTO {Table} (FlightID, SeatID, IsOccupied) VALUES (@FlightID, @SeatID, 0)";
-            _connection.Execute(sql, new { FlightID = flightId, SeatID = airplaneId });
-        }
-    }
-
     public void SetSeatOccupancy(int flightId, string seatId, bool isOccupied)
     {
         string sql = $"UPDATE {Table} SET IsOccupied = @IsOccupied WHERE FlightID = @FlightID AND SeatID = @SeatID";
@@ -56,8 +47,18 @@ public class FlightSeatAccess : GenericAccess<SeatModel, string>, IFlightSeatAcc
 
     public void CreateFlightSeats(int flightId, string airplaneId)
     {
-        string sql = $@"INSERT INTO {Table} (FlightID, SeatID, IsOccupied) VALUES (@FlightID, @SeatID, 0)";
-        _connection.Execute(sql, new { FlightID = flightId, SeatID = airplaneId });
+        // This SQL query creates flight seats for a specific flight.:
+        // It SELECTS all the SeatIDs from the SEATS table that match the airplaneId.
+        // For each SeatID found, it INSERTS a new row into the FLIGHTSEATS table.
+        // It uses the provided flightId and sets IsOccupied to 0 (unoccupied) for all new rows.
+        string sql = $@"
+            INSERT INTO {Table} (FlightID, SeatID, IsOccupied)
+            SELECT @FlightID, SeatID, 0
+            FROM {SeatsTable}
+            WHERE AirplaneID = @AirplaneID";
+
+        var parameters = new { FlightID = flightId, AirplaneID = airplaneId };
+        _connection.Execute(sql, parameters);
     }
 
     public void DeleteFlightSeatsByFlightIDs(List<int> flightIDs)

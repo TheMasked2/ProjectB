@@ -15,3 +15,6 @@
 2025-06-20 13:42:14;EDIT_USER;1;Addmin admin;11;My Name;FirstName=MyName -> My|LastName=Jeff -> Name|Email=jeff@gmail.com -> jeff@jeff.com|PhoneNumber=612345678 -> 0612345678
 2025-06-20 13:46:00;EDIT_USER;1;Addmin admin;7;Peter Lagemaat;FirstName=Cheng -> Peter|LastName=C -> Lagemaat|Email=1234@gmail.com -> peterlagemaat@gmail.com|City=N -> Rotterdam|Country=N -> Netherlands
 2025-06-20 19:08:15;CREATE_USER;1;Addmin admin;13;New Admin;Email=admin@airtreides.nl|Admin=True
+2025-07-07 14:14:09;CREATE_USER;2;Admin Addmin;3;Lucio Ridder;Email=lucioridder2003@gmail.com|Admin=False
+2025-07-07 14:15:33;EDIT_USER;2;Admin Addmin;3;Lucio Ridder;Role=Customer -> Admin
+2025-07-07 14:16:12;EDIT_USER;2;Admin Addmin;3;Lucio Ridder;Role=Admin -> Customer

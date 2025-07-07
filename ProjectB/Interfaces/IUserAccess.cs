@@ -4,6 +4,5 @@ namespace ProjectB.DataAccess
     {
         User? Login(string email, string password);
         User? GetUserInfoByEmail(string email);
-        int GetHighestUserId();
     }
 }

@@ -49,4 +49,10 @@ public class BookingAccess : GenericAccess<BookingModel, int>, IBookingAccess
         string sql = $@"SELECT * FROM {Table} WHERE UserID = @UserID";
         return _connection.Query<BookingModel>(sql, new { UserID = userId }).ToList();
     }
+
+    public List<BookingModel> GetBookingsByFlightId(int flightId)
+    {
+        string sql = $@"SELECT * FROM {Table} WHERE FlightID = @FlightID";
+        return _connection.Query<BookingModel>(sql, new { FlightID = flightId }).ToList();
+    }
 }

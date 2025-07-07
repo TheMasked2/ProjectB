@@ -26,7 +26,7 @@ public class UserAccess : GenericAccess<User, int>, IUserAccess
                         @LastName, 
                         @Country, 
                         @City, 
-                        @EmailAddress,
+                        @Email,
                         @Password, 
                         @PhoneNumber, 
                         @BirthDate, 
@@ -57,23 +57,16 @@ public class UserAccess : GenericAccess<User, int>, IUserAccess
     public User? GetUserInfoByEmail(string email)
     {
         string sql = $@"SELECT * FROM {Table}
-                        WHERE Email = @EmailAddress";
-        var parameters = new { EmailAddress = email };
+                        WHERE Email = @Email";
+        var parameters = new { Email = email };
         return _connection.QuerySingleOrDefault<User>(sql, parameters);
     }
 
     public User? Login(string email, string password)
     {
         string sql = $@"SELECT * FROM {Table} 
-                    WHERE Email = @EmailAddress AND Password = @Password";
-        var parameters = new { EmailAddress = email, Password = password };
+                    WHERE Email = @Email AND Password = @Password";
+        var parameters = new { Email = email, Password = password };
         return _connection.QueryFirstOrDefault<User>(sql, parameters);
     }
-
-    public int GetHighestUserId()
-    {
-        string sql = $@"SELECT MAX(UserID) FROM {Table}";
-        return _connection.ExecuteScalar<int>(sql);
-    }
-
 }

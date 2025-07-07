@@ -4,26 +4,11 @@ using Spectre.Console;
 public static class BookingLogic
 {
     public static IBookingAccess BookingAccessService { get; set; } = new BookingAccess();
-    public static IUserAccess UserAccessService { get; set; } = new UserAccess();
+    public static ISeatAccess SeatAccessService { get; set; } = new SeatAccess();
     public static IFlightAccess FlightAccessService { get; set; } = new FlightAccess();
     public static IFlightSeatAccess FlightSeatAccessService { get; set; } = new FlightSeatAccess();
     private static readonly Style primaryStyle = new(new Color(134, 64, 0));
     private static readonly Style errorStyle = new(new Color(162, 52, 0));
-
-    public static void BackfillFlightSeats(int FlightID)
-    {
-        FlightModel? flight = FlightAccessService.GetById(FlightID);
-        AirplaneModel? airplane = AirplaneLogic.GetAirplaneByID(flight.AirplaneID);
-
-        // If flight and airplane exist, and there are no seats for the flight, create them
-        if (flight != null && airplane != null && !FlightSeatAccessService.HasAnySeatsForFlight(FlightID))
-        {
-            for (int i = 1; i < airplane.TotalSeats; i++)
-            {
-                FlightSeatAccessService.CreateFlightSeats(FlightID, flight.AirplaneID);
-            }
-        }
-    }
 
     public static (decimal finalPrice, decimal discount, decimal insurancePrice) CalculateBookingPrice(
         User user,
@@ -102,7 +87,7 @@ public static class BookingLogic
         {
             if (b.BookingStatus == "Cancelled")
                 return !upcoming;
-            
+
             FlightModel? flight = FlightAccessService.GetById(b.FlightID);
             if (flight == null) return false;
 
@@ -121,9 +106,9 @@ public static class BookingLogic
 
         // Free up the seat
         FlightSeatAccessService.SetSeatOccupancy(booking.FlightID, booking.SeatID, false);
-        
+
         bool freeCancel = booking.HasInsurance;
-        
+
         // Update the booking based on insurance status
         if (booking.HasInsurance)
         {
@@ -133,13 +118,13 @@ public static class BookingLogic
         {
             booking.TotalPrice = Math.Max(0, booking.TotalPrice - 100); // Apply $100 cancellation fee
         }
-        
+
         // Set booking status to cancelled
         booking.BookingStatus = "Cancelled";
-        
+
         // Save the changes
         BookingAccessService.Update(booking);
-        
+
         return (true, freeCancel);
     }
 
@@ -200,19 +185,28 @@ public static class BookingLogic
         {
             FlightModel? flight = FlightAccessService.GetById(booking.FlightID);
             User? user = SessionManager.CurrentUser;
-            SeatModel? seat = FlightSeatAccessService.GetById(booking.SeatID);
+            SeatModel? seat = SeatAccessService.GetById(booking.SeatID);
             table.AddRow(
                 booking.BookingID.ToString(),
                 booking.BookingStatus,
                 booking.FlightID.ToString(),
                 booking.SeatID,
-                seat.SeatClass,
+                seat?.SeatClass ?? "[red]N/A[/]",
                 $"{user.FirstName} {user.LastName}",
-                flight.DepartureTime.ToString("g"),
-                flight.ArrivalTime.ToString("g")
+                flight?.DepartureTime.ToString("g") ?? "[red]N/A[/]",
+                flight?.ArrivalTime.ToString("g") ?? "[red]N/A[/]"
             );
         }
 
         return table;
+    }
+
+    public static void DeleteBookingsByFlightId(int flightId)
+    {
+        List<BookingModel> bookings = BookingAccessService.GetBookingsByFlightId(flightId);
+        foreach (BookingModel booking in bookings)
+        {
+            BookingAccessService.Delete(booking.BookingID);
+        }
     }
 }

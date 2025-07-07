@@ -27,7 +27,8 @@ public static class AdminUI
                 new SelectionPrompt<string>()
                     .Title("[yellow]Select a user management option:[/]")
                     .PageSize(5)
-                    .AddChoices(choices));
+                    .AddChoices(choices)
+                    .WrapAround(true));
 
             switch (input)
             {
@@ -70,7 +71,8 @@ public static class AdminUI
                 new SelectionPrompt<string>()
                     .Title("[yellow]Select a flight management option:[/]")
                     .PageSize(6)
-                    .AddChoices(choices));
+                    .AddChoices(choices)
+                    .WrapAround(true));
 
             switch (input)
             {
@@ -84,7 +86,10 @@ public static class AdminUI
                     FlightUI.RemoveFlight();
                     break;
                 case "View upcoming flights":
-                    List<FlightModel> flights = FlightUI.DisplayFilteredFlights();
+                    FlightUI.DisplayFilteredFlights();
+                    break;
+                case "View past flights":
+                    FlightUI.DisplayPastFlights();
                     break;
                 case "Back to main menu":
                     return;

@@ -7,6 +7,8 @@ public class ReviewModel
     public double Rating { get; set; }
     public DateTime CreatedAt { get; set; }
 
+    public ReviewModel() { }
+
     public ReviewModel(int userID, int flightID, string content, double rating)
     {
         UserID = userID;

@@ -23,7 +23,7 @@ public static class SeatMapLogic
         List<string> seatLetters;
         int colCount = seatLettersRaw.Count;
         if (colCount == 2)
-            seatLetters = new List<string> { "A" , "B" };
+            seatLetters = new List<string> { "A", "B" };
         else if (colCount == 4)
             seatLetters = new List<string> { "A", "B", "C", "D" };
         else if (colCount == 6)
@@ -31,8 +31,8 @@ public static class SeatMapLogic
         else if (colCount == 8)
             seatLetters = new List<string> { "A", "B", "C", "D", "E", "F", "G", "H" };
         else if (colCount == 10)
-            seatLetters = new List<string> { "A", "B", "C", "D", "E", "F", "G" ,"H", "J", "K" };
-        else 
+            seatLetters = new List<string> { "A", "B", "C", "D", "E", "F", "G", "H", "J", "K" };
+        else
             seatLetters = seatLettersRaw; // fallback to whatever is in the DB
 
         // Determine aisle positions based on column count and arrangement
@@ -153,5 +153,13 @@ public static class SeatMapLogic
     {
         seat.IsOccupied = true;
         FlightSeatAccessService.SetSeatOccupancy(flightId, seat.SeatID, true);
+    }
+
+    public static void CreateSeatMapForFlight(int flightId, string airplaneId)
+    {
+        if (!FlightSeatAccessService.HasAnySeatsForFlight(flightId))
+        {
+            FlightSeatAccessService.CreateFlightSeats(flightId, airplaneId);
+        }
     }
 }

@@ -49,16 +49,26 @@ public static class UserLogic
             return false;
         }
 
-        var user = new User(
-            userID: UserAccessService.GetHighestUserId() + 1,
-            firstName, lastName, country, city, emailAddress, password,
-            phoneNumberString, birthDate, DateTime.Now, UserRole.Customer, firstTimeDiscount: true
-        );
+        User newUser = new User
+        {
+            FirstName = firstName,
+            LastName = lastName,
+            Country = country,
+            City = city,
+            Email = emailAddress,
+            Password = password,
+            PhoneNumber = phoneNumberString,
+            BirthDate = birthDate,
+            AccCreatedAt = DateTime.Now,
+            Role = UserRole.Customer,
+            FirstTimeDiscount = true
+        };
 
-        UserAccessService.Insert(user);
+        UserAccessService.Insert(newUser);
         return true;
     }
 
+    // Overloaded Register method for admin use
     public static bool Register(
         string firstName,
         string lastName,
@@ -100,14 +110,22 @@ public static class UserLogic
             return false;
         }
 
-        var user = new User(
-            userID: UserAccessService.GetHighestUserId() + 1,
-            firstName, lastName, country, city, emailAddress, password,
-            phoneNumberString, birthDate, accCreatedAt, role
-        );
+        User newUser = new User
+        {
+            FirstName = firstName,
+            LastName = lastName,
+            Country = country,
+            City = city,
+            Email = emailAddress,
+            Password = password,
+            PhoneNumber = phoneNumberString,
+            BirthDate = birthDate,
+            AccCreatedAt = accCreatedAt,
+            Role = role,
+            FirstTimeDiscount = role == UserRole.Customer
+        };
 
-        UserAccessService.Insert(user);
-
+        UserAccessService.Insert(newUser);
         return true;
     }
 
@@ -351,11 +369,6 @@ public static class UserLogic
             $"Birth Date: {SessionManager.CurrentUser.BirthDate.ToString("yyyy-MM-dd")}\n" +
             $"Account Created At: {SessionManager.CurrentUser.AccCreatedAt.ToString("yyyy-MM-dd")}\n" +
             $"======================================\n";
-    }
-    public static int GetNextUserId()
-    {
-        int highestId = UserAccessService.GetHighestUserId();
-        return highestId + 1;
     }
 
     public static User? GetUserByID(int userId)
