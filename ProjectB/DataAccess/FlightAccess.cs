@@ -6,26 +6,25 @@ public class FlightAccess : GenericAccess<FlightModel, int>, IFlightAccess
 {
     protected override string Table => "FLIGHTS";
     protected override string PrimaryKey => "FlightID";
+
     public override void Insert(FlightModel flight)
     {
         string sql = $@"INSERT INTO {Table}
                         (Airline, 
                         AirplaneID, 
-                        AvailableSeats, 
                         DepartureAirport, 
                         ArrivalAirport, 
                         DepartureTime, 
                         ArrivalTime, 
-                        FlightStatus) 
+                        Status) 
                         VALUES 
                         (@Airline, 
                         @AirplaneID, 
-                        @AvailableSeats, 
                         @DepartureAirport, 
                         @ArrivalAirport, 
                         @DepartureTime, 
                         @ArrivalTime,
-                        @FlightStatus)";
+                        @Status)";
         _connection.Execute(sql, flight);
     }
 
@@ -34,12 +33,11 @@ public class FlightAccess : GenericAccess<FlightModel, int>, IFlightAccess
         string sql = $@"UPDATE {Table} 
                         SET Airline = @Airline, 
                             AirplaneID = @AirplaneID, 
-                            AvailableSeats = @AvailableSeats, 
                             DepartureAirport = @DepartureAirport, 
                             ArrivalAirport = @ArrivalAirport, 
                             DepartureTime = @DepartureTime, 
                             ArrivalTime = @ArrivalTime,
-                            FlightStatus = @FlightStatus 
+                            Status = @Status 
                         WHERE FlightID = @FlightID";
         _connection.Execute(sql, flight);
     }
@@ -47,8 +45,7 @@ public class FlightAccess : GenericAccess<FlightModel, int>, IFlightAccess
     public List<FlightModel> GetPastFlights(DateTime currentDate)
     {
         string sql = $@"SELECT * FROM {Table} 
-                        WHERE DepartureTime < @CurrentTime
-                        AND FlightStatus = 'Departed'";
+                        WHERE DepartureTime < @CurrentTime";
 
         return _connection.Query<FlightModel>(sql, new { CurrentTime = currentDate }).ToList();
     }
@@ -57,8 +54,7 @@ public class FlightAccess : GenericAccess<FlightModel, int>, IFlightAccess
     {
         string sql = $@"SELECT * FROM {Table} 
                         WHERE DepartureTime <= @SoonDate
-                        AND FlightStatus != 'Departed'";
-                        
+                        AND Status != 'Departed'";
 
         return _connection.Query<FlightModel>(sql, new { SoonDate = departingSoonDate }).ToList();
     }
@@ -66,14 +62,25 @@ public class FlightAccess : GenericAccess<FlightModel, int>, IFlightAccess
     public List<FlightModel> GetFilteredFlights(
         string? origin,
         string? destination,
-        DateTime departureDate)
+        DateTime departureDate,
+        bool past = false)
     {
-        string sql = $@"SELECT * FROM {Table}
+        // Dynmamic SQL query for past or upcoming flights
+        var sql = new System.Text.StringBuilder();
+        sql.Append($@"SELECT * FROM {Table}
                         WHERE date(DepartureTime) = date(@DepartureDate)
                         AND DepartureAirport LIKE @Origin
-                        AND ArrivalAirport LIKE @Destination
-                        AND FlightStatus != 'Departed'";
-        
+                        AND ArrivalAirport LIKE @Destination");
+
+        if (past)
+        {
+            sql.Append(" AND Status = 'Departed'");
+        }
+        else
+        {
+            sql.Append(" AND Status != 'Departed'");
+        }
+
         var parameters = new
         {
             DepartureDate = departureDate,
@@ -81,7 +88,33 @@ public class FlightAccess : GenericAccess<FlightModel, int>, IFlightAccess
             Destination = string.IsNullOrEmpty(destination) ? "%" : destination
         };
 
-        return _connection.Query<FlightModel>(sql, parameters).ToList();
+        return _connection.Query<FlightModel>(sql.ToString(), parameters).ToList();
     }
 
+    public void DeleteFlightsByIDs(List<int> flightIDs)
+    {
+        string sql = $@"DELETE FROM {Table} WHERE FlightID IN @FlightIDs";
+        var parameters = new { FlightIDs = flightIDs };
+        _connection.Execute(sql, parameters);
+    }
+
+    public List<int> GetOldDepartedFlightIDs(DateTime monthAgo)
+    {
+        string sql = $@"SELECT FlightID FROM {Table} 
+                        WHERE DepartureTime < @MonthAgo 
+                        AND Status = 'Departed'";
+        var parameters = new { MonthAgo = monthAgo };
+        return _connection.Query<int>(sql, parameters).ToList();
+    }
+
+    public int GetFlightIdByDetails(FlightModel flight)
+    {
+        string sql = $@"SELECT {PrimaryKey} FROM {Table} 
+                        WHERE AirplaneID = @AirplaneID 
+                        AND DepartureAirport = @DepartureAirport 
+                        AND ArrivalAirport = @ArrivalAirport 
+                        AND DepartureTime = @DepartureTime";
+        
+        return _connection.QuerySingle<int>(sql, flight);
+    }
 }

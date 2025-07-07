@@ -25,7 +25,8 @@ public static class ReviewUI
                 new SelectionPrompt<string>()
                     .Title("[yellow]Select an option:[/]")
                     .PageSize(10)
-                    .AddChoices(choices));
+                    .AddChoices(choices)
+                    .WrapAround(true));
 
             switch (input)
             {
@@ -46,37 +47,49 @@ public static class ReviewUI
 
     public static void MakeAReview()
     {
-        bool succes = false;
-        do
+        int flightID = AnsiConsole.Prompt(
+            new TextPrompt<int>("[#864000]Please enter the flight ID you wish to review:[/]")
+                .PromptStyle(highlightStyle)
+                .Validate(id =>
+                {
+                    FlightModel? flight = FlightLogic.GetFlightById(id);
+                    if (flight == null)
+                    {
+                        return ValidationResult.Error("[red]Flight not found.[/]");
+                    }
+                    if (flight.Status != "Departed")
+                    {
+                        return ValidationResult.Error($"[red]You can't review a flight that hasn't flown yet. This flight's status is '{flight.Status}'.[/]");
+                    }
+                    return ValidationResult.Success();
+                })
+        );
+
+        // If we get here, the flightID is valid. Now get the rest of the review details.
+        int rating = AnsiConsole.Prompt(
+            new TextPrompt<int>("[#864000]Please enter the rating for the review (1-5):[/]")
+                .PromptStyle(highlightStyle)
+                .ValidationErrorMessage("[red]Invalid rating. Please enter a whole number between 1 and 5.[/]")
+                .Validate(r => r >= 1 && r <= 5)
+        );
+
+        string content = AnsiConsole.Prompt(
+            new TextPrompt<string>("[#864000]Please enter the content of the review:[/]")
+                .PromptStyle(highlightStyle));
+
+        ReviewModel review = new ReviewModel(SessionManager.CurrentUser.UserID, flightID, content, rating);
+
+        string errorMessage;
+        if (ReviewLogic.AddReview(review, out errorMessage))
         {
-            int Rating = AnsiConsole.Prompt(
-                new TextPrompt<int>("[#864000]Please enter the rating of the review (1-5):[/]")
-                    .PromptStyle(highlightStyle));
-
-            string Content = AnsiConsole.Prompt(
-                new TextPrompt<string>("[#864000]Please enter the content of the review:[/]")
-                    .PromptStyle(highlightStyle));
-
-            int FlightID = AnsiConsole.Prompt(
-                new TextPrompt<int>("[#864000]Please enter the flight id of the review:[/]")
-                    .PromptStyle(highlightStyle));
-
-            ReviewModel Review = new ReviewModel(SessionManager.CurrentUser.UserID, FlightID, Content, Rating);
-
-            string errorMessage;
-            succes = ReviewLogic.AddReview(Review, out errorMessage);
-
-            if (succes)
-            {
-                AnsiConsole.MarkupLine($"[green]Review added successfully![/]");
-            }
-            else
-            {
-                AnsiConsole.MarkupLine($"[red]{errorMessage}[/]");
-            }
+            AnsiConsole.MarkupLine("[green]Review added successfully![/]");
             FlightUI.WaitForKeyPress();
-            break;
-        } while (!succes);
+        }
+        else
+        {
+            AnsiConsole.MarkupLine($"[red]Error: {errorMessage}[/]");
+            FlightUI.WaitForKeyPress();
+        }
     }
     
     public static void ViewReviews()
@@ -91,41 +104,11 @@ public static class ReviewUI
             return;
         }
 
-        foreach (var review in reviews)
-        {
-            // var UserModel = UserAccess.GetUserInfoByID(review.UserID);
-            var UserModel = UserLogic.GetUserByID(review.UserID);
-            var FlightModel = FlightLogic.GetFlightById(review.FlightID);
-
-            if (UserModel == null || FlightModel == null)
-            {
-                continue;
-            }
-
-            string goldStars = string.Join(" ", Enumerable.Repeat("★", review.Rating));
-            string grayStars = string.Join(" ", Enumerable.Repeat("☆", 5 - review.Rating));
-            
-            string profile = $"[rgb(134,64,0)]Firstname:[/][rgb(255,122,0)]{UserModel.FirstName}[/]\n" +
-                             $"[rgb(134,64,0)]Date:[/]     [rgb(255,122,0)]{review.CreatedAt:yyyy-MM-dd}[/]\n" +
-                             $"[rgb(134,64,0)]Airline:[/]  [rgb(255,122,0)]{FlightModel.Airline}[/]\n" +
-                             $"[rgb(134,64,0)]Departure:[/][rgb(255,122,0)]{FlightModel.DepartureAirport}[/]\n" +
-                             $"[rgb(134,64,0)]Arrival:[/]  [rgb(255,122,0)]{FlightModel.ArrivalAirport}[/]\n" +
-                             $"[rgb(134,64,0)]Rating:[/]   [rgb(255,122,0)]{goldStars + " " + grayStars}[/]\n" +
-                             $"[rgb(134,64,0)]Content:[/]  [rgb(255,122,0)]{review.Content}[/]";
-
-            var panel = new Panel(profile)
-                .Header("[rgb(134,64,0)]Review[/]")
-                .HeaderAlignment(Justify.Center)
-                .Border(BoxBorder.Rounded)
-                .BorderStyle(new Style(new Color(184, 123, 74)))
-                .Padding(new Padding(1, 1, 1, 1));
-
-            AnsiConsole.Write(panel);
-        }
+        DisplayReviews(reviews);
         FlightUI.WaitForKeyPress();
     }
 
-        public static void FilterViewReviews()
+    public static void FilterViewReviews()
     {
         int flightId = AnsiConsole.Prompt(
                 new TextPrompt<int>("[#864000]Please enter the flight id to filter reviews:[/]")
@@ -141,19 +124,36 @@ public static class ReviewUI
             return;
         }
 
+        DisplayReviews(reviews);
+        FlightUI.WaitForKeyPress();
+    }
+
+    private static void DisplayReviews(List<ReviewModel> reviews)
+    {
+        if (reviews == null || !reviews.Any())
+        {
+            AnsiConsole.MarkupLine("[yellow]No reviews found.[/]");
+            return;
+        }
+
         foreach (var review in reviews)
         {
-            var UserModel = UserLogic.GetUserByID(review.UserID);
-            var FlightModel = FlightLogic.GetFlightById(review.FlightID);
+            var userModel = UserLogic.GetUserByID(review.UserID);
+            var flightModel = FlightLogic.GetFlightById(review.FlightID);
 
-            string goldStars = string.Join(" ", Enumerable.Repeat("★", review.Rating));
-            string grayStars = string.Join(" ", Enumerable.Repeat("☆", 5 - review.Rating));
+            if (userModel == null || flightModel == null)
+            {
+                continue;
+            }
 
-            string profile = $"[rgb(134,64,0)]Firstname:[/][rgb(255,122,0)]{UserModel.FirstName}[/]\n" +
+            string goldStars = string.Join(" ", Enumerable.Repeat("★", (int)review.Rating));
+            string grayStars = string.Join(" ", Enumerable.Repeat("☆", 5 - (int)review.Rating));
+            
+            string profile = $"[rgb(134,64,0)]Firstname:[/][rgb(255,122,0)]{userModel.FirstName}[/]\n" +
                              $"[rgb(134,64,0)]Date:[/]     [rgb(255,122,0)]{review.CreatedAt:yyyy-MM-dd}[/]\n" +
-                             $"[rgb(134,64,0)]Airline:[/]  [rgb(255,122,0)]{FlightModel.Airline}[/]\n" +
-                             $"[rgb(134,64,0)]Departure:[/][rgb(255,122,0)]{FlightModel.DepartureAirport}[/]\n" +
-                             $"[rgb(134,64,0)]Arrival:[/]  [rgb(255,122,0)]{FlightModel.ArrivalAirport}[/]\n" +
+                             $"[rgb(134,64,0)]Airline:[/]  [rgb(255,122,0)]{flightModel.Airline}[/]\n" +
+                             $"[rgb(134,64,0)]Departure:[/][rgb(255,122,0)]{flightModel.DepartureAirport}[/]\n" +
+                             $"[rgb(134,64,0)]Arrival:[/]  [rgb(255,122,0)]{flightModel.ArrivalAirport}[/]\n" +
                              $"[rgb(134,64,0)]Rating:[/]   [rgb(255,122,0)]{goldStars + " " + grayStars}[/]\n" +
                              $"[rgb(134,64,0)]Content:[/]  [rgb(255,122,0)]{review.Content}[/]";
 
@@ -166,6 +166,5 @@ public static class ReviewUI
 
             AnsiConsole.Write(panel);
         }
-        FlightUI.WaitForKeyPress();
     }
 }

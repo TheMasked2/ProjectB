@@ -2,6 +2,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using System;
 using System.Collections.Generic;
+using ProjectB.DataAccess;
 
 namespace ProjectB.Tests
 {
@@ -20,15 +21,15 @@ namespace ProjectB.Tests
         }
 
         [DataTestMethod]
-        [DataRow("John", "Doe", "USA", "NY", "john@test.com", "Pass123!","Pass123!", "1234567890", "2000-01-01", true)]
-        [DataRow("", "Doe", "USA", "NY", "john@test.com", "Pass123!","Pass123!", "1234567890", "2000-01-01", false)]
-        [DataRow("John", "", "USA", "NY", "john@test.com", "Pass123!","Pass123!", "1234567890", "2000-01-01", false)]
-        [DataRow("John", "Doe", "", "NY", "john@test.com", "Pass123!","Pass123!", "1234567890", "2000-01-01", false)]
-        [DataRow("John", "Doe", "USA", "", "john@test.com", "Pass123!","Pass123!", "1234567890", "2000-01-01", false)]
-        [DataRow("John", "Doe", "USA", "NY", "", "Pass123!", "1234567890","1234567890", "2000-01-01", false)]
-        [DataRow("John", "Doe", "USA", "NY", "invalid-email", "Pass123!","Pass123!", "1234567890", "2000-01-01", false)]
-        [DataRow("John", "Doe", "USA", "NY", "john@test.com", "Pass123!","Pass123!", "abc", "2000-01-01", false)]
-        [DataRow("John", "Doe", "USA", "NY", "john@test.com", "Pass123!","Pass123!", "1234567890", "invalid-date", false)]
+        [DataRow("John", "Doe", "USA", "NY", "john@test.com", "Pass123!", "Pass123!", "1234567890", "2000-01-01", true)]
+        [DataRow("", "Doe", "USA", "NY", "john@test.com", "Pass123!", "Pass123!", "1234567890", "2000-01-01", false)]
+        [DataRow("John", "", "USA", "NY", "john@test.com", "Pass123!", "Pass123!", "1234567890", "2000-01-01", false)]
+        [DataRow("John", "Doe", "", "NY", "john@test.com", "Pass123!", "Pass123!", "1234567890", "2000-01-01", false)]
+        [DataRow("John", "Doe", "USA", "", "john@test.com", "Pass123!", "Pass123!", "1234567890", "2000-01-01", false)]
+        [DataRow("John", "Doe", "USA", "NY", "", "Pass123!", "1234567890", "1234567890", "2000-01-01", false)]
+        [DataRow("John", "Doe", "USA", "NY", "invalid-email", "Pass123!", "Pass123!", "1234567890", "2000-01-01", false)]
+        [DataRow("John", "Doe", "USA", "NY", "john@test.com", "Pass123!", "Pass123!", "abc", "2000-01-01", false)]
+        [DataRow("John", "Doe", "USA", "NY", "john@test.com", "Pass123!", "Pass123!", "1234567890", "invalid-date", false)]
         public void Register_ValidatesInputsCorrectly(
             string firstName,
             string lastName,
@@ -42,7 +43,7 @@ namespace ProjectB.Tests
             bool expectedResult)
         {
             // Arrange
-            mockUserAccess.Setup(x => x.GetAllUsers()).Returns(new List<User>());
+            mockUserAccess.Setup(x => x.GetAll()).Returns(new List<User>());
 
             // Act
             var result = UserLogic.Register(firstName, lastName, country, city, emailAddress, password, confirmPassword, phoneNumber, birthDate);
@@ -55,7 +56,7 @@ namespace ProjectB.Tests
             }
         }
 
-    
+
         [DataTestMethod]
         [DataRow(1, "John", "Doe", "USA", "NY", true)]
         [DataRow(1, "", "Doe", "USA", "NY", false)]
@@ -77,7 +78,7 @@ namespace ProjectB.Tests
                 LastName = newLastName,
                 Country = newCountry,
                 City = newCity,
-                EmailAddress = "test@test.com",
+                Email = "test@test.com",
                 Password = "Pass123!",
                 PhoneNumber = "1234567890",
                 BirthDate = DateTime.Parse("2000-01-01")
@@ -88,7 +89,7 @@ namespace ProjectB.Tests
             {
                 existingUsers.Add(new User { UserID = 1, FirstName = "Original", LastName = "User" });
             }
-            mockUserAccess.Setup(x => x.GetAllUsers()).Returns(existingUsers);
+            mockUserAccess.Setup(x => x.GetAll()).Returns(existingUsers);
 
             // Act
             var result = UserLogic.UpdateUser(user);
@@ -110,12 +111,12 @@ namespace ProjectB.Tests
             // Arrange
             var mockUsers = new List<User>
             {
-                new User { EmailAddress = "test@test.com" },
-                new User { EmailAddress = "test2@test.com" },
-                new User { EmailAddress = "john.doe@example.com" },
-                new User { EmailAddress = "other@example.com" }
+                new User { Email = "test@test.com" },
+                new User { Email = "test2@test.com" },
+                new User { Email = "john.doe@example.com" },
+                new User { Email = "other@example.com" }
             };
-            mockUserAccess.Setup(x => x.GetAllUsers()).Returns(mockUsers);
+            mockUserAccess.Setup(x => x.GetAll()).Returns(mockUsers);
 
             // Act
             var results = UserLogic.GetUsersByEmail(emailFilter);
@@ -125,23 +126,24 @@ namespace ProjectB.Tests
         }
 
         [DataTestMethod]
-        [DataRow(true, 2)]
-        [DataRow(false, 3)]
-        public void GetUsersByAdminStatus_ReturnsCorrectUsers(bool isAdmin, int expectedCount)
+        [DataRow(UserRole.Admin, 2)]
+        [DataRow(UserRole.Customer, 2)]
+        [DataRow(UserRole.Guest, 1)]
+        public void GetUsersByRole_ReturnsCorrectUsers(UserRole role, int expectedCount)
         {
             // Arrange
             var mockUsers = new List<User>
-            {
-                new User { IsAdmin = true },
-                new User { IsAdmin = true },
-                new User { IsAdmin = false },
-                new User { IsAdmin = false },
-                new User { IsAdmin = false }
-            };
-            mockUserAccess.Setup(x => x.GetAllUsers()).Returns(mockUsers);
+                {
+                    new User { Role = UserRole.Admin },
+                    new User { Role = UserRole.Admin },
+                    new User { Role = UserRole.Customer },
+                    new User { Role = UserRole.Customer },
+                    new User { Role = UserRole.Guest }
+                };
+            mockUserAccess.Setup(x => x.GetAll()).Returns(mockUsers);
 
             // Act
-            var results = UserLogic.GetUsersByAdminStatus(isAdmin);
+            List<User> results = UserLogic.GetUsersByRole(role);
 
             // Assert
             Assert.AreEqual(expectedCount, results.Count);

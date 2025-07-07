@@ -10,12 +10,14 @@ public static class BookingUI
         AnsiConsole.MarkupLine("\n[grey]Press any key to continue...[/]");
         Console.ReadKey(true);
     }
+
     public static void BookADamnFlight()
     {
         // Display all bookable flights based on user input
-        List<FlightModel> bookableFlights = FlightUI.DisplayAllBookableFlights();
+        List<FlightModel> bookableFlights = FlightUI.DisplayFilteredFlights();
         if (bookableFlights == null || !bookableFlights.Any())
         {
+            WaitForKeyPress();
             return;
         }
         FlightModel selectedFlight = SelectBookableFlight(bookableFlights);
@@ -44,7 +46,7 @@ public static class BookingUI
             insuranceStatus
         );
         // Display booking details
-        DisplayBookingDetails(booking);
+        DisplayBookingDetails(booking, selectedFlight, user);
         // Ask to confirm booking
         ConfirmBooking(booking, selectedSeat);
     }
@@ -83,26 +85,38 @@ public static class BookingUI
         return flight;
     }
 
-    private static void DisplayBookingDetails(BookingModel booking, bool ComesFromModify = false)
+    private static void DisplayBookingDetails(BookingModel booking, FlightModel flight = null, User user = null, bool ComesFromModify = false)
     {
+        if (flight == null)
+        {
+            flight = FlightLogic.GetFlightById(booking.FlightID);
+        }
+    
+        if (user == null)
+        {
+            user = SessionManager.CurrentUser;
+        }
+
+        AirplaneModel airplane = AirplaneLogic.GetAirplaneByID(flight.AirplaneID);
+
         if (!ComesFromModify)
         {
-            AnsiConsole.MarkupLine($"[green]Booking confirmation will be sent to: {booking.PassengerEmail}[/]");
+            AnsiConsole.MarkupLine($"[green]Booking confirmation will be sent to: {user.Email}[/]");
         }
         AnsiConsole.MarkupLine("[yellow]Booking Details:[/]");
         AnsiConsole.MarkupLine($"[yellow]Seat[/]: [white]{(booking.SeatID.Contains("-") ? booking.SeatID.Split('-')[1] : booking.SeatID)}[/]");
-        AnsiConsole.MarkupLine($"[yellow]Airline[/]: [white]{booking.Airline}[/]");
-        AnsiConsole.MarkupLine($"[yellow]Airplane Model[/]: [white]{booking.AirplaneModel}[/]");
+        AnsiConsole.MarkupLine($"[yellow]Airline[/]: [white]{flight.Airline}[/]");
+        AnsiConsole.MarkupLine($"[yellow]Airplane Model[/]: [white]{airplane.AirplaneName}[/]");
         AnsiConsole.MarkupLine($"[yellow]Flight ID[/]: [white]{booking.FlightID}[/]");
-        AnsiConsole.MarkupLine($"[yellow]From[/]: [white]{booking.DepartureAirport}[/]");
-        AnsiConsole.MarkupLine($"[yellow]To[/]: [white]{booking.ArrivalAirport}[/]");
-        AnsiConsole.MarkupLine($"[yellow]Departure[/]: [white]{booking.DepartureTime:g}[/]");
-        AnsiConsole.MarkupLine($"[yellow]Arrival[/]: [white]{booking.ArrivalTime:g}[/]");
+        AnsiConsole.MarkupLine($"[yellow]From[/]: [white]{flight.DepartureAirport}[/]");
+        AnsiConsole.MarkupLine($"[yellow]To[/]: [white]{flight.ArrivalAirport}[/]");
+        AnsiConsole.MarkupLine($"[yellow]Departure[/]: [white]{flight.DepartureTime:g}[/]");
+        AnsiConsole.MarkupLine($"[yellow]Arrival[/]: [white]{flight.ArrivalTime:g}[/]");
         AnsiConsole.MarkupLine("");
         AnsiConsole.MarkupLine("[yellow]Personal Details:[/]");
-        AnsiConsole.MarkupLine($"[yellow]Passenger[/]: [white]{booking.PassengerFirstName} {booking.PassengerLastName}[/]");
-        AnsiConsole.MarkupLine($"[yellow]Email[/]: [white]{booking.PassengerEmail ?? "N/A"}[/]");
-        AnsiConsole.MarkupLine($"[yellow]Phone[/]: [white]{booking.PassengerPhone ?? "N/A"}[/]");
+        AnsiConsole.MarkupLine($"[yellow]Passenger[/]: [white]{user.FirstName} {user.LastName}[/]");
+        AnsiConsole.MarkupLine($"[yellow]Email[/]: [white]{user.Email ?? "N/A"}[/]");
+        AnsiConsole.MarkupLine($"[yellow]Phone[/]: [white]{user.PhoneNumber ?? "N/A"}[/]");
         AnsiConsole.MarkupLine("");
         AnsiConsole.MarkupLine("[yellow]Extra Options:[/]");
         AnsiConsole.MarkupLine($"[yellow]Luggage[/]: [white]{booking.LuggageAmount}[/]");
@@ -110,8 +124,8 @@ public static class BookingUI
         AnsiConsole.MarkupLine("");
         AnsiConsole.MarkupLine("[yellow]Pricing Details:[/]");
         AnsiConsole.MarkupLine(booking.TotalPrice < 0 
-            ? $"[yellow]Price[/]: [white]{Math.Abs(booking.TotalPrice)} Imperial units of Spice[/]" 
-            : $"[yellow]Price[/]: [white]€{booking.TotalPrice}[/]");
+            ? $"[yellow]Price[/]: [white]{Math.Abs(booking.TotalPrice):F2} Imperial units of Spice[/]" 
+            : $"[yellow]Price[/]: [white]€{booking.TotalPrice:F2}[/]");
         
         if (booking.Discount < 1.0m)
         {
@@ -219,7 +233,7 @@ public static class BookingUI
             AnsiConsole.MarkupLine(seat);
 
         AnsiConsole.MarkupLine(
-            "[yellow]L[/]=Luxury: $900  [cyan]B[/]=Business: $700  [magenta]P[/]=Premium: $500  [blue]E[/]=Standard Extra Legroom: $400  [green]O[/]=Standard: $300  [red]X[/]=Occupied"
+            "[yellow]L[/]=Luxury: $400  [cyan]B[/]=Business: $250  [magenta]P[/]=Premium: $150  [blue]E[/]=Economy Extra Legroom: $120  [green]O[/]=Economy: $100  [red]X[/]=Occupied"
         );
     }
 
@@ -267,9 +281,9 @@ public static class BookingUI
             AnsiConsole.MarkupLine("[yellow]Thank you for booking with Airtreides![/]");
     
             // If user has email, confirm that confirmation will be sent
-            if (!string.IsNullOrEmpty(booking.PassengerEmail))
+            if (!string.IsNullOrEmpty(SessionManager.CurrentUser.Email))
             {
-                AnsiConsole.MarkupLine($"[green]Booking confirmation has been sent to: {booking.PassengerEmail}[/]");
+                AnsiConsole.MarkupLine($"[green]Booking confirmation has been sent to: {SessionManager.CurrentUser.Email}[/]");
             }
         }
         else
@@ -401,7 +415,7 @@ public static class BookingUI
         );
 
         BookingModel selectedBooking = bookings.First(b => b.BookingID == bookingId);
-        DisplayBookingDetails(selectedBooking, true);
+        DisplayBookingDetails(selectedBooking, user:user, ComesFromModify:true);
 
         SeatModel selectedSeat = HandleSeatSelection(selectedBooking.FlightID);
 
@@ -415,10 +429,10 @@ public static class BookingUI
         {
             AnsiConsole.MarkupLine($"[green]Booking with Booking ID: {selectedBooking.BookingID} successfully modified![/]");
             AnsiConsole.MarkupLine("[green]Your previous payment will be refunded.[/]");
-            BookingModel updatedmodel = BookingLogic.GetBookingById(bookingId);
-            DisplayBookingDetails(updatedmodel, true);
+            BookingModel updatedModel = BookingLogic.GetBookingById(bookingId);
+            DisplayBookingDetails(updatedModel, ComesFromModify:true);
             AnsiConsole.MarkupLine("[green]A modification fee of $50 has been applied.[/]");
-            AnsiConsole.MarkupLine($"[green]Your new total: {updatedmodel.TotalPrice + 50}[/]");
+            AnsiConsole.MarkupLine($"[green]Your new total: {updatedModel.TotalPrice + 50}[/]");
         }
         else
         {
@@ -434,12 +448,12 @@ public static class BookingUI
             WaitForKeyPress();
             return;
         }
-        var user = SessionManager.CurrentUser;
-        var bookings = BookingLogic.GetBookingsForUser(user.UserID, upcoming);
+        User? user = SessionManager.CurrentUser;
+        List<BookingModel>? bookings = BookingLogic.GetBookingsForUser(user.UserID, upcoming);
         if (!bookings.Any())
         {
             AnsiConsole.MarkupLine("[yellow]No bookings found.[/]");
-            BookingUI.WaitForKeyPress();
+            WaitForKeyPress();
             return;
         }
         Spectre.Console.Rendering.IRenderable bookingTable = BookingLogic.CreateBookingTable(bookings);

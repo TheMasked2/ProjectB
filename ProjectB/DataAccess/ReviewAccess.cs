@@ -10,8 +10,8 @@ public class ReviewAccess : GenericAccess<ReviewModel, int>, IReviewAccess
     public override void Insert(ReviewModel review)
     {
         string sql = @$"INSERT INTO {Table} 
-                        (FlightID, UserID, Rating, Comment) 
-                        VALUES (@FlightID, @UserID, @Rating, @Comment)";
+                        (FlightID, UserID, Rating, Content, CreatedAt) 
+                        VALUES (@FlightID, @UserID, @Rating, @Content, @CreatedAt)";
         _connection.Execute(sql, review);
     }
 
@@ -21,7 +21,8 @@ public class ReviewAccess : GenericAccess<ReviewModel, int>, IReviewAccess
                         SET FlightID = @FlightID, 
                             UserID = @UserID, 
                             Rating = @Rating, 
-                            Comment = @Comment 
+                            Content = @Content,
+                            CreatedAt = @CreatedAt
                         WHERE ReviewID = @ReviewID";
         _connection.Execute(sql, review);
     }

@@ -29,7 +29,7 @@ namespace ProjectB.Tests
             LoggerLogic.LoggerAccessService = mockLoggerAccess.Object;
 
             var adminUser = new User { UserID = adminId, FirstName = adminFirstName, LastName = adminLastName };
-            var createdUser = new User { UserID = createdId, FirstName = createdFirstName, LastName = createdLastName, EmailAddress = createdEmail, IsAdmin = createdIsAdmin };
+            var createdUser = new User { UserID = createdId, FirstName = createdFirstName, LastName = createdLastName, Email = createdEmail, IsAdmin = createdIsAdmin };
 
             // Act
             LoggerLogic.LogUserCreation(adminUser, createdUser);

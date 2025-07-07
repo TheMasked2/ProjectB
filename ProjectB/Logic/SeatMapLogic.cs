@@ -11,7 +11,7 @@ public static class SeatMapLogic
 
     public static (List<string> seatLetters, List<int> rowNumbers) GetSeatLayout(List<SeatModel> seats)
     {
-        var seatLetters = seats.Select(s => s.SeatPosition).Distinct().OrderBy(c => c).ToList();
+        var seatLetters = seats.Select(s => s.ColumnLetter).Distinct().OrderBy(c => c).ToList();
         var rowNumbers = seats.Select(s => s.RowNumber).Distinct().OrderBy(n => n).ToList();
         return (seatLetters, rowNumbers);
     }
@@ -23,7 +23,7 @@ public static class SeatMapLogic
         List<string> seatLetters;
         int colCount = seatLettersRaw.Count;
         if (colCount == 2)
-            seatLetters = new List<string> { "A" , "B" };
+            seatLetters = new List<string> { "A", "B" };
         else if (colCount == 4)
             seatLetters = new List<string> { "A", "B", "C", "D" };
         else if (colCount == 6)
@@ -31,8 +31,8 @@ public static class SeatMapLogic
         else if (colCount == 8)
             seatLetters = new List<string> { "A", "B", "C", "D", "E", "F", "G", "H" };
         else if (colCount == 10)
-            seatLetters = new List<string> { "A", "B", "C", "D", "E", "F", "G" ,"H", "J", "K" };
-        else 
+            seatLetters = new List<string> { "A", "B", "C", "D", "E", "F", "G", "H", "J", "K" };
+        else
             seatLetters = seatLettersRaw; // fallback to whatever is in the DB
 
         // Determine aisle positions based on column count and arrangement
@@ -62,7 +62,7 @@ public static class SeatMapLogic
             for (int i = 0; i < seatLetters.Count; i++)
             {
                 var letter = seatLetters[i];
-                var seat = seats.FirstOrDefault(s => s.RowNumber == row && s.SeatPosition == letter);
+                var seat = seats.FirstOrDefault(s => s.RowNumber == row && s.ColumnLetter == letter);
                 if (seat == null)
                 {
                     line += "   ";
@@ -73,7 +73,7 @@ public static class SeatMapLogic
                 }
                 else
                 {
-                    var seatType = (seat.SeatType ?? "").Trim().ToLower();
+                    var seatType = (seat.SeatClass ?? "").Trim().ToLower();
                     switch (seatType)
                     {
                         case "luxury":
@@ -82,13 +82,13 @@ public static class SeatMapLogic
                         case "premium":
                             line += "[magenta] P [/]";
                             break;
-                        case "standard extra legroom":
+                        case "extra legroom":
                             line += "[blue] E [/]";
                             break;
                         case "business":
                             line += "[cyan] B [/]";
                             break;
-                        case "standard":
+                        case "economy":
                             line += "[green] O [/]";
                             break;
                         default:
@@ -143,7 +143,7 @@ public static class SeatMapLogic
 
     public static SeatModel TryGetAvailableSeat(List<SeatModel> seats, int row, string seatLetter)
     {
-        var seat = seats.FirstOrDefault(s => s.RowNumber == row && s.SeatPosition == seatLetter);
+        var seat = seats.FirstOrDefault(s => s.RowNumber == row && s.ColumnLetter == seatLetter);
         if (seat != null && !seat.IsOccupied)
             return seat;
         return null;
@@ -153,5 +153,13 @@ public static class SeatMapLogic
     {
         seat.IsOccupied = true;
         FlightSeatAccessService.SetSeatOccupancy(flightId, seat.SeatID, true);
+    }
+
+    public static void CreateSeatMapForFlight(int flightId, string airplaneId)
+    {
+        if (!FlightSeatAccessService.HasAnySeatsForFlight(flightId))
+        {
+            FlightSeatAccessService.CreateFlightSeats(flightId, airplaneId);
+        }
     }
 }

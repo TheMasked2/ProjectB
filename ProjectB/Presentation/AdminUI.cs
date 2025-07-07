@@ -27,7 +27,8 @@ public static class AdminUI
                 new SelectionPrompt<string>()
                     .Title("[yellow]Select a user management option:[/]")
                     .PageSize(5)
-                    .AddChoices(choices));
+                    .AddChoices(choices)
+                    .WrapAround(true));
 
             switch (input)
             {
@@ -70,7 +71,8 @@ public static class AdminUI
                 new SelectionPrompt<string>()
                     .Title("[yellow]Select a flight management option:[/]")
                     .PageSize(6)
-                    .AddChoices(choices));
+                    .AddChoices(choices)
+                    .WrapAround(true));
 
             switch (input)
             {
@@ -84,28 +86,10 @@ public static class AdminUI
                     FlightUI.RemoveFlight();
                     break;
                 case "View upcoming flights":
-                    List<FlightModel> flights = FlightUI.DisplayFilteredUpcomingFlights();
-
-                    var flightId = AnsiConsole.Prompt(
-                        new TextPrompt<int>("[#864000]Enter Flight ID to remove:[/]")
-                            .PromptStyle(highlightStyle)
-                            .Validate(id =>
-                            {
-                                if (flights.Any(f => f.FlightID == id))
-                                    return true;
-                                return false;
-                            }, "[red]Invalid Flight ID. Please enter an ID from the table above.[/]")
-                    );
-
-                    List<SeatModel> seatMapModelList = SeatMapLogic.GetSeatMap(flightId);
-                    List<string> seatMap = SeatMapLogic.BuildSeatMapLayout(seatMapModelList);
-                    BookingUI.DisplaySeatMap(seatMap);
-
-                    AnsiConsole.MarkupLine("[#864000]Press any key to continue...[/]");
-                    Console.ReadKey(true);
+                    FlightUI.DisplayFilteredFlights();
                     break;
                 case "View past flights":
-                    PastFlightUI.DisplayFilteredPastFlights(); 
+                    FlightUI.DisplayPastFlights();
                     break;
                 case "Back to main menu":
                     return;
@@ -309,7 +293,7 @@ public static class AdminUI
             table.AddRow(
                 user.UserID.ToString(),
                 $"{user.FirstName} {user.LastName}",
-                user.EmailAddress,
+                user.Email,
                 user.PhoneNumber,
                 $"{user.City}, {user.Country}",
                 user.Role.ToString()
@@ -342,9 +326,9 @@ public static class AdminUI
                 .DefaultValue(selectedUser.LastName)
                 .PromptStyle(highlightStyle));
         
-        selectedUser.EmailAddress = AnsiConsole.Prompt(
+        selectedUser.Email = AnsiConsole.Prompt(
             new TextPrompt<string>("[#864000]Enter new email[/]")
-                .DefaultValue(selectedUser.EmailAddress)
+                .DefaultValue(selectedUser.Email)
                 .PromptStyle(highlightStyle));
         
         selectedUser.PhoneNumber = AnsiConsole.Prompt(

@@ -13,12 +13,7 @@ public class BookingAccess : GenericAccess<BookingModel, int>, IBookingAccess
                         (UserID, 
                         FlightID, 
                         BookingStatus, 
-                        PassengerFirstName, 
-                        PassengerLastName, 
-                        PassengerEmail, 
-                        PassengerPhone, 
                         SeatID, 
-                        SeatClass, 
                         LuggageAmount, 
                         HasInsurance, 
                         Discount, 
@@ -27,12 +22,7 @@ public class BookingAccess : GenericAccess<BookingModel, int>, IBookingAccess
                         (@UserID, 
                         @FlightID, 
                         @BookingStatus, 
-                        @PassengerFirstName, 
-                        @PassengerLastName, 
-                        @PassengerEmail, 
-                        @PassengerPhone, 
                         @SeatID, 
-                        @SeatClass, 
                         @LuggageAmount, 
                         @HasInsurance,
                         @Discount,
@@ -45,12 +35,7 @@ public class BookingAccess : GenericAccess<BookingModel, int>, IBookingAccess
     {
         string sql = $@"UPDATE {Table} 
                         SET BookingStatus = @BookingStatus,
-                            PassengerFirstName = @PassengerFirstName,
-                            PassengerLastName = @PassengerLastName,
-                            PassengerEmail = @PassengerEmail,
-                            PassengerPhone = @PassengerPhone,
                             SeatID = @SeatID,
-                            SeatClass = @SeatClass,
                             LuggageAmount = @LuggageAmount,
                             HasInsurance = @HasInsurance,
                             Discount = @Discount,
@@ -63,5 +48,11 @@ public class BookingAccess : GenericAccess<BookingModel, int>, IBookingAccess
     {
         string sql = $@"SELECT * FROM {Table} WHERE UserID = @UserID";
         return _connection.Query<BookingModel>(sql, new { UserID = userId }).ToList();
+    }
+
+    public List<BookingModel> GetBookingsByFlightId(int flightId)
+    {
+        string sql = $@"SELECT * FROM {Table} WHERE FlightID = @FlightID";
+        return _connection.Query<BookingModel>(sql, new { FlightID = flightId }).ToList();
     }
 }

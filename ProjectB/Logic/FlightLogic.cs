@@ -1,12 +1,12 @@
 using Spectre.Console;
 using ProjectB.DataAccess;
+using System.ComponentModel;
 
 public static class FlightLogic
 {
     public static IFlightAccess FlightAccessService { get; set; } = new FlightAccess();
     public static IFlightSeatAccess FlightSeatAccessService { get; set; } = new FlightSeatAccess();
     public static IAirplaneAccess AirplaneAccessService { get; set; } = new AirplaneAccess();
-    public static IPastFlightAccess PastFlightAccessService { get; set; } = new PastFlightAccess();
     public static ISeatAccess SeatAccessService { get; set; } = new SeatAccess();
     private static readonly Style primaryStyle = new(new Color(134, 64, 0));
     private static readonly Style errorStyle = new(new Color(162, 52, 0));
@@ -14,26 +14,32 @@ public static class FlightLogic
     public static List<FlightModel> GetFilteredFlights(
         string? origin,
         string? destination,
-        DateTime departureDate) => FlightAccessService.GetFilteredFlights(origin, destination, departureDate);
+        DateTime departureDate,
+        bool past = false) => FlightAccessService.GetFilteredFlights(origin, destination, departureDate, past);
 
     public static List<FlightModel> GetFilteredFlights(
         string? origin,
         string? destination,
         DateTime departureDate,
-        string seatClass)
+        string? seatClass)
     {
         List<FlightModel> flights = FlightAccessService.GetFilteredFlights(origin, destination, departureDate);
 
         List<FlightModel> bookableFlights =
-            flights.Where(flight => 
-                FlightSeatAccessService.GetAvailableSeatCountByClass(flight.FlightID, flight.AirplaneID, seatClass) > 0 && 
+            flights.Where(flight =>
+                FlightSeatAccessService.GetAvailableSeatCountByClass(flight.FlightID, flight.AirplaneID, seatClass) > 0 &&
                 GetSeatClassPrice(flight.AirplaneID, seatClass) > 0
             ).ToList();
 
         return bookableFlights;
     }
 
-    public static Spectre.Console.Rendering.IRenderable CreateDisplayableFlightsTable(List<FlightModel> flights, string seatClass = null)
+    public static List<FlightModel> GetFilteredPastFlights(
+        string? origin,
+        string? destination,
+        DateTime departureDate) => FlightAccessService.GetFilteredFlights(origin, destination, departureDate, past: true);
+
+    public static Spectre.Console.Rendering.IRenderable CreateDisplayableFlightsTable(List<FlightModel> flights, string? seatClass)
     {
         if (flights == null || !flights.Any())
         {
@@ -50,8 +56,8 @@ public static class FlightLogic
 
         table.AddColumns(
             "[#864000]ID[/]", "[#864000]Aircraft ID[/]", "[#864000]Airline[/]",
-            "[#864000]From[/]", "[#864000]To[/]", "[#864000]Departure[/]",
-            "[#864000]Arrival[/]", "[#864000]Status[/]"
+            "[#864000]From[/]", "[#864000]To[/]", "[#864000]Departure time[/]",
+            "[#864000]Arrival time[/]", "[#864000]Status[/]"
         );
 
         if (seatClass != null)
@@ -71,7 +77,7 @@ public static class FlightLogic
                 flight.ArrivalAirport,
                 flight.DepartureTime.ToString("g"),
                 flight.ArrivalTime.ToString("g"),
-                flight.FlightStatus,
+                flight.Status,
                 GetSeatClassPrice(flight.AirplaneID, seatClass).ToString("C"));
             }
             else
@@ -84,8 +90,9 @@ public static class FlightLogic
                 flight.ArrivalAirport,
                 flight.DepartureTime.ToString("g"),
                 flight.ArrivalTime.ToString("g"),
-                flight.FlightStatus);
-            };
+                flight.Status);
+            }
+            ;
         }
 
         return table;
@@ -97,96 +104,27 @@ public static class FlightLogic
     }
     public static void AddFlight(FlightModel flight)
     {
-        ValidateFlight(flight);
-
-        AirplaneModel? airplane = AirplaneLogic.GetAirplaneByID(flight.AirplaneID);
-
-        if (airplane == null)
-        {
-            throw new ArgumentException("Airplane not found.");
-        }
-
-        flight.AirplaneID = airplane.AirplaneID;
-        flight.AvailableSeats = airplane.TotalSeats;
-
-        flight.FlightStatus = "Scheduled";
-
-        AutoIncrementFlightID(flight);
-
+        flight.Status = "Scheduled";
         FlightAccessService.Insert(flight);
-
-        BookingLogic.BackfillFlightSeats(flight.FlightID);
-
-        FlightSeatAccessService.CreateFlightSeats(flight.FlightID, flight.AirplaneID);
+        flight.FlightID = FlightAccessService.GetFlightIdByDetails(flight);
+        SeatMapLogic.CreateSeatMapForFlight(flight.FlightID, flight.AirplaneID);
     }
 
     public static void UpdateFlight(FlightModel flight)
     {
-        ValidateFlight(flight);
         FlightAccessService.Update(flight);
     }
 
     public static void DeleteFlight(int flightId)
     {
-        if (flightId <= 0)
-        {
-            throw new ArgumentException("Flight ID must be valid.");
-        }
-
         FlightSeatAccessService.DeleteFlightSeatsByFlightID(flightId);
+        BookingLogic.DeleteBookingsByFlightId(flightId);
         FlightAccessService.Delete(flightId);
-        
-    }
-
-    private static void AutoIncrementFlightID(FlightModel flight)
-    {
-        var existingFlights = FlightAccessService.GetAll();
-
-        int nextId = 1;
-
-        // If flights exist, find highest ID and add 1
-        if (existingFlights.Count > 0)
-        {
-            nextId = existingFlights.Max(f => f.FlightID) + 1;
-        }
-
-        flight.FlightID = nextId;
-    }
-
-    private static void ValidateFlight(FlightModel flight)
-    {
-        DateTime today = DateTime.Today;
-
-        if (string.IsNullOrWhiteSpace(flight.Airline))
-        {
-            throw new ArgumentException("Airline name cannot be empty.");
-        }
-
-        if (flight.DepartureTime.Date < today.Date)
-        {
-            throw new ArgumentException("Departure date cannot be in the past.");
-        }
-
-        if (flight.DepartureTime >= flight.ArrivalTime)
-        {
-            throw new ArgumentException("Departure time must be earlier than arrival time.");
-        }
-
-        if (string.IsNullOrWhiteSpace(flight.DepartureAirport) || string.IsNullOrWhiteSpace(flight.ArrivalAirport))
-        {
-            throw new ArgumentException("Departure and arrival airports cannot be empty.");
-        }
-
-         if (flight.FlightID <= 0)
-        {
-            throw new ArgumentException("FlightModel ID must be valid for updates.");
-        }
-
     }
 
     private static float GetSeatClassPrice(string airplaneID, string seatClass)
     {
-        if(seatClass == null)
+        if (seatClass == null)
         {
             return SeatAccessService.GetSeatClassPrice(airplaneID);
         }
@@ -204,12 +142,8 @@ public static class FlightLogic
         foreach (FlightModel flight in pastFlights)
         {
             // Update flight
-            flight.FlightStatus = "Departed";
+            flight.Status = "Departed";
             FlightAccessService.Update(flight);
-            // Move to past flights
-            PastFlightAccessService.WritePastFlight(flight);
-            // Remove from current flights
-            FlightAccessService.Delete(flight.FlightID);
         }
         // Remove past flights and their seats which are older than a month
         PurgeOldPastFlights(monthAgo);
@@ -220,20 +154,20 @@ public static class FlightLogic
         foreach (FlightModel flight in upcomingFlights)
         {
             // Update flight status to "Boarding"
-            flight.FlightStatus = "Boarding";
+            flight.Status = "Boarding";
             FlightAccessService.Update(flight);
         }
     }
 
     private static void PurgeOldPastFlights(DateTime monthAgo)
     {
-        List<int> oldFlightIDs = PastFlightAccessService.GetOldPastFlightIDs(monthAgo);
+        List<int> oldFlightIDs = FlightAccessService.GetOldDepartedFlightIDs(monthAgo);
         // Only call if there are any flights to delete
         if (oldFlightIDs != null && oldFlightIDs.Count != 0)
         {
             // Delete seats and flights
-            FlightSeatAccessService.DeletePastFlightSeatsByFlightIDs(oldFlightIDs);
-            PastFlightAccessService.DeleteOldPastFlights(oldFlightIDs);
+            FlightSeatAccessService.DeleteFlightSeatsByFlightIDs(oldFlightIDs);
+            FlightAccessService.DeleteFlightsByIDs(oldFlightIDs);
         }
     }
 }

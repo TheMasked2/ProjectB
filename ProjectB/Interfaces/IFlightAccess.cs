@@ -7,6 +7,10 @@ namespace ProjectB.DataAccess
         List<FlightModel> GetFilteredFlights(
             string? origin,
             string? destination,
-            DateTime departureDate);
+            DateTime departureDate,
+            bool past = false);
+        void DeleteFlightsByIDs(List<int> flightIDs);
+        List<int> GetOldDepartedFlightIDs(DateTime monthAgo);
+        int GetFlightIdByDetails(FlightModel flight);
     }
 }
