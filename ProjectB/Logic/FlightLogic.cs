@@ -6,7 +6,6 @@ public static class FlightLogic
 {
     public static IFlightAccess FlightAccessService { get; set; } = new FlightAccess();
     public static IFlightSeatAccess FlightSeatAccessService { get; set; } = new FlightSeatAccess();
-    public static IAirplaneAccess AirplaneAccessService { get; set; } = new AirplaneAccess();
     public static ISeatAccess SeatAccessService { get; set; } = new SeatAccess();
     public static IReviewAccess ReviewAccessService { get; set; } = new ReviewAccess();
     private static readonly Style primaryStyle = new(new Color(134, 64, 0));
@@ -34,11 +33,6 @@ public static class FlightLogic
 
         return bookableFlights;
     }
-
-    public static List<FlightModel> GetFilteredPastFlights(
-        string? origin,
-        string? destination,
-        DateTime departureDate) => FlightAccessService.GetFilteredFlights(origin, destination, departureDate, past: true);
 
     public static Spectre.Console.Rendering.IRenderable CreateDisplayableFlightsTable(List<FlightModel> flights, string? seatClass)
     {
@@ -147,7 +141,7 @@ public static class FlightLogic
             FlightAccessService.Update(flight);
         }
         // Remove past flights and their seats which are older than a month
-        PurgeOldPastFlights(monthAgo);
+        PurgeOldFlights(monthAgo);
 
         // Update flights that are departing soon (3 hours or less)
         DateTime departingSoonDate = currentDate.AddHours(3);
@@ -160,7 +154,7 @@ public static class FlightLogic
         }
     }
 
-    private static void PurgeOldPastFlights(DateTime monthAgo)
+    private static void PurgeOldFlights(DateTime monthAgo)
     {
         List<int> oldFlightIDs = FlightAccessService.GetOldDepartedFlightIDs(monthAgo);
         // Only call if there are any flights to delete
@@ -169,7 +163,6 @@ public static class FlightLogic
             // Delete seats, flights, bookings and reviews by ids
             foreach (int flightId in oldFlightIDs)
             {
-                FlightSeatAccessService.DeleteFlightSeatsByFlightID(flightId);
                 BookingLogic.DeleteBookingsByFlightId(flightId);
                 ReviewAccessService.DeleteReviewsByFlightID(flightId);
             }
