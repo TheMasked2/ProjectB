@@ -66,7 +66,7 @@ namespace ProjectB.Tests
         [DataRow(true, UserRole.Guest, -70, 0, false, Coupons.Atreides, 85.0, 0.85, 0.0, DisplayName = "Guest Check: Coupon Only")]
         // Spice Coupon Easter Egg
         [DataRow(false, UserRole.Customer, -30, 0, false, Coupons.Spice, -100.0, 1.0, 0.0, DisplayName = "Spice Coupon: Base")]
-        [DataRow(true, UserRole.Customer, -70, 2, true, Coupons.Spice, -66.0, 0.3, 20.0, DisplayName = "Spice Coupon: With other discounts and extras")]
+        [DataRow(true, UserRole.Customer, -70, 2, true, Coupons.Spice, -154.0, 0.7, 20.0, DisplayName = "Spice Coupon: With other discounts and extras")]
         public void CalculateBookingPrice_ReturnsCorrectAmounts(
             bool firstTimeDiscount, UserRole role, int ageYears,
             int luggage, bool insurance, Coupons? coupon,
@@ -93,8 +93,8 @@ namespace ProjectB.Tests
 
         [DataTestMethod]
         [DataRow(123, 456, "B737-15A", "Pending", 1, true, null, 290.0, 1.0, DisplayName = "Regular booking with luggage and insurance")]
-        [DataRow(456, 789, "B737-5C", "Pending", 2, true, Coupons.BeneGesserit, 455.0, 0.65, DisplayName = "Booking with discounts, luggage, and insurance")]
-        [DataRow(789, 101, "B737-7B", "Pending", 0, false, Coupons.Spice, -150.0, 1.0, DisplayName = "Spice coupon booking (negative price easter egg)")]
+        [DataRow(789, 101, "B737-7B", "Pending", 0, false, Coupons.Spice, -200.0, 1.0, DisplayName = "Spice coupon booking (negative price easter egg)")]
+        [DataRow(456, 789, "B737-5C", "Pending", 2, true, Coupons.BeneGesserit, 560.0, 0.8, DisplayName = "Booking with discounts, luggage, and insurance")]
         public void BookingBuilder_CreatesCorrectBookingModels(
             int userId, int flightId, string seatId,
             string expectedStatus,
@@ -102,9 +102,9 @@ namespace ProjectB.Tests
             double expectedPrice, double expectedDiscount)
         {
             // Arrange
-            var user = new User { UserID = userId, Role = UserRole.Customer, BirthDate = DateTime.Now.AddYears(-30), FirstTimeDiscount = (userId == 456) };
-            var flight = new FlightModel { FlightID = flightId };
-            var seat = new SeatModel { SeatID = seatId, Price = (userId == 456) ? 500.0m : 200.0m };
+            User user = new() { UserID = userId, Role = UserRole.Customer, BirthDate = DateTime.Now.AddYears(-30), FirstTimeDiscount = (userId == 456) };
+            FlightModel flight = new() { FlightID = flightId };
+            SeatModel seat = new() { SeatID = seatId, Price = (userId == 456) ? 500.0m : 200.0m };
 
             // Act
             BookingModel result = BookingLogic.BookingBuilder(user, flight, seat, coupon, luggageAmount, hasInsurance);

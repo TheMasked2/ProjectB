@@ -11,15 +11,15 @@ namespace ProjectB.Tests
     public class ReviewLogicUnitTests
     {
         [DataTestMethod]
-        [DataRow(1, 101, "Great flight!", 5, true, DisplayName = "Valid review")]
-        [DataRow(1, 101, "Bad rating", 0, false, DisplayName = "Rating too low")]
-        [DataRow(1, 101, "Bad rating", 6, false, DisplayName = "Rating too high")]
-        [DataRow(1, 9999, "Unknown flight", 4, false, DisplayName = "Non-existent flight")]
+        [DataRow(1, 101, "Great flight!", 5.0, true, DisplayName = "Valid review")]
+        [DataRow(1, 101, "Bad rating", 0.0, false, DisplayName = "Rating too low")]
+        [DataRow(1, 101, "Bad rating", 6.0, false, DisplayName = "Rating too high")]
+        [DataRow(1, 9999, "Unknown flight", 4.0, false, DisplayName = "Non-existent flight")]
         public void AddReview_ValidatesAndAddsCorrectly(
             int userId,
             int flightId,
             string content,
-            int rating,
+            double rating,
             bool expectedResult)
         {
             // Arrange
@@ -46,14 +46,17 @@ namespace ProjectB.Tests
             var result = ReviewLogic.AddReview(review, out errorMessage);
 
             // Assert
-            Assert.AreEqual(expectedResult, result, errorMessage);
-            if (!expectedResult)
+            if (flightId == 9999 || rating < 1.0 || rating > 5.0)
             {
+                Assert.IsFalse(result, errorMessage);
                 Assert.IsFalse(string.IsNullOrEmpty(errorMessage));
+                mockReviewAccess.Verify(x => x.Insert(It.IsAny<ReviewModel>()), Times.Never);
             }
             else
             {
-                mockReviewAccess.Verify(x => x.AddReview(review), Times.Once);
+                Assert.IsTrue(result, errorMessage);
+                Assert.IsTrue(string.IsNullOrEmpty(errorMessage));
+                mockReviewAccess.Verify(x => x.Insert(review), Times.Once);
             }
         }
 
@@ -105,7 +108,7 @@ namespace ProjectB.Tests
         {
             // Arrange
             var mockReviewAccess = new Mock<IReviewAccess>();
-            mockReviewAccess.Setup(x => x.GetAllReviews())
+            mockReviewAccess.Setup(x => x.GetAll())
                 .Returns(new List<ReviewModel>()); // Empty list to trigger error message
 
             ReviewLogic.ReviewAccessService = mockReviewAccess.Object;

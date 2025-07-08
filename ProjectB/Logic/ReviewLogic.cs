@@ -7,6 +7,22 @@ public static class ReviewLogic
     public static bool AddReview(ReviewModel review, out string errorMessage)
     {
         errorMessage = null;
+
+        // Validate rating
+        if (review.Rating < 1.0 || review.Rating > 5.0)
+        {
+            errorMessage = "Rating must be between 1 and 5.";
+            return false;
+        }
+
+        // Validate flight existence
+        var flight = FlightLogic.GetFlightById(review.FlightID);
+        if (flight == null)
+        {
+            errorMessage = "Flight does not exist.";
+            return false;
+        }
+
         try
         {
             ReviewAccessService.Insert(review);
