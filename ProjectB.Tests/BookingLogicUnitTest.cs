@@ -92,9 +92,9 @@ namespace ProjectB.Tests
         }
 
         [DataTestMethod]
-        [DataRow(123, 456, "15A", "Pending", 1, true, null, 290.0, 1.0, DisplayName = "Regular booking with luggage and insurance")]
-        [DataRow(456, 789, "5C", "Pending", 2, true, Coupons.BeneGesserit, 455.0, 0.65, DisplayName = "Booking with discounts, luggage, and insurance")]
-        [DataRow(789, 101, "7B", "Pending", 0, false, Coupons.Spice, -150.0, 1.0, DisplayName = "Spice coupon booking (negative price easter egg)")]
+        [DataRow(123, 456, "B737-15A", "Pending", 1, true, null, 290.0, 1.0, DisplayName = "Regular booking with luggage and insurance")]
+        [DataRow(456, 789, "B737-5C", "Pending", 2, true, Coupons.BeneGesserit, 455.0, 0.65, DisplayName = "Booking with discounts, luggage, and insurance")]
+        [DataRow(789, 101, "B737-7B", "Pending", 0, false, Coupons.Spice, -150.0, 1.0, DisplayName = "Spice coupon booking (negative price easter egg)")]
         public void BookingBuilder_CreatesCorrectBookingModels(
             int userId, int flightId, string seatId,
             string expectedStatus,
@@ -182,9 +182,9 @@ namespace ProjectB.Tests
         }
 
         [DataTestMethod]
-        [DataRow(123, "Pending", 1, 101, "1A", 0, false, 1.0, 200.0, DisplayName = "Confirm a standard pending booking")]
-        [DataRow(456, "Pending", 2, 202, "2B", 1, true, 1.0, 350.0, DisplayName = "Confirm a booking with luggage and insurance")]
-        [DataRow(789, "Pending", 3, 303, "3C", 2, false, 0.85, 500.0, DisplayName = "Confirm a booking with 2 luggage and a coupon discount")]
+        [DataRow(123, "Pending", 1, 101, "B737-1A", 0, false, 1.0, 200.0, DisplayName = "Confirm a standard pending booking")]
+        [DataRow(456, "Pending", 2, 202, "B737-2B", 1, true, 1.0, 350.0, DisplayName = "Confirm a booking with luggage and insurance")]
+        [DataRow(789, "Pending", 3, 303, "B737-3C", 2, false, 0.85, 500.0, DisplayName = "Confirm a booking with 2 luggage and a coupon discount")]
         public void ConfirmBooking_SetsStatusAndInsertsBooking(
             int bookingId, string initialStatus, int userId, int flightId, string seatId,
             int luggageAmount, bool hasInsurance, double discount, double totalPrice)
@@ -280,18 +280,18 @@ namespace ProjectB.Tests
 
         [DataTestMethod]
         // The expected total price is the new seat price + a fixed luggage cost of $50.
-        [DataRow("1A", "Luxury", 400.0, 450.0, DisplayName = "ModifyBooking: To Luxury")]
-        [DataRow("2B", "Business", 250.0, 300.0, DisplayName = "ModifyBooking: To Business")]
-        [DataRow("7A", "Premium", 150.0, 200.0, DisplayName = "ModifyBooking: To Premium")]
-        [DataRow("10D", "Extra Legroom", 120.0, 170.0, DisplayName = "ModifyBooking: To Extra Legroom")]
-        [DataRow("15F", "Economy", 100.0, 150.0, DisplayName = "ModifyBooking: To Economy")]
+        [DataRow("B737-1A", "Luxury", 400.0, 450.0, DisplayName = "ModifyBooking: To Luxury")]
+        [DataRow("B737-2B", "Business", 250.0, 300.0, DisplayName = "ModifyBooking: To Business")]
+        [DataRow("B737-7A", "Premium", 150.0, 200.0, DisplayName = "ModifyBooking: To Premium")]
+        [DataRow("B737-10D", "Extra Legroom", 120.0, 170.0, DisplayName = "ModifyBooking: To Extra Legroom")]
+        [DataRow("B737-15F", "Economy", 100.0, 150.0, DisplayName = "ModifyBooking: To Economy")]
         public void ModifyBooking_WhenSuccessful_UpdatesBookingWithNewSeatAndPrice(
              string newSeatId, string newSeatClass, double newSeatPrice, double expectedTotalPrice)
         {
             // Arrange
             const int bookingId = 1;
             const int flightId = 101;
-            const string originalSeatId = "20C";
+            const string originalSeatId = "B737-20C";
             const int luggageAmount = 1; // Fixed for this test
 
             BookingModel originalBooking = new()
@@ -333,10 +333,10 @@ namespace ProjectB.Tests
         }
 
         [DataTestMethod]
-        [DataRow(1, true, DisplayName = "GetBookingById: Should find an existing booking")]
-        [DataRow(2, true, DisplayName = "GetBookingById: Should find another existing booking")]
-        [DataRow(3, false, DisplayName = "GetBookingById: Should return null for a non-existent booking")]
-        public void GetBookingById_ReturnsCorrectBookingOrNull(int bookingIdToFetch, bool shouldExist)
+        [DataRow(1, true, 11, 101, DisplayName = "GetBookingById: Should find booking 1")]
+        [DataRow(2, true, 13, 103, DisplayName = "GetBookingById: Should find booking 2")]
+        [DataRow(3, false, 0, 0, DisplayName = "GetBookingById: Should return null for non-existent booking")]
+        public void GetBookingById_ReturnsCorrectBookingOrNull(int bookingIdToFetch, bool shouldExist, int expectedUserId, int expectedFlightId)
         {
             // Arrange
             List<BookingModel> mockBookingDb =
@@ -351,20 +351,89 @@ namespace ProjectB.Tests
                 .Returns<int>(id => mockBookingDb.FirstOrDefault(b => b.BookingID == id));
 
             // Act
-            BookingModel? fetchedBooking = BookingLogic.GetBookingById(bookingIdToFetch);
+            BookingModel? result = BookingLogic.GetBookingById(bookingIdToFetch);
 
             // Assert
             mockBookingAccess.Verify(service => service.GetById(bookingIdToFetch), Times.Once);
 
             if (shouldExist)
             {
-                Assert.IsNotNull(fetchedBooking, "Expected to find a booking, but null was returned.");
-                Assert.AreEqual(bookingIdToFetch, fetchedBooking.BookingID, "The wrong booking was returned.");
+                Assert.IsNotNull(result, "Expected to find a booking, but null was returned.");
+                Assert.AreEqual(bookingIdToFetch, result.BookingID, "The wrong booking was returned.");
+                Assert.AreEqual(expectedUserId, result.UserID, "UserID does not match expected.");
+                Assert.AreEqual(expectedFlightId, result.FlightID, "FlightID does not match expected.");
             }
             else
             {
-                Assert.IsNull(fetchedBooking, "Expected null for a non-existent booking, but an object was returned.");
+                Assert.IsNull(result, "Expected null for a non-existent booking, but an object was returned.");
             }
+        }
+
+        [DataTestMethod]
+        [DataRow(1, "B737-1A", 101, DisplayName = "BookTheDamnFlight: Should book flight with seat B737-1A")]
+        [DataRow(2, "B737-2B", 102, DisplayName = "BookTheDamnFlight: Should book flight with seat B737-2B")]
+        public void BookTheDamnFlight_BooksFlightWithConfirmedStatus(int userId, string seatId, int flightId)
+        {
+            // Arrange
+            var insertedBookings = new List<BookingModel>();
+
+            User user = new User { UserID = userId, Role = UserRole.Customer, BirthDate = DateTime.Now.AddYears(-30) };
+            SessionManager.SetCurrentUser(user);
+
+            FlightModel flight = new FlightModel { FlightID = flightId };
+            SeatModel seat = new SeatModel { SeatID = seatId, Price = 100.0m, SeatClass = "Economy" };
+
+            BookingModel booking = BookingLogic.BookingBuilder(user, flight, seat, null, 0, false);
+
+            // Setup mocks
+            mockFlightSeatAccess.Setup(s => s.SetSeatOccupancy(flightId, seatId, true));
+            mockBookingAccess.Setup(s => s.Insert(It.IsAny<BookingModel>()))
+                .Callback<BookingModel>(b => insertedBookings.Add(b));
+
+            // Act
+            BookingLogic.BookTheDamnFlight(booking);
+
+            // Assert
+            Assert.AreEqual(1, insertedBookings.Count, "Exactly one booking should have been inserted.");
+            Assert.AreSame(booking, insertedBookings[0], "The inserted booking should be the same object as the original.");
+            Assert.AreEqual("Confirmed", insertedBookings[0].BookingStatus, "The booking status should be set to 'Confirmed'.");
+        }
+
+        [DataTestMethod]
+        [DataRow(42, 4, DisplayName = "DeleteBookingsByFlightId: Removes all bookings for flight 42")]
+        [DataRow(99, 3, DisplayName = "DeleteBookingsByFlightId: Removes all bookings for flight 99")]
+        public void DeleteBookingsByFlightId_RemovesBookingsForGivenFlight(int flightIdToDelete, int expectedRemaining)
+        {
+            // Arrange
+            var allBookings = new List<BookingModel>
+            {
+                new BookingModel { BookingID = 1, FlightID = 42 },
+                new BookingModel { BookingID = 2, FlightID = 42 },
+                new BookingModel { BookingID = 3, FlightID = 99 },
+                new BookingModel { BookingID = 4, FlightID = 99 },
+                new BookingModel { BookingID = 5, FlightID = 100 },
+                new BookingModel { BookingID = 6, FlightID = 99 }
+            };
+
+            // Setup mock
+            mockBookingAccess
+                .Setup(m => m.GetBookingsByFlightId(flightIdToDelete))
+                .Returns(() => allBookings.Where(b => b.FlightID == flightIdToDelete).ToList());
+            mockBookingAccess
+                .Setup(m => m.Delete(It.IsAny<int>()))
+                .Callback<int>(id =>
+                {
+                    BookingModel? toRemove = allBookings.FirstOrDefault(b => b.BookingID == id);
+                    if (toRemove != null)
+                        allBookings.Remove(toRemove);
+                });
+
+            // Act
+            BookingLogic.DeleteBookingsByFlightId(flightIdToDelete);
+
+            // Assert
+            Assert.AreEqual(expectedRemaining, allBookings.Count, "Unexpected number of bookings remain after deletion.");
+            Assert.IsFalse(allBookings.Any(b => b.FlightID == flightIdToDelete), "No bookings for the deleted flight should remain.");
         }
     }
 }

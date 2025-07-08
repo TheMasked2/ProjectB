@@ -18,7 +18,7 @@ public class FlightSeatAccess : GenericAccess<SeatModel, string>, IFlightSeatAcc
         // Results are ordered by row number and seat position for logical display.
         string sql = $@"
             SELECT 
-                s.SeatID,
+                s.{PrimaryKey},
                 s.AirplaneID,
                 s.RowNumber,
                 s.ColumnLetter,
@@ -26,7 +26,7 @@ public class FlightSeatAccess : GenericAccess<SeatModel, string>, IFlightSeatAcc
                 s.Price,
                 fs.IsOccupied
             FROM {Table} fs
-            INNER JOIN {SeatsTable} s ON fs.SeatID = s.SeatID
+            INNER JOIN {SeatsTable} s ON fs.{PrimaryKey} = s.{PrimaryKey}
             WHERE fs.FlightID = @FlightID
             ORDER BY s.RowNumber, s.ColumnLetter
         ";
@@ -41,7 +41,7 @@ public class FlightSeatAccess : GenericAccess<SeatModel, string>, IFlightSeatAcc
 
     public void SetSeatOccupancy(int flightId, string seatId, bool isOccupied)
     {
-        string sql = $"UPDATE {Table} SET IsOccupied = @IsOccupied WHERE FlightID = @FlightID AND SeatID = @SeatID";
+        string sql = $"UPDATE {Table} SET IsOccupied = @IsOccupied WHERE FlightID = @FlightID AND {PrimaryKey} = @{PrimaryKey}";
         _connection.Execute(sql, new { IsOccupied = isOccupied, FlightID = flightId, SeatID = seatId });
     }
 
@@ -49,11 +49,11 @@ public class FlightSeatAccess : GenericAccess<SeatModel, string>, IFlightSeatAcc
     {
         // This SQL query creates flight seats for a specific flight.:
         // It SELECTS all the SeatIDs from the SEATS table that match the airplaneId.
-        // For each SeatID found, it INSERTS a new row into the FLIGHTSEATS table.
+        // For each {PrimaryKey} found, it INSERTS a new row into the FLIGHTSEATS table.
         // It uses the provided flightId and sets IsOccupied to 0 (unoccupied) for all new rows.
         string sql = $@"
-            INSERT INTO {Table} (FlightID, SeatID, IsOccupied)
-            SELECT @FlightID, SeatID, 0
+            INSERT INTO {Table} (FlightID, {PrimaryKey}, IsOccupied)
+            SELECT @FlightID, {PrimaryKey}, 0
             FROM {SeatsTable}
             WHERE AirplaneID = @AirplaneID";
 
@@ -83,9 +83,9 @@ public class FlightSeatAccess : GenericAccess<SeatModel, string>, IFlightSeatAcc
         // It then filters by the given FlightID, SeatType (class),
         // and returns the count of unoccupied seats (IsOccupied = 0).
         string sql = $@"
-            SELECT COUNT(fs.SeatID)
+            SELECT COUNT(fs.{PrimaryKey})
             FROM {Table} fs
-            INNER JOIN {SeatsTable} s ON fs.SeatID = s.SeatID AND s.AirplaneID = @AirplaneID 
+            INNER JOIN {SeatsTable} s ON fs.{PrimaryKey} = s.{PrimaryKey} AND s.AirplaneID = @AirplaneID 
             WHERE fs.FlightID = @FlightID
               AND s.SeatClass = @SeatClass
               AND fs.IsOccupied = 0";
@@ -97,9 +97,9 @@ public class FlightSeatAccess : GenericAccess<SeatModel, string>, IFlightSeatAcc
     public override void Insert(SeatModel seat)
     {
         string sql = $@"INSERT INTO {Table} 
-                        (FlightID, SeatID, IsOccupied) 
+                        (FlightID, {PrimaryKey}, IsOccupied) 
                         VALUES 
-                        (@FlightID, @SeatID, @IsOccupied)";
+                        (@FlightID, @{PrimaryKey}, @IsOccupied)";
         _connection.Execute(sql, seat);
     }
 
@@ -107,7 +107,7 @@ public class FlightSeatAccess : GenericAccess<SeatModel, string>, IFlightSeatAcc
     {
         string sql = $@"UPDATE {Table} 
                         SET IsOccupied = @IsOccupied 
-                        WHERE SeatID = @SeatID";
+                        WHERE FlightID = @FlightID AND {PrimaryKey} = @{PrimaryKey}";
         _connection.Execute(sql, seat);
     }
 }
