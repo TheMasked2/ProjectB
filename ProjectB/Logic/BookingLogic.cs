@@ -163,6 +163,11 @@ public static class BookingLogic
     {
         booking.BookingStatus = "Confirmed";
         BookingAccessService.Insert(booking);
+        if (SessionManager.CurrentUser.IsCustomer && SessionManager.CurrentUser.FirstTimeDiscount == true)
+        {
+            SessionManager.CurrentUser.FirstTimeDiscount = false;
+            UserLogic.UserAccessService.Update(SessionManager.CurrentUser); // Update user to remove first time discount if applicable
+        }
     }
 
     public static Spectre.Console.Rendering.IRenderable CreateBookingTable(List<BookingModel> bookings)
