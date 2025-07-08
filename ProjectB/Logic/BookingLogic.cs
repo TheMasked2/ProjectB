@@ -179,7 +179,7 @@ public static class BookingLogic
             .Border(TableBorder.Rounded)
             .BorderStyle(primaryStyle)
             .Expand();
-        table.AddColumns("BookingID", "Status", "FlightID", "Seat", "Class", "Passenger", "Departure", "Arrival");
+        table.AddColumns("BookingID", "Status", "FlightID", "Seat", "Class", "Passenger", "Departure", "Arrival", "Insurance");
 
         foreach (BookingModel booking in bookings)
         {
@@ -194,7 +194,8 @@ public static class BookingLogic
                 seat?.SeatClass ?? "[red]N/A[/]",
                 $"{user.FirstName} {user.LastName}",
                 flight?.DepartureTime.ToString("g") ?? "[red]N/A[/]",
-                flight?.ArrivalTime.ToString("g") ?? "[red]N/A[/]"
+                flight?.ArrivalTime.ToString("g") ?? "[red]N/A[/]",
+                booking.HasInsurance ? "[green]Yes[/]" : "[red]No[/]"
             );
         }
 
