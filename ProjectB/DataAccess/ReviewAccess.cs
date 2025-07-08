@@ -6,7 +6,7 @@ public class ReviewAccess : GenericAccess<ReviewModel, int>, IReviewAccess
 {
     protected override string PrimaryKey => "ReviewID";
     protected override string Table => "REVIEWS";
-    
+
     public override void Insert(ReviewModel review)
     {
         string sql = @$"INSERT INTO {Table} 
@@ -37,5 +37,11 @@ public class ReviewAccess : GenericAccess<ReviewModel, int>, IReviewAccess
     {
         string sql = @$"SELECT * FROM {Table} WHERE UserID = @UserId";
         return _connection.Query<ReviewModel>(sql, new { UserId = userId }).ToList();
+    }
+
+    public void DeleteReviewsByFlightID(int flightId)
+    {
+        string sql = @$"DELETE FROM {Table} WHERE FlightID = @FlightId";
+        _connection.Execute(sql, new { FlightId = flightId });
     }
 }

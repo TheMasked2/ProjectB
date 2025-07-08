@@ -8,6 +8,7 @@ public static class FlightLogic
     public static IFlightSeatAccess FlightSeatAccessService { get; set; } = new FlightSeatAccess();
     public static IAirplaneAccess AirplaneAccessService { get; set; } = new AirplaneAccess();
     public static ISeatAccess SeatAccessService { get; set; } = new SeatAccess();
+    public static IReviewAccess ReviewAccessService { get; set; } = new ReviewAccess();
     private static readonly Style primaryStyle = new(new Color(134, 64, 0));
     private static readonly Style errorStyle = new(new Color(162, 52, 0));
 
@@ -165,7 +166,14 @@ public static class FlightLogic
         // Only call if there are any flights to delete
         if (oldFlightIDs != null && oldFlightIDs.Count != 0)
         {
-            // Delete seats and flights
+            // Delete seats, flights, bookings and reviews by ids
+            foreach (int flightId in oldFlightIDs)
+            {
+                FlightSeatAccessService.DeleteFlightSeatsByFlightID(flightId);
+                BookingLogic.DeleteBookingsByFlightId(flightId);
+                ReviewAccessService.DeleteReviewsByFlightID(flightId);
+            }
+
             FlightSeatAccessService.DeleteFlightSeatsByFlightIDs(oldFlightIDs);
             FlightAccessService.DeleteFlightsByIDs(oldFlightIDs);
         }

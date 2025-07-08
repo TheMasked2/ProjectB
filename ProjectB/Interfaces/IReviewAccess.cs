@@ -4,6 +4,7 @@ namespace ProjectB.DataAccess
     {
         List<ReviewModel> GetReviewsByFlight(int flightId);
         List<ReviewModel> GetReviewsByUser(int userId);
+        void DeleteReviewsByFlightID(int flightId);
     }
 
 }
