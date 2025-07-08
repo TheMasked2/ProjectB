@@ -44,7 +44,8 @@ public static class Menu
                     "View user info",
                     "Edit user info",
                     "Search for flights",
-                    "Reviews",
+                    "View flights without booking",
+                    "View reviews",
                     "Logout"
                 });
             }
@@ -109,7 +110,13 @@ public static class Menu
                     FlightUI.SearchFlights();
                     break;
 
-                case "Reviews":
+                case "View flights without booking":
+                    SessionManager.SetTemporaryAdmin();
+                    FlightUI.DisplayFilteredFlights();
+                    SessionManager.RemoveTemporaryAdmin();
+                    break;
+
+                case "View reviews":
                     ReviewUI.ShowReviewMenu();
                     break;
 

@@ -2,6 +2,16 @@ public static class SessionManager
 {
     public static User? CurrentUser { get; private set; }
     public static DateTime LoginTime { get; private set; }
+    
+    public static void SetTemporaryAdmin()
+    {
+        CurrentUser.Role = UserRole.Admin; // Temporarily set the user to Admin
+    }
+
+    public static void RemoveTemporaryAdmin()
+    {
+        CurrentUser.Role = UserRole.Customer; // Revert back to Customer role
+    }
 
     public static void SetCurrentUser(User user)
     {
