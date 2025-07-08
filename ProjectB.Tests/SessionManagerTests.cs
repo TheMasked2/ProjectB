@@ -46,7 +46,7 @@ namespace ProjectB.Tests
 
             // Assert
             Assert.IsNull(SessionManager.CurrentUser);
-            Assert.IsTrue((SessionManager.LoginTime - DateTime.MinValue).TotalSeconds < 1);
+            Assert.AreEqual(DateTime.MinValue, SessionManager.LoginTime);
         }
 
         [TestMethod]
@@ -89,6 +89,22 @@ namespace ProjectB.Tests
 
             // Assert
             Assert.AreEqual(user2, SessionManager.CurrentUser);
+        }
+
+        [TestMethod]
+        public void SetGuestUser_SetsGuestUserAndLoginTime()
+        {
+            // Act
+            SessionManager.SetGuestUser();
+
+            // Assert
+            Assert.IsNotNull(SessionManager.CurrentUser);
+            Assert.AreEqual(-1, SessionManager.CurrentUser.UserID);
+            Assert.AreEqual("Guest", SessionManager.CurrentUser.FirstName);
+            Assert.AreEqual("User", SessionManager.CurrentUser.LastName);
+            Assert.AreEqual(UserRole.Guest, SessionManager.CurrentUser.Role);
+            Assert.IsTrue(SessionManager.CurrentUser.IsGuest);
+            Assert.IsTrue((DateTime.Now - SessionManager.LoginTime).TotalSeconds < 2);
         }
     }
 }
