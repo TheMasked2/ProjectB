@@ -53,7 +53,7 @@ public static class Menu
             var input = AnsiConsole.Prompt(
                 new SelectionPrompt<string>()
                     .Title("[yellow]Select an option:[/]")
-                    .PageSize(7)
+                    .PageSize(8)
                     .AddChoices(choices)
                     .WrapAround(true));
 

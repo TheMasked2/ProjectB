@@ -57,7 +57,11 @@ namespace ProjectB.Tests
         [DataRow(true, UserRole.Customer, -30, 0, false, Coupons.MuadDib, 70.0, 0.7, 0.0, DisplayName = "Discount: First-Time + Coupon (20%)")]
         [DataRow(false, UserRole.Customer, -70, 0, false, Coupons.BeneGesserit, 70.0, 0.7, 0.0, DisplayName = "Discount: Senior + Coupon (10%)")]
         [DataRow(true, UserRole.Customer, -70, 0, false, Coupons.LisanAlGaib, 60.0, 0.6, 0.0, DisplayName = "Discount: All Three (10+20+10)")]
-        // Edge Case: 100% Discount
+        // Edge case: Senior discounts
+        [DataRow(false, UserRole.Customer, -64, 0, false, null, 100.0, 1.0, 0.0, DisplayName = "Edge: 64 years old, no senior discount")]
+        [DataRow(false, UserRole.Customer, -65, 0, false, null, 80.0, 0.8, 0.0, DisplayName = "Edge: 65 years old, gets senior discount")]
+        [DataRow(false, UserRole.Customer, -66, 0, false, null, 80.0, 0.8, 0.0, DisplayName = "Edge: 66 years old, gets senior discount")]
+        // Edge case: 100% Discount
         [DataRow(true, UserRole.Customer, -70, 0, false, Coupons.KwisatzHaderach, 0.0, 0.0, 0.0, DisplayName = "Edge Case: 100% Discount (10+20+70)")]
         [DataRow(true, UserRole.Customer, -70, 2, true, Coupons.KwisatzHaderach, 0.0, 0.0, 20.0, DisplayName = "Edge Case: 100% Discount with extras")]
         // Guest discount checks (should not receive age/first-time discounts)
@@ -73,7 +77,7 @@ namespace ProjectB.Tests
             double expectedPrice, double expectedDiscount, double expectedInsurance)
         {
             // Arrange
-            User user = new User
+            User user = new()
             {
                 FirstTimeDiscount = firstTimeDiscount,
                 Role = role,
@@ -83,7 +87,7 @@ namespace ProjectB.Tests
             SeatModel seat = new SeatModel { SeatID = "1A", Price = 100.0m, SeatClass = "Economy" };
 
             // Act
-            var result = BookingLogic.CalculateBookingPrice(user, flight, seat, luggage, insurance, coupon);
+            (decimal finalPrice, decimal discount, decimal insurancePrice) result = BookingLogic.CalculateBookingPrice(user, flight, seat, luggage, insurance, coupon);
 
             // Assert
             Assert.AreEqual((decimal)expectedPrice, result.finalPrice, 0.01m, "Final price calculation is incorrect");

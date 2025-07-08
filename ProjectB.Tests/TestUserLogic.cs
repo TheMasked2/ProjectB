@@ -71,6 +71,38 @@ namespace ProjectB.Tests
         }
 
         [DataTestMethod]
+        [DataRow("John", "Doe", "USA", "NY", "john@test.com", "Pass123!", "Pass123!", "0612345678", "2000-01-01", true, DisplayName = "Valid registration")]
+        [DataRow("Paul", "Atreides", "Arrakis", "Carthag", "paul@atreides.com", "MuadDib123!", "MuadDib123!", "0612345679", "1980-05-01", true, DisplayName = "Valid registration")]
+        [DataRow("Duncan", "Idaho", "Caladan", "Arrakeen", "duncan@idaho.com", "Swordmaster1!", "Swordmaster1!", "0612345680", "1975-03-15", true, DisplayName = "Valid registration")]
+        public void Register_ValidUser_HasFirstTimeDiscount(
+            string firstName,
+            string lastName,
+            string country,
+            string city,
+            string emailAddress,
+            string password,
+            string confirmPassword,
+            string phoneNumber,
+            string birthDate,
+            bool expectedFirstTimeDiscount)
+        {
+            // Arrange
+            List<User> insertedUsers = [];
+
+            // Setup mock
+            mockUserAccess.Setup(x => x.Insert(It.IsAny<User>()))
+                .Callback<User>(u => insertedUsers.Add(u));
+
+            // Act
+            bool result = UserLogic.Register(firstName, lastName, country, city, emailAddress, password, confirmPassword, phoneNumber, birthDate);
+
+            // Assert
+            Assert.IsTrue(result, "Registration should succeed for valid input.");
+            Assert.AreEqual(1, insertedUsers.Count, "A user should have been inserted.");
+            Assert.AreEqual(expectedFirstTimeDiscount, insertedUsers[0].FirstTimeDiscount, "FirstTimeDiscount should be true for new users.");
+        }
+
+        [DataTestMethod]
         [DataRow("Alice", "Admin", "USA", "LA", "alice@admin.com", "AdminPass1!", "0612345678", "1980-05-05", "2024-01-01", UserRole.Admin, true, DisplayName = "Valid admin registration")]
         [DataRow("Alice", "Admin", "USA", "LA", "alice@admin.com", "AdminPass1!", "0612345678", "1980-05-05", "2024-01-01", UserRole.Customer, true, DisplayName = "Valid customer registration")]
         [DataRow("", "Admin", "USA", "LA", "alice@admin.com", "AdminPass1!", "0612345678", "1980-05-05", "2024-01-01", UserRole.Admin, false, DisplayName = "Empty first name")]

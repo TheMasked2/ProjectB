@@ -18,3 +18,4 @@
 2025-07-07 14:14:09;CREATE_USER;2;Admin Addmin;3;Lucio Ridder;Email=lucioridder2003@gmail.com|Admin=False
 2025-07-07 14:15:33;EDIT_USER;2;Admin Addmin;3;Lucio Ridder;Role=Customer -> Admin
 2025-07-07 14:16:12;EDIT_USER;2;Admin Addmin;3;Lucio Ridder;Role=Admin -> Customer
+2025-07-08 18:07:03;CREATE_USER;4;admin admin;5;New Admin;Email=newadmin@airtreides.nl|Admin=True
