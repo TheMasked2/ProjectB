@@ -206,7 +206,7 @@ public static class UserLogic
             return;
         }
 
-        User guestUser = SessionManager.CurrentUser;
+        User? guestUser = SessionManager.CurrentUser;
 
         // Update guest user properties
         guestUser.FirstName = firstName;
@@ -218,6 +218,7 @@ public static class UserLogic
 
         SessionManager.SetCurrentUser(guestUser);
     }
+
     public static bool UpdateUser(User updatedUser)
     {
         errors.Clear();
@@ -348,27 +349,6 @@ public static class UserLogic
     public static User? GetUserByEmail(string email)
     {
         return UserAccessService.GetUserInfoByEmail(email);
-    }
-
-    public static string GetUserInfo()
-    {
-        if (!SessionManager.IsLoggedIn())
-        {
-            errors.Add("User is not logged in.");
-            return null;
-        }
-
-        return
-            $"======================================\n" +
-            $"First Name: {SessionManager.CurrentUser.FirstName}\n" +
-            $"Last Name: {SessionManager.CurrentUser.LastName}\n" +
-            $"Country: {SessionManager.CurrentUser.Country}\n" +
-            $"City: {SessionManager.CurrentUser.City}\n" +
-            $"Email: {SessionManager.CurrentUser.Email}\n" +
-            $"Phone Number: {SessionManager.CurrentUser.PhoneNumber}\n" +
-            $"Birth Date: {SessionManager.CurrentUser.BirthDate.ToString("yyyy-MM-dd")}\n" +
-            $"Account Created At: {SessionManager.CurrentUser.AccCreatedAt.ToString("yyyy-MM-dd")}\n" +
-            $"======================================\n";
     }
 
     public static User? GetUserByID(int userId)
