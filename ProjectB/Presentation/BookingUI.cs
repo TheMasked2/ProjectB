@@ -275,6 +275,7 @@ public static class BookingUI
     
             BookingLogic.BookTheDamnFlight(booking);
             SeatMapLogic.OccupySeat(booking.FlightID, selectedSeat);
+            if (SessionManager.CurrentUser.IsCustomer) SessionManager.CurrentUser.FirstTimeDiscount = false;
     
             AnsiConsole.MarkupLine("[green]Booking confirmed![/]");
             AnsiConsole.MarkupLine($"[green]Payment of {(booking.TotalPrice < 0 ? $"SPICE {Math.Abs(booking.TotalPrice)}" : $"€{booking.TotalPrice}")} processed successfully via {(booking.TotalPrice < 0 ? "SPICE payment" : paymentMethod)}.[/]");
